@@ -2,11 +2,13 @@
     "name": "ldr-photobooth",
     "version": "1.0.0",
     "description": "LDR Photobooth - P2P Photo Sharing",
+    "main": "server/index.js",
     "scripts": {
         "install-all": "cd server && npm install && cd ../client && npm install",
         "dev:server": "cd server && npm run dev",
         "dev:client": "cd client && npm run dev",
         "start": "cd server && npm start",
+        "build": "cd server && npm install",
         "build:client": "cd client && npm run build"
     },
     "keywords": [
@@ -15,5 +17,8 @@
         "p2p"
     ],
     "author": "",
-    "license": "MIT"
+    "license": "MIT",
+    "engines": {
+        "node": ">=18.0.0"
+    }
 }
