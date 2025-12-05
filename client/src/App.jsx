@@ -112,6 +112,14 @@ function App() {
     };
   }, []);
 
+  // Effect to ensure video stream stays attached
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
+      console.log('Re-attaching video stream');
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [step]);
+
   // Watch for completion of transfers to trigger next logic is handled in data channel
 
   const getShotsCount = (layout) => {
@@ -156,20 +164,44 @@ function App() {
 
   const triggerCaptureAndSend = async (index) => {
     setIsFlash(true);
-    setTimeout(() => setIsFlash(false), 300);
 
-    if (!videoRef.current) return;
+    // Wait a bit for flash to render before capture
+    await new Promise(r => setTimeout(r, 100));
+
+    if (!videoRef.current) {
+      console.error('Video ref not available');
+      return;
+    }
+
+    // Check if video is actually playing
+    if (videoRef.current.readyState < 2) {
+      console.error('Video not ready, readyState:', videoRef.current.readyState);
+      // Try to re-attach stream
+      if (streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      await new Promise(r => setTimeout(r, 500));
+    }
+
     const blob = await captureFrame(videoRef.current);
+    setIsFlash(false);
 
     // Store Local
     localBlobsRef.current[index] = blob;
 
     // Send
-    await sendPhotoToPeer(blob, index); // We add index to meta
+    await sendPhotoToPeer(blob, index);
   };
 
   const captureFrame = (video) => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      // Validate video dimensions
+      if (!video.videoWidth || !video.videoHeight) {
+        console.error('Video dimensions not available:', video.videoWidth, video.videoHeight);
+        reject(new Error('Video not ready'));
+        return;
+      }
+
       const canvas = document.createElement('canvas');
       canvas.width = 1200;
       canvas.height = 1800;
@@ -191,9 +223,19 @@ function App() {
         sy = (video.videoHeight - sh) / 2;
       }
 
+      // Mirror horizontally
+      ctx.save();
       ctx.scale(-1, 1);
-      ctx.drawImage(video, sx, sy, sw, sh, -1200, 0, 1200, 1800);
-      canvas.toBlob(b => resolve(b), 'image/jpeg', 0.9);
+      ctx.drawImage(video, sx, sy, sw, sh, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      canvas.toBlob(b => {
+        if (b) {
+          resolve(b);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      }, 'image/jpeg', 0.9);
     });
   };
 
@@ -396,10 +438,23 @@ function App() {
   };
 
   const startCamera = () => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        facingMode: 'user'
+      },
+      audio: false
+    })
       .then(s => {
         streamRef.current = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+        }
+      })
+      .catch(err => {
+        console.error('Camera error:', err);
+        alert('Cannot access camera: ' + err.message);
       });
   };
 
