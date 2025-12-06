@@ -482,85 +482,44 @@ function App() {
     socketRef.current.emit('session:start', { layout: selectedLayout });
   };
 
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(roomCode);
-    alert("Room Code copied! Share it with your partner.");
-  };
-
-  const goHome = () => {
-    // Full reset logic to initial state
-    setStep('join');
-    setCapturedPhotos([]);
-    setMergedImage(null);
-    setParticipants([]);
-    setSelectedLayout(null);
-    localBlobsRef.current = [];
-    remoteBlobsRef.current = [];
-
-    // Cleanup
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current.connect(); // Reconnect fresh for new session
-    }
-  };
-
   return (
     <div className="container">
       {isFlash && <div className="flash-effect" />}
 
       <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <h1 className="title">LDR Booth ☁️</h1>
-        <p className="subtitle">Capture moments together, miles apart.</p>
+        <h1 className="title">LDR Photobooth</h1>
       </header>
 
       {step === 'join' && (
         <div className="glass-panel" style={{ maxWidth: '400px', margin: '0 auto' }}>
-          <div className="input-group">
+          <div style={{ marginBottom: '1rem' }}>
             <label>Your Name</label>
-            <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. Evan" />
+            <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Name" />
           </div>
-          <div className="input-group">
+          <div style={{ marginBottom: '1.5rem' }}>
             <label>Room Code</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                value={roomCode}
-                onChange={e => setRoomCode(e.target.value)}
-                placeholder="Create or Enter Code"
-              />
-            </div>
+            <input value={roomCode} onChange={e => setRoomCode(e.target.value)} placeholder="Code" />
           </div>
-          <button className="btn-primary" style={{ width: '100%' }} onClick={joinRoom}>Enter Booth ✨</button>
+          <button className="btn-primary" style={{ width: '100%' }} onClick={joinRoom}>Join Booth</button>
         </div>
       )}
 
       {(step === 'room') && (
-        <div className="glass-panel layout-wide">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2>Waiting Room</h2>
-            <div className="code-display" onClick={copyRoomCode} title="Click to Copy">
-              #{roomCode} 📋
-            </div>
-          </div>
-
-          <div className="camera-container" style={{ aspectRatio: '16/9', maxHeight: '400px' }}>
+        <div className="glass-panel" style={{ scale: 0.9 }}>
+          <h2>Wait Room</h2>
+          <div className="camera-container" style={{ height: '300px' }}>
             <video ref={videoRef} autoPlay playsInline muted style={{ transform: 'scaleX(-1)' }}></video>
           </div>
-
           <div className="controls">
-            <div className="status-indicator">
-              <span className={`status-dot ${participants.length >= 2 ? 'active' : ''}`}></span>
-              {participants.length < 2 ? 'Waiting for partner...' : 'Partner Connected!'}
-            </div>
-          </div>
-
-          <div className="controls" style={{ marginTop: '1.5rem' }}>
+            {participants.length < 2 && <p>Waiting for partner...</p>}
             {participants.length >= 2 && status !== 'P2P Ready' && (
-              <button className="btn-secondary" onClick={connectPeers}>🔗 Sync Peers</button>
+              <button className="btn-primary" onClick={connectPeers}>Connect Peers</button>
             )}
             {status === 'P2P Ready' && (
-              <button className="btn-primary" onClick={() => setStep('layout-select')}>Next: Select Layout ➡️</button>
+              <button className="btn-primary" onClick={() => setStep('layout-select')}>Next: Select Layout</button>
             )}
           </div>
+          <p>Status: {status}</p>
         </div>
       )}
 
@@ -637,24 +596,19 @@ function App() {
       )}
 
       {step === 'result' && mergedImage && (
-        <div className="glass-panel">
-          <h2 style={{ textAlign: 'center' }}>Perfect! 🎉</h2>
+        <div className="result-container">
           <img src={mergedImage} className="merged-preview" alt="LDR Result" />
 
-          <div className="action-buttons" style={{ justifyContent: 'center', marginTop: '2rem' }}>
+          <div className="action-buttons">
             <a href={mergedImage} download={`ldr-photo-${Date.now()}.jpg`} className="btn-primary" style={{ textDecoration: 'none' }}>
-              Download ⬇️
+              Download Photo
             </a>
-            <button className="btn-secondary" onClick={goHome}>
-              Home 🏠
+            <button className="btn-secondary" onClick={() => socketRef.current.emit('session:reset')}>
+              Home (Reset)
             </button>
           </div>
         </div>
       )}
-
-      <footer className="credits">
-        Created by <a href="https://www.instagram.com/evankristiannn/" target="_blank" rel="noopener noreferrer">EvanKristian</a>
-      </footer>
     </div>
   );
 }
