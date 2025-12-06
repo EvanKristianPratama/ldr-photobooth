@@ -31,6 +31,8 @@ function App() {
   const dcRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const makingOfferRef = useRef(false);
+  const ignoreOfferRef = useRef(false);
 
   const incomingFileRef = useRef({
     id: null,
@@ -74,18 +76,37 @@ function App() {
       setParticipants(participants);
     });
 
-    // WebRTC Signaling
+    // WebRTC Signaling with Perfect Negotiation
     socket.on('webrtc:offer', async ({ sdp, from }) => {
-      const pc = getOrCreatePC(socket, from);
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('webrtc:answer', { to: from, sdp: answer });
+      try {
+        const pc = getOrCreatePC(socket, from);
+
+        // Determine if we are polite (higher socket ID = polite)
+        const isPolite = socket.id > from;
+        const offerCollision = pc.signalingState !== 'stable' || makingOfferRef.current;
+
+        ignoreOfferRef.current = !isPolite && offerCollision;
+        if (ignoreOfferRef.current) {
+          console.log('⚠️ Ignoring offer collision (impolite peer)');
+          return;
+        }
+
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('webrtc:answer', { to: from, sdp: answer });
+      } catch (err) {
+        console.error('Error handling offer:', err);
+      }
     });
 
     socket.on('webrtc:answer', async ({ sdp }) => {
-      if (pcRef.current) {
-        await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+      try {
+        if (pcRef.current && !ignoreOfferRef.current) {
+          await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+        }
+      } catch (err) {
+        console.error('Error handling answer:', err);
       }
     });
 
@@ -481,16 +502,25 @@ function App() {
       });
   };
 
-  const connectPeers = () => {
+  const connectPeers = async () => {
     const peer = participants.find(p => p.id !== socketRef.current.id);
     if (!peer) return;
-    const pc = getOrCreatePC(socketRef.current, peer.id);
-    const dc = pc.createDataChannel('ldr-channel');
-    setupDataChannel(dc);
-    pc.createOffer().then(offer => {
-      pc.setLocalDescription(offer);
+
+    try {
+      const pc = getOrCreatePC(socketRef.current, peer.id);
+      const dc = pc.createDataChannel('ldr-channel');
+      setupDataChannel(dc);
+
+      makingOfferRef.current = true;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      makingOfferRef.current = false;
+
       socketRef.current.emit('webrtc:offer', { to: peer.id, sdp: offer });
-    });
+    } catch (err) {
+      makingOfferRef.current = false;
+      console.error('Error creating offer:', err);
+    }
   };
 
   const handleLayoutSelect = (layout) => {
