@@ -43,14 +43,36 @@ function App() {
   const remoteBlobsRef = useRef([]); // Temp store for ongoing session
 
   useEffect(() => {
-    socketRef.current = io(SERVER_URL);
-    const socket = socketRef.current;
+    const socket = io(SERVER_URL, {
+      transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    });
+
+    socketRef.current = socket;
 
     socket.on('connect', () => {
+      console.log('✅ Connected to server:', SERVER_URL);
+      console.log('Socket ID:', socket.id);
       setStatus('Connected');
     });
 
-    socket.on('room:joined', ({ participants }) => setParticipants(participants));
+    socket.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error.message);
+      setStatus('Connection Error: ' + error.message);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('⚠️ Disconnected:', reason);
+      setStatus('Disconnected: ' + reason);
+    });
+
+    socket.on('room:joined', ({ participants }) => {
+      console.log('👥 Room joined event, participants:', participants);
+      setParticipants(participants);
+    });
 
     // WebRTC Signaling
     socket.on('webrtc:offer', async ({ sdp, from }) => {
@@ -432,6 +454,7 @@ function App() {
   // UI Actions
   const joinRoom = () => {
     if (!roomCode || !displayName) return;
+    console.log('🚪 Joining room:', roomCode, 'as', displayName);
     socketRef.current.emit('room:join', { code: roomCode, displayName });
     setStep('room');
     startCamera();
@@ -507,6 +530,16 @@ function App() {
       {(step === 'room') && (
         <div className="glass-panel" style={{ scale: 0.9 }}>
           <h2>Wait Room</h2>
+          <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px' }}>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              👥 Participants: <strong>{participants.length}</strong> / 2
+            </p>
+            {participants.map((p, i) => (
+              <div key={i} style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                • {p.displayName} {p.id === socketRef.current?.id ? '(You)' : ''}
+              </div>
+            ))}
+          </div>
           <div className="camera-container" style={{ height: '300px' }}>
             <video ref={videoRef} autoPlay playsInline muted style={{ transform: 'scaleX(-1)' }}></video>
           </div>

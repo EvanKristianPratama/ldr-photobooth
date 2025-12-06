@@ -9,19 +9,24 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || "*", // Will be set in production
+        origin: "*", // Allow all origins for now (can restrict later)
         methods: ["GET", "POST"],
         credentials: true
-    }
+    },
+    transports: ['websocket', 'polling'],
+    allowEIO3: true // Support older clients
 });
 
 // Store room state: { [roomCode]: { participants: [] } }
 const rooms = {};
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+    console.log('✅ User connected:', socket.id);
+    console.log('📊 Total connections:', io.engine.clientsCount);
 
     socket.on('room:join', ({ code, displayName }) => {
+        console.log(`🚪 Join request: ${displayName} → Room ${code}`);
+
         socket.join(code);
 
         if (!rooms[code]) {
@@ -32,13 +37,16 @@ io.on('connection', (socket) => {
         const participant = { id: socket.id, displayName };
         rooms[code].participants.push(participant);
 
-        console.log(`User ${displayName} (${socket.id}) joined room ${code}`);
+        console.log(`✅ ${displayName} (${socket.id}) joined room ${code}`);
+        console.log(`👥 Room ${code} now has ${rooms[code].participants.length} participants:`,
+            rooms[code].participants.map(p => p.displayName).join(', '));
 
         // Notify room
         io.to(code).emit('room:joined', { participants: rooms[code].participants });
 
         // Check readiness (2 participants)
         if (rooms[code].participants.length >= 2) {
+            console.log(`🎉 Room ${code} is ready!`);
             io.to(code).emit('room:ready', { ready: true });
         }
     });
