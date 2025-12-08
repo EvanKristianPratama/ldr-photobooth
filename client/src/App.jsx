@@ -148,7 +148,19 @@ function App() {
       remoteBlobsRef.current = [];
     });
 
+    // Photo relay via Socket.IO (fallback when not using WebRTC data channel)
+    socket.on('photo:receive', async ({ index, mime, base64 }) => {
+      try {
+        const blob = await base64ToBlob(base64, mime || 'image/jpeg');
+        remoteBlobsRef.current[index || 0] = blob;
+        console.log(`📩 Photo received via socket for index ${index}`);
+      } catch (err) {
+        console.error('Failed to handle photo:receive', err);
+      }
+    });
+
     return () => {
+      socket.off('photo:receive');
       socket.disconnect();
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (pcRef.current) pcRef.current.close();
@@ -389,6 +401,20 @@ function App() {
     });
   };
 
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const base64ToBlob = async (base64, mime = 'image/jpeg') => {
+    const res = await fetch(`data:${mime};base64,${base64}`);
+    return await res.blob();
+  };
+
   // WebRTC & Data
   const getOrCreatePC = (socket, remoteId) => {
     if (pcRef.current) return pcRef.current;
@@ -447,29 +473,44 @@ function App() {
   };
 
   const sendPhotoToPeer = async (blob, index) => {
-    if (!dcRef.current || dcRef.current.readyState !== 'open') return;
+    // Preferred: use data channel if available
+    if (dcRef.current && dcRef.current.readyState === 'open') {
+      const buffer = await blob.arrayBuffer();
+      const fileId = uuidv4();
 
-    const buffer = await blob.arrayBuffer();
-    const fileId = uuidv4();
+      dcRef.current.send(JSON.stringify({
+        type: 'meta',
+        id: fileId,
+        size: blob.size,
+        mime: blob.type,
+        index: index
+      }));
 
-    dcRef.current.send(JSON.stringify({
-      type: 'meta',
-      id: fileId,
-      size: blob.size,
-      mime: blob.type,
-      index: index
-    }));
-
-    let offset = 0;
-    while (offset < buffer.byteLength) {
-      const chunk = buffer.slice(offset, offset + CHUNK_SIZE);
-      while (dcRef.current.bufferedAmount > 10 * 1024 * 1024) {
-        await new Promise(r => setTimeout(r, 50));
+      let offset = 0;
+      while (offset < buffer.byteLength) {
+        const chunk = buffer.slice(offset, offset + CHUNK_SIZE);
+        while (dcRef.current.bufferedAmount > 10 * 1024 * 1024) {
+          await new Promise(r => setTimeout(r, 50));
+        }
+        dcRef.current.send(chunk);
+        offset += chunk.byteLength;
       }
-      dcRef.current.send(chunk);
-      offset += chunk.byteLength;
+      dcRef.current.send(JSON.stringify({ type: 'done', id: fileId }));
+      return;
     }
-    dcRef.current.send(JSON.stringify({ type: 'done', id: fileId }));
+
+    // Fallback: send via Socket.IO as base64
+    try {
+      const base64 = await blobToBase64(blob);
+      socketRef.current.emit('photo:send', {
+        index,
+        mime: blob.type || 'image/jpeg',
+        base64
+      });
+      console.log(`📤 Photo sent via socket for index ${index}`);
+    } catch (err) {
+      console.error('Failed to send photo via socket', err);
+    }
   };
 
   // UI Actions

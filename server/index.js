@@ -91,6 +91,23 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Photo relay via Socket.IO (fallback when not using WebRTC)
+    socket.on('photo:send', (payload) => {
+        const roomCode = Object.keys(rooms).find(code =>
+            rooms[code].participants.find(p => p.id === socket.id)
+        );
+
+        if (!roomCode) return;
+
+        const forward = {
+            ...payload,
+            from: socket.id
+        };
+
+        console.log(`Relaying photo index ${payload?.index ?? '?'} in room ${roomCode}`);
+        socket.to(roomCode).emit('photo:receive', forward);
+    });
+
     // Session Synchronization (LDR Booth)
     socket.on('session:start', (data) => {
         // data might contain settings, countdown duration etc.
