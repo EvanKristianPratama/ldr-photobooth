@@ -398,12 +398,8 @@ function App() {
     ctx.fillText(new Date().toLocaleDateString(), gap, totalH - 100);
 
     ctx.textAlign = "right";
-    // Get names
-    const nameA = sorted[0]?.displayName || 'A';
-    const nameB = sorted[1]?.displayName || 'B';
-    // If A is Right, B is left on image? 
-    // Img: [B] [A]
-    ctx.fillText(`${nameB} & ${nameA}`, totalW - gap, totalH - 100);
+    // Static footer label
+    ctx.fillText('Ldr-Photobooth', totalW - gap, totalH - 100);
 
     setMergedImage(canvas.toDataURL('image/jpeg', 0.8));
     setStep('result');
