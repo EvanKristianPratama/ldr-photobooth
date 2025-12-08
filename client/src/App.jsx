@@ -672,6 +672,10 @@ function App() {
           </div>
         </div>
       )}
+
+      <footer className="credits">
+        Created by Evan Kristian — <a href="https://www.instagram.com/evankristiannn/" target="_blank" rel="noopener noreferrer">@evankristiannn</a>
+      </footer>
     </div>
   );
 }
