@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+const SOCKET_ONLY = import.meta.env.VITE_SOCKET_ONLY === 'true';
 const CHUNK_SIZE = 64 * 1024; // 64KB
 
 function App() {
@@ -55,6 +56,12 @@ function App() {
     });
 
     socketRef.current = socket;
+
+    // Optional: force socket-only mode via env flag
+    if (SOCKET_ONLY) {
+      enableSocketFallback('socket-only-mode');
+      setStatus('Socket-only ready');
+    }
 
     socket.on('connect', () => {
       console.log('✅ Connected to server:', SERVER_URL);
@@ -567,6 +574,11 @@ function App() {
   };
 
   const connectPeers = async () => {
+    if (SOCKET_ONLY) {
+      enableSocketFallback('socket-only-mode');
+      return;
+    }
+
     const peer = participants.find(p => p.id !== socketRef.current.id);
     if (!peer) return;
 
@@ -639,11 +651,10 @@ function App() {
           </div>
           <div className="controls">
             {participants.length < 2 && <p>Waiting for partner...</p>}
-            {participants.length >= 2 && status !== 'P2P Ready' && (
-              <button className="btn-primary" onClick={connectPeers}>Connect Peers</button>
-            )}
-            {status === 'P2P Ready' && (
-              <button className="btn-primary" onClick={() => setStep('layout-select')}>Next: Select Layout</button>
+            {participants.length >= 2 && (
+              <button className="btn-primary" onClick={() => setStep('layout-select')}>
+                Next: Select Layout
+              </button>
             )}
           </div>
           <p>Status: {status}</p>
