@@ -33,6 +33,7 @@ function App() {
   const streamRef = useRef(null);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
+  const socketOnlyRef = useRef(false); // force non-WebRTC fallback if negotiation fails
 
   const incomingFileRef = useRef({
     id: null,
@@ -103,16 +104,24 @@ function App() {
     socket.on('webrtc:answer', async ({ sdp }) => {
       try {
         if (pcRef.current && !ignoreOfferRef.current) {
+          // Avoid InvalidStateError when already stable
+          if (pcRef.current.signalingState === 'stable') return;
           await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
         }
       } catch (err) {
         console.error('Error handling answer:', err);
+        enableSocketFallback('answer-error');
       }
     });
 
     socket.on('webrtc:candidate', async ({ candidate }) => {
       if (pcRef.current) {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        try {
+          await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.error('ICE candidate error:', err);
+          enableSocketFallback('candidate-error');
+        }
       }
     });
 
@@ -434,6 +443,8 @@ function App() {
         setStatus('P2P Ready');
         // If in room, move to layout select automatically if 2 peers
         // But we wait for manual Start
+      } else if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+        enableSocketFallback(pc.connectionState);
       }
     };
 
@@ -474,7 +485,7 @@ function App() {
 
   const sendPhotoToPeer = async (blob, index) => {
     // Preferred: use data channel if available
-    if (dcRef.current && dcRef.current.readyState === 'open') {
+    if (!socketOnlyRef.current && dcRef.current && dcRef.current.readyState === 'open') {
       const buffer = await blob.arrayBuffer();
       const fileId = uuidv4();
 
@@ -511,6 +522,18 @@ function App() {
     } catch (err) {
       console.error('Failed to send photo via socket', err);
     }
+  };
+
+  const enableSocketFallback = (reason) => {
+    socketOnlyRef.current = true;
+    setStatus(`Fallback (socket-only): ${reason}`);
+    try {
+      if (pcRef.current) pcRef.current.close();
+    } catch (e) {
+      console.error('Error closing PC during fallback', e);
+    }
+    pcRef.current = null;
+    dcRef.current = null;
   };
 
   // UI Actions
