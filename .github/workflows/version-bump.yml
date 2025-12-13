@@ -23,6 +23,12 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install & Test Server
+        run: |
+          cd server
+          npm ci
+          npm test
+
       - name: Bump root package.json version (patch)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
