@@ -983,7 +983,6 @@ function App() {
         <div className="result-container">
           <div className="result-customize">
             <h2 className="result-title">Edit Your Photostrip</h2>
-            <p className="subtitle" style={{ marginTop: 0 }}>Customize the frame before downloading</p>
 
             <div className="customize-grid">
               <div className="input-group" style={{ marginBottom: 0 }}>
