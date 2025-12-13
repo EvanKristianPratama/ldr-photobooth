@@ -789,8 +789,13 @@ function App() {
   const closeDonate = () => setDonateOpen(false);
 
   const goHomeToJoin = () => {
+    // Reset URL to base (remove code)
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.pushState({ path: baseUrl }, '', baseUrl);
+
     // Return to the join screen (copy code) without resetting the room session on server.
     setStep('join');
+    setRoomCode(''); // Clear code so user can start fresh or enter new one
     setSelectedLayout(null);
     setCountdown(null);
     setCapturedPhotos([]);
