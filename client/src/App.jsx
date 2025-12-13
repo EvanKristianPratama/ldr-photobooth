@@ -26,6 +26,8 @@ function App() {
   const [participants, setParticipants] = useState([]);
   const [status, setStatus] = useState('Disconnected');
   const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false); // Ref for access inside loops
 
   // Frame customization (used when merging result)
   const [frameColor, setFrameColor] = useState('#000000');
@@ -115,6 +117,37 @@ function App() {
     socket.on('room:joined', ({ participants }) => {
       console.log('👥 Room joined event, participants:', participants);
       setParticipants(participants);
+
+      // Check for disconnection during active session
+      if ((participants.length < 2) && (step === 'countdown' || step === 'processing')) {
+        console.log('⚠️ Partner disconnected during session!');
+        setPaused(true);
+        pausedRef.current = true;
+
+        Swal.fire({
+          title: 'Partner Disconnected!',
+          text: 'Waiting for them to reconnect...',
+          icon: 'warning',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+      } else if (participants.length >= 2 && pausedRef.current) {
+        console.log('✅ Partner reconnected!');
+        setPaused(false);
+        pausedRef.current = false;
+        Swal.close();
+        Swal.fire({
+          icon: 'success',
+          title: 'Connected!',
+          text: 'Resuming session...',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
     });
 
     socket.on('location:update', ({ from, lat, lng, accuracy }) => {
@@ -348,7 +381,10 @@ function App() {
     return new Promise(resolve => {
       let count = seconds;
       setCountdown(count);
+
       const interval = setInterval(() => {
+        if (pausedRef.current) return; // Pause countdown if partner is missing
+
         count--;
         if (count > 0) {
           setCountdown(count);
@@ -444,11 +480,17 @@ function App() {
     // Since send/receive is async, we might be here before remote photos arrive.
     // We implement a wait loop.
     let retries = 0;
-    while (remoteBlobsRef.current.filter(b => b).length < total && retries < 20) {
+    while (remoteBlobsRef.current.filter(b => b).length < total && retries < 40) { // Increased retries
+      const received = remoteBlobsRef.current.filter(b => b).length;
+      // Calculate progress: We have all locals (50%) + (received/total * 50%)
+      const percentage = 50 + Math.round((received / total) * 50);
+      setProgress(percentage);
+
       await new Promise(r => setTimeout(r, 500));
       retries++;
     }
 
+    setProgress(100);
     mergePhotos(total);
   };
 
@@ -1021,9 +1063,24 @@ function App() {
           </div>
 
           {step === 'processing' && (
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-              <h3>Processing...</h3>
-              <p>Merging photos and syncing...</p>
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontWeight: 600 }}>
+                <span>Processing Photos...</span>
+                <span>{progress}%</span>
+              </div>
+              <div style={{ width: '100%', height: '12px', background: '#e2e8f0', borderRadius: '6px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${progress}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #9b87f5 0%, #b794f4 100%)',
+                    transition: 'width 0.3s ease-out'
+                  }}
+                />
+              </div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                Syncing high-quality images with partner...
+              </p>
             </div>
           )}
         </div>
