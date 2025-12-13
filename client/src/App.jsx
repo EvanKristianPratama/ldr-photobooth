@@ -319,7 +319,7 @@ function App() {
     // Loop
     for (let i = 0; i < total; i++) {
       setCurrentShotIndex(i + 1);
-      await runCountdown(3); // 3s countdown per shot
+      await runCountdown(6); // 6s countdown per shot
       await triggerCaptureAndSend(i);
       // Wait for transfer of this shot to complete before next? 
       // Ideally P2P is fast enough. We'll add a small buffer.

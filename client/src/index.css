@@ -112,6 +112,18 @@ button {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+@media (max-width: 600px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .title {
+    font-size: 2rem;
+  }
+}
+
 .subtitle {
   text-align: center;
   color: var(--text-muted);
@@ -335,27 +347,46 @@ input:focus {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 560px) {
+@media (max-width: 600px) {
   .container {
     padding: 1rem;
   }
 
-  .title {
-    font-size: 2.6rem;
-  }
-
   .glass-panel {
     padding: 1.5rem;
+    border-radius: var(--radius-lg);
   }
 
   .btn-primary {
     width: 100%;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
   }
 
   .code-display {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
     font-size: 1rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .layout-selection-container {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .glass-panel {
+    padding: 1.25rem;
+  }
+
+  .input-group label {
+    font-size: 0.85rem;
+  }
+
+  input {
+    padding: 0.8rem 1rem;
   }
 }
 
@@ -397,8 +428,20 @@ video {
   cursor: pointer;
   transition: all 0.3s ease;
   width: 180px;
+  max-width: 45%;
+  /* Allow it to shrink to side-by-side on mobile */
   text-align: center;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  flex-grow: 1;
+  /* allow growth */
+}
+
+@media (max-width: 400px) {
+  .layout-card {
+    min-width: 100%;
+    /* Force full width on very small screens */
+    max-width: 100%;
+  }
 }
 
 .layout-card:hover {
@@ -709,7 +752,7 @@ select:focus {
 .donate-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -722,7 +765,7 @@ select:focus {
   background: var(--surface-color);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
   position: relative;
 }
 
