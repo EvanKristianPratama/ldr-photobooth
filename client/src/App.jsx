@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import rootPkg from '../../package.json';
 import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
+import Swal from 'sweetalert2';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const SOCKET_ONLY = import.meta.env.VITE_SOCKET_ONLY === 'true';
@@ -92,6 +93,18 @@ function App() {
     socket.on('connect_error', (error) => {
       console.error('❌ Connection error:', error.message);
       setStatus('Connection Error: ' + error.message);
+    });
+
+    socket.on('room:error', (error) => {
+      console.error('❌ Room error:', error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops!',
+        text: 'Sooryy room is fulll :( maybe try another one?',
+        confirmButtonColor: '#9b87f5'
+      });
+      setStatus('Room Error: ' + error.message);
+      setStep('join'); // Go back to join screen
     });
 
     socket.on('disconnect', (reason) => {
@@ -711,7 +724,16 @@ function App() {
 
   // UI Actions
   const joinRoom = () => {
-    if (!roomCode || !displayName) return;
+    if (!displayName || !displayName.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Oops...',
+        text: 'Please enter your name!',
+        confirmButtonColor: '#9b87f5'
+      });
+      return;
+    }
+    if (!roomCode) return;
 
     // Update URL to match the room code
     const newUrl = `${window.location.origin}${window.location.pathname}?code=${roomCode}`;

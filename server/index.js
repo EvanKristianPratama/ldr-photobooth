@@ -27,10 +27,20 @@ io.on('connection', (socket) => {
     socket.on('room:join', ({ code, displayName }) => {
         console.log(`🚪 Join request: ${displayName} → Room ${code}`);
 
+        if (rooms[code]?.participants.length >= 2) {
+            socket.emit('room:error', { message: 'Room is full (max 2 participants)' });
+            console.log(`⚠️ Join rejected: ${displayName} -> Room ${code} is full`);
+            return;
+        }
+
         socket.join(code);
 
         if (!rooms[code]) {
-            rooms[code] = { participants: [] };
+            rooms[code] = {
+                participants: [],
+                state: 'IDLE', // IDLE, SESSION
+                layout: null
+            };
         }
 
         // Add participant
@@ -140,7 +150,15 @@ io.on('connection', (socket) => {
             rooms[code].participants.find(p => p.id === socket.id)
         );
         if (roomCode) {
+            const room = rooms[roomCode];
+            if (room.state !== 'IDLE') {
+                console.log(`⚠️ Session start ignored in room ${roomCode} (State: ${room.state})`);
+                return;
+            }
+
             console.log(`Session start in room ${roomCode}`);
+            room.state = 'SESSION';
+
             // Broadcast to everyone in room including sender
             io.to(roomCode).emit('session:start', {
                 startTime: Date.now() + 1000,
@@ -154,6 +172,13 @@ io.on('connection', (socket) => {
             rooms[code].participants.find(p => p.id === socket.id)
         );
         if (roomCode) {
+            const room = rooms[roomCode];
+            // Only allow layout changes in IDLE state
+            if (room.state !== 'IDLE') {
+                return;
+            }
+
+            room.layout = input;
             // Broadcast to others (or all) to update UI state
             io.to(roomCode).emit('session:layout', input);
         }
@@ -164,6 +189,8 @@ io.on('connection', (socket) => {
             rooms[code].participants.find(p => p.id === socket.id)
         );
         if (roomCode) {
+            rooms[roomCode].state = 'IDLE';
+            rooms[roomCode].layout = null;
             io.to(roomCode).emit('session:reset');
         }
     });
