@@ -1050,6 +1050,11 @@ function App() {
         <div style={{ marginTop: '10px' }}>
           <button className="btn-secondary" onClick={openDonate} style={{ marginTop: '8px' }}>Donate</button>
         </div>
+        <div style={{ marginTop: '8px' }}>
+          <a href="https://wa.me/6287779511667?text=Halo%2C%20saya%20mengalami%20masalah%20dengan%20LDR%20Photobooth.%20Bisa%20dibantu%3F" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}>
+            Tell me if u have trouble
+          </a>
+        </div>
       </footer>
 
       {donateOpen && (
