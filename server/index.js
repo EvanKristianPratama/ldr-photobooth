@@ -43,9 +43,12 @@ io.on('connection', (socket) => {
             };
         }
 
-        // Add participant
+        // Store participant
         const participant = { id: socket.id, displayName };
         rooms[code].participants.push(participant);
+
+        // Optimize: Store roomCode directly on socket for O(1) access later
+        socket.data.roomCode = code;
 
         console.log(`✅ ${displayName} (${socket.id}) joined room ${code}`);
         console.log(`👥 Room ${code} now has ${rooms[code].participants.length} participants:`,
@@ -90,11 +93,7 @@ io.on('connection', (socket) => {
     // Photo Metadata Broadcast
     socket.on('photo:meta', (data) => {
         // Broadcast to room (excluding sender)
-        // Find room of socket
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
-
+        const roomCode = socket.data.roomCode;
         if (roomCode) {
             console.log(`Photo meta in room ${roomCode}:`, data.filename);
             socket.to(roomCode).emit('photo:meta', data);
@@ -103,10 +102,7 @@ io.on('connection', (socket) => {
 
     // Photo relay via Socket.IO (fallback when not using WebRTC)
     socket.on('photo:send', (payload) => {
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
-
+        const roomCode = socket.data.roomCode;
         if (!roomCode) return;
 
         const forward = {
@@ -120,9 +116,7 @@ io.on('connection', (socket) => {
 
     // Location relay (coordinates only)
     socket.on('location:update', (payload) => {
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
+        const roomCode = socket.data.roomCode;
         if (!roomCode) return;
 
         const lat = payload?.lat;
@@ -146,10 +140,8 @@ io.on('connection', (socket) => {
     // Session Synchronization (LDR Booth)
     socket.on('session:start', (data) => {
         // data might contain settings, countdown duration etc.
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
-        if (roomCode) {
+        const roomCode = socket.data.roomCode;
+        if (roomCode && rooms[roomCode]) {
             const room = rooms[roomCode];
             if (room.state !== 'IDLE') {
                 console.log(`⚠️ Session start ignored in room ${roomCode} (State: ${room.state})`);
@@ -168,10 +160,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('session:layout', (input) => {
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
-        if (roomCode) {
+        const roomCode = socket.data.roomCode;
+        if (roomCode && rooms[roomCode]) {
             const room = rooms[roomCode];
             // Only allow layout changes in IDLE state
             if (room.state !== 'IDLE') {
@@ -185,10 +175,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('session:reset', () => {
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
-        if (roomCode) {
+        const roomCode = socket.data.roomCode;
+        if (roomCode && rooms[roomCode]) {
             rooms[roomCode].state = 'IDLE';
             rooms[roomCode].layout = null;
             io.to(roomCode).emit('session:reset');
@@ -197,9 +185,7 @@ io.on('connection', (socket) => {
 
     // Transfer Confirmation
     socket.on('photo:transfer-complete', (data) => {
-        const roomCode = Object.keys(rooms).find(code =>
-            rooms[code].participants.find(p => p.id === socket.id)
-        );
+        const roomCode = socket.data.roomCode;
         if (roomCode) {
             console.log(`Photo transfer complete in room ${roomCode}`);
             socket.to(roomCode).emit('photo:transferred', data);
@@ -209,7 +195,9 @@ io.on('connection', (socket) => {
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-        for (const code in rooms) {
+        const code = socket.data.roomCode;
+
+        if (code && rooms[code]) {
             const idx = rooms[code].participants.findIndex(p => p.id === socket.id);
             if (idx !== -1) {
                 rooms[code].participants.splice(idx, 1);
@@ -221,7 +209,6 @@ io.on('connection', (socket) => {
                 if (rooms[code].participants.length === 0) {
                     delete rooms[code];
                 }
-                break;
             }
         }
     });
