@@ -1,0 +1,48 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  bump:
+    name: Bump version on push to main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Bump root package.json version (patch)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Ensure full history for tags
+          git fetch --prune --unshallow || true
+
+          # Bump the version in package.json (root)
+          npm --no-git-tag-version version patch
+
+          git add package.json
+          if git diff --quiet --staged; then
+            echo "No version change detected, skipping commit.";
+          else
+            git commit -m "chore: bump version via CI"
+            git push origin HEAD:main
+
+            # Tag with v<version>
+            TAG=v$(node -pe "require('./package.json').version")
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi

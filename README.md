@@ -60,5 +60,15 @@ npm run dev
 5. Mulai photobooth!
 6. Download hasil foto
 
+## Auto Versioning
+
+This project uses an automated version bump workflow that increments the root `package.json` patch version on every push to `main`.
+
+- The workflow file is at `.github/workflows/version-bump.yml`.
+- It runs `npm version patch` (without git-tag-version), commits the updated `package.json`, pushes the commit and creates a git tag `v<version>`.
+- The action uses the repository `GITHUB_TOKEN` so no extra secret is required.
+
+If you want to skip bumping for a particular push, include `[skip bump]` in the commit message, or push to a different branch and open a PR instead.
+
 ## 📄 License
 MIT

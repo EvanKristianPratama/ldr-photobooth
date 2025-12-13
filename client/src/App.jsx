@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import rootPkg from '../../package.json';
 import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,6 +18,7 @@ const getCssVar = (name, fallback) => {
 };
 
 function App() {
+  const APP_VERSION = rootPkg?.version || '';
   const [step, setStep] = useState('join'); // join, room, layout-select, countdown, processing, result
   const [roomCode, setRoomCode] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -726,6 +728,26 @@ function App() {
     requestAndSendLocation();
   };
 
+  const generateRoomCode = () => {
+    const code = uuidv4().split('-')[0].toUpperCase();
+    setRoomCode(code);
+    try {
+      if (navigator?.clipboard) navigator.clipboard.writeText(code);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const copyRoomCode = async () => {
+    if (!roomCode) return;
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      console.log('Room code copied:', roomCode);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+  };
+
   const startCamera = () => {
     navigator.mediaDevices.getUserMedia({
       video: {
@@ -802,6 +824,14 @@ function App() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label>Room Code</label>
             <input value={roomCode} onChange={e => setRoomCode(e.target.value)} placeholder="Code" />
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', alignItems: 'center' }}>
+              <button className="btn-secondary" onClick={generateRoomCode}>Generate Code</button>
+              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default' }} onClick={copyRoomCode}>
+                {roomCode || 'No code yet'}
+                <button className="btn-icon" style={{ marginLeft: '8px' }} onClick={(e) => { e.stopPropagation(); copyRoomCode(); }} aria-label="Copy code">Copy</button>
+              </div>
+            </div>
           </div>
           <button className="btn-primary" style={{ width: '100%' }} onClick={joinRoom}>Join Booth</button>
         </div>
@@ -983,6 +1013,11 @@ function App() {
 
       <footer className="credits">
         Created by Evan Kristian — <a href="https://www.instagram.com/evankristiannn/" target="_blank" rel="noopener noreferrer">@evankristiannn</a>
+        {APP_VERSION && (
+          <div style={{ marginTop: '8px', color: 'var(--text-muted)', fontWeight: 700 }}>
+            v{APP_VERSION}
+          </div>
+        )}
       </footer>
     </div>
   );

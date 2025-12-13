@@ -440,6 +440,8 @@ video {
   color: var(--text-main);
 }
 
+/* version badge removed — version now shown as plain text under credits */
+
 .result-customize {
   width: 100%;
   background: var(--surface-color);
