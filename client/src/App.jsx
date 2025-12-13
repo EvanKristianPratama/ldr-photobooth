@@ -27,9 +27,8 @@ function App() {
   const [progress, setProgress] = useState(0);
 
   // Frame customization (used when merging result)
-  const [frameColor, setFrameColor] = useState(() => getCssVar('--primary', '#9b87f5'));
-  const [frameLeftName, setFrameLeftName] = useState('');
-  const [frameRightName, setFrameRightName] = useState('');
+  const [frameColor, setFrameColor] = useState('#000000');
+  const [frameTextColor, setFrameTextColor] = useState('#FFFFFF');
   const [lastMergeCount, setLastMergeCount] = useState(0);
   const [locationsById, setLocationsById] = useState({}); // { [socketId]: { lat, lng, accuracy, city, country } }
 
@@ -44,6 +43,8 @@ function App() {
 
   const [mergedImage, setMergedImage] = useState(null);
   const [isFlash, setIsFlash] = useState(false);
+  const [donateOpen, setDonateOpen] = useState(false);
+  const [donateQrMissing, setDonateQrMissing] = useState(false);
 
   // Refs
   const socketRef = useRef(null);
@@ -297,17 +298,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    // Set sensible defaults once participants are known
-    const { left, right } = getDefaultFrameNames();
-    const optionSet = new Set(participants.map(p => p?.displayName).filter(Boolean));
-    const shouldSetLeft = !frameLeftName || (optionSet.size > 0 && !optionSet.has(frameLeftName));
-    const shouldSetRight = !frameRightName || (optionSet.size > 0 && !optionSet.has(frameRightName));
-    if (shouldSetLeft) setFrameLeftName(left);
-    if (shouldSetRight) setFrameRightName(right);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [participants]);
-
   // Effect to ensure video stream stays attached
   useEffect(() => {
     if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
@@ -467,9 +457,10 @@ function App() {
     const footerH = 260;
 
     const { left: defaultLeft, right: defaultRight } = getDefaultFrameNames();
-    const leftName = (frameLeftName || defaultLeft || '').trim();
-    const rightName = (frameRightName || defaultRight || '').trim();
+    const leftName = (defaultLeft || '').trim();
+    const rightName = (defaultRight || '').trim();
     const activeFrameColor = (frameColor || '#9b87f5').trim();
+    const activeTextColor = (frameTextColor || '#FFFFFF').trim();
 
     const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
     const userAId = sorted[0]?.id;
@@ -513,7 +504,7 @@ function App() {
 
     // Header: names + coordinates (clean, no boxes)
     ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+    ctx.fillStyle = activeTextColor;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 3;
@@ -567,7 +558,7 @@ function App() {
     }
 
     // Footer
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+    ctx.fillStyle = activeTextColor;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 3;
@@ -748,6 +739,26 @@ function App() {
     }
   };
 
+  const openDonate = () => {
+    setDonateQrMissing(false);
+    setDonateOpen(true);
+  };
+  const closeDonate = () => setDonateOpen(false);
+
+  const goHomeToJoin = () => {
+    // Return to the join screen (copy code) without resetting the room session on server.
+    setStep('join');
+    setSelectedLayout(null);
+    setCountdown(null);
+    setCapturedPhotos([]);
+    setCurrentShotIndex(0);
+    setTotalShots(0);
+    localBlobsRef.current = [];
+    remoteBlobsRef.current = [];
+    setMergedImage(null);
+    setProgress(0);
+  };
+
   const startCamera = () => {
     navigator.mediaDevices.getUserMedia({
       video: {
@@ -838,19 +849,51 @@ function App() {
       )}
 
       {(step === 'room') && (
-        <div className="glass-panel" style={{ scale: 0.9 }}>
-          <h2>Wait Room</h2>
-          <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px' }}>
-            <p style={{ margin: 0, fontSize: '0.9rem' }}>
-              👥 Participants: <strong>{participants.length}</strong> / 2
-            </p>
-            {participants.map((p, i) => (
-              <div key={i} style={{ fontSize: '0.8rem', color: '#aaa' }}>
-                • {p.displayName} {p.id === socketRef.current?.id ? '(You)' : ''}
+        <div className="glass-panel wait-room wait-room-panel">
+          <h2 className="wait-room__title">Wait Room</h2>
+
+          <div className="wait-room__meta">
+            <div className="wait-room__participants">
+              <div className="wait-room__participantsHeader">
+                <span>Participants</span>
+                <strong>{participants.length} / 2</strong>
               </div>
-            ))}
+              <div className="wait-room__participantsList">
+                {participants.map((p, i) => (
+                  <div key={i} className="wait-room__participant">
+                    • {p.displayName} {p.id === socketRef.current?.id ? '(You)' : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="wait-room__code">
+              <div className="wait-room__codeLabel">Room Code</div>
+              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default' }} onClick={copyRoomCode}>
+                {roomCode || 'No code'}
+                <button
+                  className="btn-icon"
+                  style={{ marginLeft: '8px' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyRoomCode();
+                  }}
+                  aria-label="Copy room code"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div className="wait-room__status">
+              <span className="status-indicator">
+                <span className={`status-dot ${status?.startsWith?.('Connected') ? 'active' : ''}`} />
+                {status}
+              </span>
+            </div>
           </div>
-          <div className="camera-container" style={{ height: '300px' }}>
+
+          <div className="camera-container">
             <video ref={videoRef} autoPlay playsInline muted style={{ transform: 'scaleX(-1)' }}></video>
           </div>
           <div className="controls">
@@ -861,7 +904,6 @@ function App() {
               </button>
             )}
           </div>
-          <p>Status: {status}</p>
         </div>
       )}
 
@@ -940,7 +982,7 @@ function App() {
       {step === 'result' && mergedImage && (
         <div className="result-container">
           <div className="result-customize">
-            <h2 className="result-title">Your Photostrip</h2>
+            <h2 className="result-title">Edit Your Photostrip</h2>
             <p className="subtitle" style={{ marginTop: 0 }}>Customize the frame before downloading</p>
 
             <div className="customize-grid">
@@ -959,29 +1001,17 @@ function App() {
               </div>
 
               <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Nama Kiri</label>
-                <select
-                  value={frameLeftName}
-                  onChange={e => setFrameLeftName(e.target.value)}
-                >
-                  <option value="">(Kosong)</option>
-                  {[...new Set(participants.map(p => p?.displayName).filter(Boolean))].map(name => (
-                    <option key={name} value={name}>{name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Nama Kanan</label>
-                <select
-                  value={frameRightName}
-                  onChange={e => setFrameRightName(e.target.value)}
-                >
-                  <option value="">(Kosong)</option>
-                  {[...new Set(participants.map(p => p?.displayName).filter(Boolean))].map(name => (
-                    <option key={name} value={name}>{name}</option>
-                  ))}
-                </select>
+                <label>Text Color</label>
+                <div className="color-row">
+                  <input
+                    className="color-input"
+                    type="color"
+                    value={frameTextColor}
+                    onChange={e => setFrameTextColor(e.target.value)}
+                    aria-label="Frame text color"
+                  />
+                  <div className="color-hex">{frameTextColor?.toUpperCase?.() || frameTextColor}</div>
+                </div>
               </div>
             </div>
 
@@ -1004,8 +1034,8 @@ function App() {
             <a href={mergedImage} download={`ldr-photo-${Date.now()}.jpg`} className="btn-primary" style={{ textDecoration: 'none' }}>
               Download Photo
             </a>
-            <button className="btn-secondary" onClick={() => socketRef.current.emit('session:reset')}>
-              Home (Reset)
+            <button className="btn-secondary" onClick={goHomeToJoin}>
+              Home
             </button>
           </div>
         </div>
@@ -1018,7 +1048,53 @@ function App() {
             v{APP_VERSION}
           </div>
         )}
+        <div style={{ marginTop: '10px' }}>
+          <button className="btn-secondary" onClick={openDonate} style={{ marginTop: '8px' }}>Donate</button>
+        </div>
       </footer>
+
+      {donateOpen && (
+        <div className="donate-modal">
+          <div className="donate-dialog">
+            <button className="donate-close" onClick={closeDonate}>×</button>
+            <h3 style={{ marginTop: 0 }}>Donate</h3>
+
+            <p className="subtitle" style={{ marginTop: '-6px' }}>Pwiiss untuk bayar server hehhe..</p>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {!donateQrMissing ? (
+                <img
+                  src="/donate-qr.png"
+                  alt="Donate QR"
+                  style={{ width: 320, height: 320, objectFit: 'contain', borderRadius: 12, background: '#fff' }}
+                  onError={() => setDonateQrMissing(true)}
+                />
+              ) : (
+                <div style={{ color: 'var(--text-muted)', fontWeight: 700, textAlign: 'center' }}>
+                  QR belum tersedia.
+                  <div style={{ marginTop: 6, fontWeight: 600 }}>
+                    Taruh file di client/public/donate-qr.png.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              {!donateQrMissing && (
+                <a
+                  className="btn-secondary"
+                  href="/donate-qr.png"
+                  download="donate-qr.png"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Download QR
+                </a>
+              )}
+              <button className="btn-secondary" onClick={closeDonate}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

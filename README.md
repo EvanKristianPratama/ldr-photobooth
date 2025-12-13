@@ -70,5 +70,13 @@ This project uses an automated version bump workflow that increments the root `p
 
 If you want to skip bumping for a particular push, include `[skip bump]` in the commit message, or push to a different branch and open a PR instead.
 
+## Donate QR / E-wallet
+
+You can show a donate QR or e-wallet address in the app. Two options:
+
+Donate modal is QR-only.
+
+- Put your QR image at: `client/public/donate-qr.png`
+
 ## 📄 License
 MIT
