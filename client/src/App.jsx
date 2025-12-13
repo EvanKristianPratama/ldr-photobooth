@@ -712,6 +712,11 @@ function App() {
   // UI Actions
   const joinRoom = () => {
     if (!roomCode || !displayName) return;
+
+    // Update URL to match the room code
+    const newUrl = `${window.location.origin}${window.location.pathname}?code=${roomCode}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+
     console.log('🚪 Joining room:', roomCode, 'as', displayName);
     socketRef.current.emit('room:join', { code: roomCode, displayName });
     setStep('room');
