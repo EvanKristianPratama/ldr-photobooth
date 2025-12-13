@@ -6,6 +6,16 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const SOCKET_ONLY = import.meta.env.VITE_SOCKET_ONLY === 'true';
 const CHUNK_SIZE = 64 * 1024; // 64KB
 
+const getCssVar = (name, fallback) => {
+  try {
+    if (typeof window === 'undefined') return fallback;
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 function App() {
   const [step, setStep] = useState('join'); // join, room, layout-select, countdown, processing, result
   const [roomCode, setRoomCode] = useState('');
@@ -13,6 +23,13 @@ function App() {
   const [participants, setParticipants] = useState([]);
   const [status, setStatus] = useState('Disconnected');
   const [progress, setProgress] = useState(0);
+
+  // Frame customization (used when merging result)
+  const [frameColor, setFrameColor] = useState(() => getCssVar('--primary', '#9b87f5'));
+  const [frameLeftName, setFrameLeftName] = useState('');
+  const [frameRightName, setFrameRightName] = useState('');
+  const [lastMergeCount, setLastMergeCount] = useState(0);
+  const [locationsById, setLocationsById] = useState({}); // { [socketId]: { lat, lng, accuracy, city, country } }
 
   // LDR State
   const [selectedLayout, setSelectedLayout] = useState(null); // 'layout1', 'layout2', 'layout3'
@@ -82,6 +99,17 @@ function App() {
     socket.on('room:joined', ({ participants }) => {
       console.log('👥 Room joined event, participants:', participants);
       setParticipants(participants);
+    });
+
+    socket.on('location:update', ({ from, lat, lng, accuracy }) => {
+      // city/country are optional; coords are required
+      const city = typeof arguments[0]?.city === 'string' ? arguments[0].city : undefined;
+      const country = typeof arguments[0]?.country === 'string' ? arguments[0].country : undefined;
+      if (!from || typeof lat !== 'number' || typeof lng !== 'number') return;
+      setLocationsById(prev => ({
+        ...prev,
+        [from]: { lat, lng, accuracy, city, country }
+      }));
     });
 
     // WebRTC Signaling with Perfect Negotiation
@@ -162,6 +190,7 @@ function App() {
       setIsFlash(false);
       localBlobsRef.current = [];
       remoteBlobsRef.current = [];
+      setLastMergeCount(0);
     });
 
     // Photo relay via Socket.IO (fallback when not using WebRTC data channel)
@@ -177,11 +206,105 @@ function App() {
 
     return () => {
       socket.off('photo:receive');
+      socket.off('location:update');
       socket.disconnect();
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (pcRef.current) pcRef.current.close();
     };
   }, []);
+
+  const getDefaultFrameNames = () => {
+    const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
+    const userA = (sorted[0]?.displayName || '').trim();
+    const userB = (sorted[1]?.displayName || '').trim();
+
+    // Canvas layout is always: Left = User B, Right = User A
+    // Avoid generic placeholders; if we can't infer, keep it blank.
+    const left = userB || '';
+    const right = userA || '';
+    return { left, right };
+  };
+
+  const requestAndSendLocation = () => {
+    try {
+      if (!navigator?.geolocation) return;
+      if (!socketRef.current?.id) return;
+
+      const reverseGeocode = async (lat, lng) => {
+        // Best-effort, no key. Fallbacks included.
+        try {
+          const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}&localityLanguage=en`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const city = (data.city || data.locality || data.principalSubdivision || '').toString().trim();
+            const country = (data.countryName || '').toString().trim();
+            if (city || country) return { city: city || undefined, country: country || undefined };
+          }
+        } catch {
+          // ignore
+        }
+
+        try {
+          const url = `https://geocode.maps.co/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data?.address || {};
+            const city = (addr.city || addr.town || addr.village || addr.county || addr.state || '').toString().trim();
+            const country = (addr.country || '').toString().trim();
+            if (city || country) return { city: city || undefined, country: country || undefined };
+          }
+        } catch {
+          // ignore
+        }
+
+        return { city: undefined, country: undefined };
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = Number(pos?.coords?.latitude);
+          const lng = Number(pos?.coords?.longitude);
+          const accuracy = Number(pos?.coords?.accuracy);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          (async () => {
+            const { city, country } = await reverseGeocode(lat, lng);
+
+            const myId = socketRef.current.id;
+            setLocationsById(prev => ({
+              ...prev,
+              [myId]: { lat, lng, accuracy, city, country }
+            }));
+
+            socketRef.current.emit('location:update', { lat, lng, accuracy, city, country });
+          })();
+        },
+        err => {
+          console.log('Geolocation unavailable/denied:', err?.message);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 5 * 60 * 1000
+        }
+      );
+    } catch (e) {
+      console.log('Geolocation error:', e);
+    }
+  };
+
+  useEffect(() => {
+    // Set sensible defaults once participants are known
+    const { left, right } = getDefaultFrameNames();
+    const optionSet = new Set(participants.map(p => p?.displayName).filter(Boolean));
+    const shouldSetLeft = !frameLeftName || (optionSet.size > 0 && !optionSet.has(frameLeftName));
+    const shouldSetRight = !frameRightName || (optionSet.size > 0 && !optionSet.has(frameRightName));
+    if (shouldSetLeft) setFrameLeftName(left);
+    if (shouldSetRight) setFrameRightName(right);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participants]);
 
   // Effect to ensure video stream stays attached
   useEffect(() => {
@@ -338,8 +461,35 @@ function App() {
     const cellW = 1200;
     const cellH = 1800;
     const gap = 100;
-    const headerH = 100;
-    const footerH = 300;
+    const headerH = 170;
+    const footerH = 260;
+
+    const { left: defaultLeft, right: defaultRight } = getDefaultFrameNames();
+    const leftName = (frameLeftName || defaultLeft || '').trim();
+    const rightName = (frameRightName || defaultRight || '').trim();
+    const activeFrameColor = (frameColor || '#9b87f5').trim();
+
+    const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
+    const userAId = sorted[0]?.id;
+    const userBId = sorted[1]?.id;
+    const leftId = userBId || sorted[0]?.id;
+    const rightId = userAId || sorted[1]?.id;
+
+    const formatLocationLine = (loc) => {
+      if (!loc) return '';
+      const city = (loc.city || '').toString().trim();
+      const country = (loc.country || '').toString().trim();
+      if (city && country) return `${city}, ${country}`;
+      if (city) return city;
+      if (country) return country;
+      if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+        return `(${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`;
+      }
+      return '';
+    };
+
+    const leftLocationLine = formatLocationLine(locationsById[leftId]);
+    const rightLocationLine = formatLocationLine(locationsById[rightId]);
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -351,14 +501,37 @@ function App() {
     canvas.height = totalH;
 
     // Fill Background
-    ctx.fillStyle = "#f8f9fa";
+    ctx.fillStyle = activeFrameColor;
     ctx.fillRect(0, 0, totalW, totalH);
 
     // Determine Position
     const myId = socketRef.current.id;
-    const sorted = [...participants].sort((a, b) => a.id.localeCompare(b.id));
     const myIndex = sorted.findIndex(p => p.id === myId);
     const isUserA = myIndex === 0;
+
+    // Header: names + coordinates (clean, no boxes)
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.textBaseline = 'middle';
+
+    const headerY1 = Math.round(headerH * 0.45);
+    const headerY2 = Math.round(headerH * 0.78);
+
+    ctx.textAlign = 'left';
+    ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
+    if (leftName) ctx.fillText(leftName, gap, headerY1);
+    ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
+    if (leftLocationLine) ctx.fillText(leftLocationLine, gap, headerY2);
+
+    ctx.textAlign = 'right';
+    ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
+    if (rightName) ctx.fillText(rightName, totalW - gap, headerY1);
+    ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
+    if (rightLocationLine) ctx.fillText(rightLocationLine, totalW - gap, headerY2);
+    ctx.restore();
 
     for (let i = 0; i < count; i++) {
       const localB = localBlobsRef.current[i];
@@ -392,16 +565,20 @@ function App() {
     }
 
     // Footer
-    ctx.fillStyle = "#333";
-    ctx.font = "bold 80px Inter";
-    ctx.textAlign = "left";
-    ctx.fillText(new Date().toLocaleDateString(), gap, totalH - 100);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.font = '800 52px Quicksand, system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(new Date().toLocaleDateString(), gap, totalH - Math.round(footerH * 0.4));
 
-    ctx.textAlign = "right";
-    // Static footer label
-    ctx.fillText('Ldr-Photobooth', totalW - gap, totalH - 100);
+    ctx.textAlign = 'right';
+    ctx.fillText('Ldr-Photobooth', totalW - gap, totalH - Math.round(footerH * 0.4));
 
-    setMergedImage(canvas.toDataURL('image/jpeg', 0.8));
+    setLastMergeCount(count);
+    setMergedImage(canvas.toDataURL('image/jpeg', 0.85));
     setStep('result');
   };
 
@@ -546,6 +723,7 @@ function App() {
     socketRef.current.emit('room:join', { code: roomCode, displayName });
     setStep('room');
     startCamera();
+    requestAndSendLocation();
   };
 
   const startCamera = () => {
@@ -731,6 +909,65 @@ function App() {
 
       {step === 'result' && mergedImage && (
         <div className="result-container">
+          <div className="result-customize">
+            <h2 className="result-title">Your Photostrip</h2>
+            <p className="subtitle" style={{ marginTop: 0 }}>Customize the frame before downloading</p>
+
+            <div className="customize-grid">
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label>Frame Color</label>
+                <div className="color-row">
+                  <input
+                    className="color-input"
+                    type="color"
+                    value={frameColor}
+                    onChange={e => setFrameColor(e.target.value)}
+                    aria-label="Frame color"
+                  />
+                  <div className="color-hex">{frameColor?.toUpperCase?.() || frameColor}</div>
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label>Nama Kiri</label>
+                <select
+                  value={frameLeftName}
+                  onChange={e => setFrameLeftName(e.target.value)}
+                >
+                  <option value="">(Kosong)</option>
+                  {[...new Set(participants.map(p => p?.displayName).filter(Boolean))].map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label>Nama Kanan</label>
+                <select
+                  value={frameRightName}
+                  onChange={e => setFrameRightName(e.target.value)}
+                >
+                  <option value="">(Kosong)</option>
+                  {[...new Set(participants.map(p => p?.displayName).filter(Boolean))].map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="customize-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  if (!lastMergeCount) return;
+                  mergePhotos(lastMergeCount);
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
           <img src={mergedImage} className="merged-preview" alt="LDR Result" />
 
           <div className="action-buttons">

@@ -108,6 +108,31 @@ io.on('connection', (socket) => {
         socket.to(roomCode).emit('photo:receive', forward);
     });
 
+    // Location relay (coordinates only)
+    socket.on('location:update', (payload) => {
+        const roomCode = Object.keys(rooms).find(code =>
+            rooms[code].participants.find(p => p.id === socket.id)
+        );
+        if (!roomCode) return;
+
+        const lat = payload?.lat;
+        const lng = payload?.lng;
+        const accuracy = payload?.accuracy;
+        const city = payload?.city;
+        const country = payload?.country;
+
+        if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+        io.to(roomCode).emit('location:update', {
+            from: socket.id,
+            lat,
+            lng,
+            accuracy,
+            city: typeof city === 'string' ? city : undefined,
+            country: typeof country === 'string' ? country : undefined
+        });
+    });
+
     // Session Synchronization (LDR Booth)
     socket.on('session:start', (data) => {
         // data might contain settings, countdown duration etc.
