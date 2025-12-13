@@ -729,11 +729,27 @@ function App() {
     }
   };
 
+  // Check URL for code on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const codeParam = params.get('code');
+    if (codeParam) {
+      setRoomCode(codeParam.toUpperCase());
+    }
+  }, []);
+
+  const [showToast, setShowToast] = useState(false);
+
   const copyRoomCode = async () => {
     if (!roomCode) return;
     try {
-      await navigator.clipboard.writeText(roomCode);
-      console.log('Room code copied:', roomCode);
+      const url = `${window.location.origin}?code=${roomCode}`;
+      const textToCopy = `Join my LDR Photobooth!\nRoom Code: ${roomCode}\nLink: ${url}`;
+      await navigator.clipboard.writeText(textToCopy);
+      console.log('Room link copied:', url);
+
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     } catch (err) {
       console.error('Copy failed', err);
     }
@@ -838,7 +854,8 @@ function App() {
 
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', alignItems: 'center' }}>
               <button className="btn-secondary" onClick={generateRoomCode}>Generate Code</button>
-              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default' }} onClick={copyRoomCode}>
+              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default', position: 'relative' }} onClick={copyRoomCode}>
+                <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Link Copied!</div>
                 {roomCode || 'No code yet'}
                 <button className="btn-icon" style={{ marginLeft: '8px' }} onClick={(e) => { e.stopPropagation(); copyRoomCode(); }} aria-label="Copy code">Copy</button>
               </div>
@@ -869,7 +886,8 @@ function App() {
 
             <div className="wait-room__code">
               <div className="wait-room__codeLabel">Room Code</div>
-              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default' }} onClick={copyRoomCode}>
+              <div className="code-display" style={{ cursor: roomCode ? 'pointer' : 'default', position: 'relative' }} onClick={copyRoomCode}>
+                <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Link Copied!</div>
                 {roomCode || 'No code'}
                 <button
                   className="btn-icon"
