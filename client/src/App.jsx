@@ -49,6 +49,12 @@ function App() {
   const [donateOpen, setDonateOpen] = useState(false);
   const [donateQrMissing, setDonateQrMissing] = useState(false);
 
+  // Editable Location Texts
+  const [locTextLeft, setLocTextLeft] = useState('');
+  const [locTextRight, setLocTextRight] = useState('');
+  // Track if user has manually edited them to avoid overwriting with auto-geo
+  const [locTextEdited, setLocTextEdited] = useState(false);
+
   // Refs
   const socketRef = useRef(null);
   const pcRef = useRef(null);
@@ -491,7 +497,20 @@ function App() {
     }
 
     setProgress(100);
+    // Initial merge with auto locations
     mergePhotos(total);
+  };
+
+  // Helper to get auto-location string
+  const getAutoLocationString = (id) => {
+    const loc = locationsById[id];
+    if (!loc) return '';
+    const city = (loc.city || '').toString().trim();
+    const country = (loc.country || '').toString().trim();
+    if (city && country) return `${city}, ${country}`;
+    if (city) return city;
+    if (country) return country;
+    return '';
   };
 
   const mergePhotos = async (count) => {
@@ -523,21 +542,21 @@ function App() {
     const leftId = userBId || sorted[0]?.id;
     const rightId = userAId || sorted[1]?.id;
 
-    const formatLocationLine = (loc) => {
-      if (!loc) return '';
-      const city = (loc.city || '').toString().trim();
-      const country = (loc.country || '').toString().trim();
-      if (city && country) return `${city}, ${country}`;
-      if (city) return city;
-      if (country) return country;
-      if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
-        return `(${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`;
-      }
-      return '';
-    };
+    // Determine final text to draw
+    // If user hasn't edited, populate state with auto-values for the UI inputs
+    let leftTextToDraw = locTextLeft;
+    let rightTextToDraw = locTextRight;
 
-    const leftLocationLine = formatLocationLine(locationsById[leftId]);
-    const rightLocationLine = formatLocationLine(locationsById[rightId]);
+    if (!locTextEdited && (!locTextLeft && !locTextRight)) {
+      const autoLeft = getAutoLocationString(leftId);
+      const autoRight = getAutoLocationString(rightId);
+      leftTextToDraw = autoLeft;
+      rightTextToDraw = autoRight;
+
+      // Update state so inputs show these values
+      setLocTextLeft(autoLeft);
+      setLocTextRight(autoRight);
+    }
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -572,13 +591,14 @@ function App() {
     ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
     if (leftName) ctx.fillText(leftName, gap, headerY1);
     ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
-    if (leftLocationLine) ctx.fillText(leftLocationLine, gap, headerY2);
+    ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
+    if (leftTextToDraw) ctx.fillText(leftTextToDraw, gap, headerY2);
 
     ctx.textAlign = 'right';
     ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
     if (rightName) ctx.fillText(rightName, totalW - gap, headerY1);
     ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
-    if (rightLocationLine) ctx.fillText(rightLocationLine, totalW - gap, headerY2);
+    if (rightTextToDraw) ctx.fillText(rightTextToDraw, totalW - gap, headerY2);
     ctx.restore();
 
     for (let i = 0; i < count; i++) {
@@ -851,7 +871,11 @@ function App() {
     localBlobsRef.current = [];
     remoteBlobsRef.current = [];
     setMergedImage(null);
+    setMergedImage(null);
     setProgress(0);
+    setLocTextLeft('');
+    setLocTextRight('');
+    setLocTextEdited(false);
   };
 
   const startCamera = () => {
@@ -1096,34 +1120,68 @@ function App() {
           <div className="result-customize">
             <h2 className="result-title">Edit Your Photostrip</h2>
 
-            <div className="customize-grid">
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Frame Color</label>
-                <div className="color-row">
-                  <input
-                    className="color-input"
-                    type="color"
-                    value={frameColor}
-                    onChange={e => setFrameColor(e.target.value)}
-                    aria-label="Frame color"
-                  />
-                  <div className="color-hex">{frameColor?.toUpperCase?.() || frameColor}</div>
+            <div className="customize-layout" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+              {/* Row 1: Colors (Side by Side) */}
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.9rem' }}>Frame Color</label>
+                  <div className="color-row">
+                    <input
+                      className="color-input"
+                      type="color"
+                      value={frameColor}
+                      onChange={e => setFrameColor(e.target.value)}
+                      aria-label="Frame color"
+                    />
+                    <div className="color-hex">{frameColor?.toUpperCase?.() || frameColor}</div>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.9rem' }}>Text Color</label>
+                  <div className="color-row">
+                    <input
+                      className="color-input"
+                      type="color"
+                      value={frameTextColor}
+                      onChange={e => setFrameTextColor(e.target.value)}
+                      aria-label="Frame text color"
+                    />
+                    <div className="color-hex">{frameTextColor?.toUpperCase?.() || frameTextColor}</div>
+                  </div>
                 </div>
               </div>
 
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Text Color</label>
-                <div className="color-row">
+              {/* Row 2: Locations (Stacked) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label>{getDefaultFrameNames().left || 'User B'} Location</label>
                   <input
-                    className="color-input"
-                    type="color"
-                    value={frameTextColor}
-                    onChange={e => setFrameTextColor(e.target.value)}
-                    aria-label="Frame text color"
+                    type="text"
+                    value={locTextLeft}
+                    onChange={e => {
+                      setLocTextLeft(e.target.value);
+                      setLocTextEdited(true);
+                    }}
+                    placeholder="e.g. Jakarta, Indonesia"
                   />
-                  <div className="color-hex">{frameTextColor?.toUpperCase?.() || frameTextColor}</div>
+                </div>
+
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label>{getDefaultFrameNames().right || 'User A'} Location</label>
+                  <input
+                    type="text"
+                    value={locTextRight}
+                    onChange={e => {
+                      setLocTextRight(e.target.value);
+                      setLocTextEdited(true);
+                    }}
+                    placeholder="e.g. Seoul, South Korea"
+                  />
                 </div>
               </div>
+
             </div>
 
             <div className="customize-actions">
