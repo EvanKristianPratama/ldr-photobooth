@@ -66,6 +66,23 @@ module.exports = {
         }
     },
 
+    handleLeave: (io, socket) => {
+        const code = socket.data.roomCode;
+        if (code) {
+            console.log(`🚪 ${socket.id} leaving room ${code}`);
+            const result = roomService.leaveRoom(code, socket.id);
+
+            socket.leave(code);
+            socket.data.roomCode = null;
+
+            if (result && !result.deleted) {
+                io.to(code).emit(EVENTS.ROOM.JOINED, { participants: result.room.participants });
+                // Also emit session reset to ensure client UI resets if they were in session
+                io.to(code).emit(EVENTS.SESSION.RESET);
+            }
+        }
+    },
+
     handleSessionStart: (io, socket, data) => {
         const code = socket.data.roomCode;
         const result = roomService.startSession(code, data?.layout);

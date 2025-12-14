@@ -55,6 +55,23 @@ describe('RoomService (Business Logic)', () => {
         expect(result.room.participants[0].displayName).toBe('User B');
     });
 
+    test('should reset room state to IDLE if one user leaves during session', () => {
+        roomService.joinRoom('ROOM123', { id: 's1', displayName: 'A' });
+        roomService.joinRoom('ROOM123', { id: 's2', displayName: 'B' });
+
+        // Start session
+        roomService.startSession('ROOM123', 'layout1');
+        expect(roomStore.getRoom('ROOM123').state).toBe(ROOM_STATES.SESSION);
+
+        // One user leaves
+        roomService.leaveRoom('ROOM123', 's1');
+
+        // Should revert to IDLE
+        expect(roomStore.getRoom('ROOM123').state).toBe(ROOM_STATES.IDLE);
+        // Should still have 1 participant
+        expect(roomStore.getRoom('ROOM123').participants).toHaveLength(1);
+    });
+
     test('should delete room when last user leaves', () => {
         roomService.joinRoom('ROOM123', { id: 'socket1', displayName: 'User A' });
         const result = roomService.leaveRoom('ROOM123', 'socket1');

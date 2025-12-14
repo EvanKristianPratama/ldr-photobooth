@@ -8,6 +8,7 @@ module.exports = (io) => {
 
         // Room
         socket.on(EVENTS.ROOM.JOIN, (data) => controller.handleJoin(io, socket, data));
+        socket.on(EVENTS.ROOM.LEAVE, () => controller.handleLeave(io, socket));
         socket.on(EVENTS.DISCONNECT, () => controller.handleDisconnect(io, socket));
 
         // Session

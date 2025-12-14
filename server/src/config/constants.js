@@ -29,7 +29,8 @@ const EVENTS = {
         JOIN: 'room:join',
         JOINED: 'room:joined',
         READY: 'room:ready',
-        ERROR: 'room:error'
+        ERROR: 'room:error',
+        LEAVE: 'room:leave'
     },
     SESSION: {
         START: 'session:start',

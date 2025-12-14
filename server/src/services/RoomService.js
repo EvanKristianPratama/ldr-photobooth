@@ -69,6 +69,13 @@ class RoomService {
             return { deleted: true };
         }
 
+        // If dropped below 2 (i.e. 1 person left), reset state to IDLE
+        // so they can't be stuck in SESSION
+        if (room.participants.length < MAX_PARTICIPANTS) {
+            room.state = ROOM_STATES.IDLE;
+            room.layout = null;
+        }
+
         roomStore.saveRoom(code, room);
         return { deleted: false, room };
     }
