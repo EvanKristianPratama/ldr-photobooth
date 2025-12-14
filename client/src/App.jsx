@@ -831,6 +831,11 @@ function App() {
   const closeDonate = () => setDonateOpen(false);
 
   const goHomeToJoin = () => {
+    // Notify server we are leaving
+    if (socketRef.current) {
+      socketRef.current.emit('room:leave');
+    }
+
     // Reset URL to base (remove code)
     const baseUrl = `${window.location.origin}${window.location.pathname}`;
     window.history.pushState({ path: baseUrl }, '', baseUrl);
