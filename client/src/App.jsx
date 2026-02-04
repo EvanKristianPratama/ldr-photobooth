@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import rootPkg from '../../package.json';
-import { io } from 'socket.io-client';
+// Use native WebSocket adapter for Cloudflare Workers compatibility
+// To switch back to Socket.IO, uncomment the line below and comment out the adapter import
+// import { io } from 'socket.io-client';
+import { io } from './lib/SocketAdapter';
 import { v4 as uuidv4 } from 'uuid';
 import Swal from 'sweetalert2';
 
