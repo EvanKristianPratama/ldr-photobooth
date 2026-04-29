@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function FrameSelectScreen({
   mergedImage,
@@ -28,264 +28,191 @@ export default function FrameSelectScreen({
   setLocTextLeft,
   locTextRight,
   setLocTextRight,
-  setLocTextEdited
+  setLocTextEdited,
+  userData
 }) {
-  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
+  const [showPresetsModal, setShowPresetsModal] = useState(false);
 
-  React.useEffect(() => {
-    if (!isEditorOpen) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isEditorOpen]);
-
-  const activePreset = React.useMemo(() => {
-    if (!framePresets?.length) return null;
-    return framePresets.find(preset => preset.id === framePresetId) || framePresets[0];
-  }, [framePresets, framePresetId]);
+  const colors = [
+    { bg: '#ffffff', text: '#1a1a2e', date: '#aaa' },
+    { bg: '#1a1a2e', text: '#fffdf5', date: 'rgba(255,255,255,0.3)' },
+    { bg: '#ffd93d', text: '#1a1a2e', date: '#666' },
+    { bg: '#ff6b9d', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
+    { bg: '#06d6a0', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
+    { bg: '#c77dff', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
+  ];
 
   return (
-    <div className="fs">
-      <div className="fs__card glass-panel">
-        {/* ── Header ── */}
-        <div className="fs__header">
-          <div className="fs__icon">🖼</div>
-          <div>
-            <h2 className="fs__title">Choose Your Frame</h2>
-            <p className="fs__subtitle">Pilih frame terbaik sebelum download</p>
-          </div>
-        </div>
-
-        {/* ── Preview ── */}
-        <div className="fs__preview">
-          {isMerging && (
-            <div className="fs__preview-loading">
-              <span className="fs__spinner" />
-              Applying frame…
+    <section className="page active" id="page-frame">
+      <div className="frame-editor">
+        <div className="photo-strip" id="preview-strip" style={{ background: frameColor }}>
+          {isMerging ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '10px' }}>
+              <div className="room-dot" style={{ width: '20px', height: '20px' }}></div>
+              <span style={{ fontFamily: 'Caveat', fontSize: '20px' }}>Rendering...</span>
             </div>
+          ) : (
+            <img 
+              src={mergedImage} 
+              alt="Strip Preview" 
+              style={{ width: '100%', borderRadius: '4px', border: '2px solid var(--ink)' }} 
+            />
           )}
-          <img src={mergedImage} className="fs__preview-img" alt="Frame preview" />
-        </div>
-
-        {/* ── Active Frame Indicator + Edit ── */}
-        <button
-          type="button"
-          className="fs__active-frame"
-          onClick={() => setIsEditorOpen(true)}
-        >
-          <div
-            className="fs__active-thumb"
-            style={{
-              backgroundImage: activePreset?.src
-                ? `url(${activePreset.src})`
-                : 'linear-gradient(135deg, rgba(155,135,245,0.3), rgba(255,183,178,0.4))'
-            }}
-          />
-          <div className="fs__active-info">
-            <span className="fs__active-label">Active Frame</span>
-            <span className="fs__active-name">{activePreset?.label || 'Default'}</span>
-            <span className="fs__active-desc">{activePreset?.description || 'Frame bawaan'}</span>
+          <div className="strip-label" id="strip-name" style={{ color: frameTextColor }}>
+            {userData?.displayName || 'your name'}
           </div>
-          <div className="fs__edit-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit Frame
+          <div className="strip-date" id="strip-date" style={{ color: frameTextColor, opacity: 0.6 }}>
+            {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
           </div>
-        </button>
-
-        {/* ── Actions ── */}
-        <div className="fs__actions">
-          <button
-            className={`btn-secondary fs__btn ${isMerging ? 'disabled' : ''}`}
-            onClick={onReapply}
-            disabled={isMerging}
-          >
-            ↻ Re-apply
-          </button>
-          <button
-            className={`btn-primary fs__btn ${isMerging ? 'disabled' : ''}`}
-            onClick={onContinue}
-            disabled={isMerging}
-          >
-            Continue →
-          </button>
         </div>
       </div>
 
-      {/* ══════════ Editor Modal ══════════ */}
-      {isEditorOpen && (
-        <div className="frame-modal" role="dialog" aria-modal="true">
-          <div
-            className="frame-modal__backdrop"
-            onClick={() => setIsEditorOpen(false)}
-            aria-hidden="true"
+      <div className="frame-controls">
+        <div className="ctrl-title">Edit Frame ✦</div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">FRAME PRESETS</div>
+          <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setShowPresetsModal(true)}>
+            Browse Presets ({framePresets?.length || 0})
+          </button>
+        </div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">FRAME COLOR</div>
+          <div className="swatch-row">
+            {colors.map((c, i) => (
+              <div 
+                key={i}
+                className={`swatch ${frameColor === c.bg ? 'sel' : ''}`} 
+                style={{ background: c.bg }} 
+                onClick={() => {
+                  setFrameColor(c.bg);
+                  setFrameTextColor(c.text);
+                  onReapply();
+                }}
+              />
+            ))}
+            <input 
+              type="color" 
+              className="color-input" 
+              value={frameColor} 
+              onChange={e => {
+                setFrameColor(e.target.value);
+                onReapply();
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">LOCATION TEXT</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <label className="field-label">Left</label>
+                <input 
+                  className="form-input" 
+                  style={{ fontSize: '14px', padding: '8px' }} 
+                  value={locTextLeft}
+                  onChange={e => { setLocTextLeft(e.target.value); setLocTextEdited(true); onReapply(); }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="field-label">Right</label>
+                <input 
+                  className="form-input" 
+                  style={{ fontSize: '14px', padding: '8px' }} 
+                  value={locTextRight}
+                  onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
+                />
+              </div>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Caveat', fontSize: '18px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={showFrameText} 
+                onChange={e => { setShowFrameText(e.target.checked); onReapply(); }} 
+              />
+              Show location on strip
+            </label>
+          </div>
+        </div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">CUSTOM UPLOAD</div>
+          <input 
+            type="file" 
+            id="frame-upload" 
+            style={{ display: 'none' }} 
+            accept="image/*"
+            onChange={handleFrameUpload}
           />
-          <div className="frame-modal__content glass-panel">
+          <label 
+            htmlFor="frame-upload" 
+            className="btn-secondary" 
+            style={{ width: '100%', display: 'flex', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            Upload PNG Frame
+          </label>
+          {frameName && <p className="form-hint" style={{ textAlign: 'center' }}>{frameName}</p>}
+          {frameError && <p className="error-msg show">{frameError}</p>}
+        </div>
+      </div>
+
+      {showPresetsModal && (
+        <div className="frame-modal">
+          <div className="frame-modal__backdrop" onClick={() => setShowPresetsModal(false)} />
+          <div className="frame-modal__content">
             <div className="frame-modal__header">
               <div>
-                <h3 className="frame-modal__title">Edit Frame</h3>
-                <p className="frame-modal__subtitle">Pilih preset, upload frame, dan edit teks.</p>
+                <h3 className="frame-modal__title">Frame Presets</h3>
+                <p className="frame-modal__subtitle">Choose a designer frame</p>
               </div>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setIsEditorOpen(false)}
-              >
-                Close
-              </button>
+              <button className="btn-secondary" onClick={() => setShowPresetsModal(false)}>×</button>
             </div>
 
-            <div className="frame-modal__body">
-              <div className="frame-section">
-                <h3>Presets</h3>
-                <div className="frame-gallery">
-                  {framePresets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      className={`frame-card ${framePresetId === preset.id ? 'selected' : ''}`}
-                      onClick={() => selectFramePreset(preset)}
-                    >
-                      <div
-                        className="frame-card__thumb"
-                        style={{
-                          backgroundImage: preset.src
-                            ? `linear-gradient(135deg, rgba(255,255,255,0.75), rgba(155,135,245,0.15)), url(${preset.src})`
-                            : 'linear-gradient(135deg, rgba(155,135,245,0.25), rgba(255,183,178,0.35))'
-                        }}
-                      />
-                      <div className="frame-card__title">{preset.label}</div>
-                      {preset.description && <div className="frame-card__desc">{preset.description}</div>}
-                    </button>
-                  ))}
+            <div className="frame-gallery">
+              <div 
+                className={`frame-card ${frameMode === 'none' ? 'selected' : ''}`}
+                onClick={() => {
+                  setFrameMode('none');
+                  setFrameSrc(null);
+                  setFrameName('');
+                  setFramePresetId(null);
+                  setShowPresetsModal(false);
+                  onReapply();
+                }}
+              >
+                <div className="frame-card__thumb" style={{ background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'Caveat', fontSize: '20px' }}>NONE</span>
                 </div>
-                <div className="frame-note">
-                  Taruh preset di <strong>client/public/frames</strong>. Kamu bisa ganti file SVG/PNG sesukamu.
-                </div>
+                <div className="frame-card__title">No Overlay</div>
               </div>
 
-              <div className="frame-section">
-                <h3>Custom Frame</h3>
-                <div className="frame-fields">
-                  <div className="input-group" style={{ marginBottom: 0 }}>
-                    <label>Frame Source</label>
-                    <input
-                      type="text"
-                      value={frameSrc}
-                      onChange={e => {
-                        setFrameSrc(e.target.value);
-                        setFrameName('');
-                        setFrameMode('custom');
-                        setFramePresetId('upload');
-                      }}
-                      placeholder="/frame.png"
-                    />
-                    <div className="frame-note">
-                      Taruh file di <span style={{ fontWeight: 700 }}>client/public</span> lalu akses dengan <span style={{ fontWeight: 700 }}>/nama-file.png</span>
-                    </div>
-                  </div>
-
-                  <div className="frame-upload">
-                    <label className="frame-upload-label">Upload PNG</label>
-                    <input type="file" accept="image/png" onChange={handleFrameUpload} />
-                    {frameName && <div className="frame-file">{frameName}</div>}
-                  </div>
-
-                  {frameError && <div className="frame-error">{frameError}</div>}
-                </div>
-              </div>
-
-              <div className="frame-section">
-                <h3>Text & Colors</h3>
-                <div className="color-grid">
-                  {frameMode === 'default' && (
-                    <div>
-                      <label className="field-label">Frame Color</label>
-                      <div className="color-row">
-                        <input
-                          className="color-input"
-                          type="color"
-                          value={frameColor}
-                          onChange={e => setFrameColor(e.target.value)}
-                          aria-label="Frame color"
-                        />
-                        <div className="color-hex">{frameColor?.toUpperCase?.() || frameColor}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="field-label">Text Color</label>
-                    <div className="color-row">
-                      <input
-                        className="color-input"
-                        type="color"
-                        value={frameTextColor}
-                        onChange={e => setFrameTextColor(e.target.value)}
-                        aria-label="Frame text color"
-                        disabled={!showFrameText}
-                      />
-                      <div className="color-hex">{frameTextColor?.toUpperCase?.() || frameTextColor}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <label className="toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={showFrameText}
-                    onChange={e => setShowFrameText(e.target.checked)}
+              {framePresets?.map((fp) => (
+                <div 
+                  key={fp.id}
+                  className={`frame-card ${framePresetId === fp.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    selectFramePreset(fp);
+                    setShowPresetsModal(false);
+                  }}
+                >
+                  <div 
+                    className="frame-card__thumb" 
+                    style={{ backgroundImage: `url(${fp.src})` }}
                   />
-                  Tampilkan teks header/footer
-                </label>
-
-                <div className="locations-grid">
-                  <div className="input-group" style={{ marginBottom: 0 }}>
-                    <label>{getDefaultFrameNames().left || 'User B'} Location</label>
-                    <input
-                      type="text"
-                      value={locTextLeft}
-                      onChange={e => {
-                        setLocTextLeft(e.target.value);
-                        setLocTextEdited(true);
-                      }}
-                      placeholder="e.g. Jakarta, Indonesia"
-                    />
-                  </div>
-
-                  <div className="input-group" style={{ marginBottom: 0 }}>
-                    <label>{getDefaultFrameNames().right || 'User A'} Location</label>
-                    <input
-                      type="text"
-                      value={locTextRight}
-                      onChange={e => {
-                        setLocTextRight(e.target.value);
-                        setLocTextEdited(true);
-                      }}
-                      placeholder="e.g. Seoul, South Korea"
-                    />
-                  </div>
+                  <div className="frame-card__title">{fp.label}</div>
                 </div>
-                <div className="frame-note">Auto apply setelah edit teks. Jika belum berubah, klik Re-apply.</div>
-              </div>
+              ))}
             </div>
 
             <div className="frame-modal__footer">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setIsEditorOpen(false)}
-              >
-                Done
-              </button>
+              <button className="btn-secondary" onClick={() => setShowPresetsModal(false)}>Close</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

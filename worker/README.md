@@ -85,12 +85,13 @@ Semua pesan dikirim dalam format JSON:
 ## 🏗 Architecture
 
 ```
-Worker (index.js)
+Worker (index.ts)
     │
-    ├── /ws?room=ABC → RoomDurableObject (room-do.js)
+    ├── /ws?room=ABC → RoomDurableObject (adapters/transport/roomDurableObject.ts)
     │                      │
     │                      ├── WebSocket sessions
-    │                      ├── RoomEngine (engine/RoomEngine.js)
+    │                      ├── RoomService (application/roomService.ts)
+    │                      ├── RoomEngine (domain/room.ts)
     │                      └── Broadcast/Relay logic
     │
     └── /health → Health check response

@@ -331,154 +331,169 @@ export default function Page() {
   };
 
   return (
-    <div className="container">
+    <div style={{ position: 'relative', zIndex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {isFlash && <div className="flash-effect" />}
 
-      <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <h1 className="title">LDR Photobooth</h1>
-      </header>
-
-      <StepIndicator steps={STEP_LABELS} currentStep={step} />
-
-      {step === 'join' && (
-        <JoinRoomScreen
-          displayName={room.displayName}
-          setDisplayName={room.setDisplayName}
-          roomCode={room.roomCode}
-          setRoomCode={room.setRoomCode}
-          generateRoomCode={() => room.generateRoomCode(uuidv4)}
-          copyRoomCode={room.copyRoomCode}
-          showToast={room.showToast}
-          onJoin={handleJoin}
-        />
-      )}
-
-      {step === 'room' && (
-        <WaitRoomScreen
-          participants={participantsWithSelf}
-          roomCode={room.roomCode}
-          copyRoomCode={room.copyRoomCode}
-          showToast={room.showToast}
-          status={room.status}
-          videoRef={capture.videoRef}
-          onNext={handleGoLayout}
-        />
-      )}
-
-      {step === 'layout-select' && (
-        <LayoutSelectScreen
-          selectedLayout={selectedLayout}
-          onSelectLayout={handleLayoutSelect}
-          onStart={handleStartBooth}
-        />
-      )}
-
-      {(step === 'countdown' || step === 'processing') && (
-        <CaptureScreen
-          videoRef={capture.videoRef}
-          countdown={capture.countdown}
-          totalShots={capture.totalShots}
-          currentShotIndex={capture.currentShotIndex}
-          progress={progress}
-          isProcessing={step === 'processing'}
-        />
-      )}
-
-      {step === 'frame-select' && frame.mergedImage && (
-        <FrameSelectScreen
-          mergedImage={frame.mergedImage}
-          isMerging={frame.isMerging}
-          onContinue={() => setStep('result')}
-          onReapply={handleReapply}
-          framePresets={frame.framePresets}
-          framePresetId={frame.framePresetId}
-          selectFramePreset={frame.selectFramePreset}
-          frameSrc={frame.frameSrc}
-          setFrameSrc={frame.setFrameSrc}
-          setFrameName={frame.setFrameName}
-          setFrameMode={frame.setFrameMode}
-          setFramePresetId={frame.setFramePresetId}
-          handleFrameUpload={frame.handleFrameUpload}
-          frameName={frame.frameName}
-          frameError={frame.frameError}
-          frameMode={frame.frameMode}
-          frameColor={frame.frameColor}
-          setFrameColor={frame.setFrameColor}
-          frameTextColor={frame.frameTextColor}
-          setFrameTextColor={frame.setFrameTextColor}
-          showFrameText={frame.showFrameText}
-          setShowFrameText={frame.setShowFrameText}
-          getDefaultFrameNames={frame.getDefaultFrameNames}
-          locTextLeft={frame.locTextLeft}
-          setLocTextLeft={frame.setLocTextLeft}
-          locTextRight={frame.locTextRight}
-          setLocTextRight={frame.setLocTextRight}
-          setLocTextEdited={frame.setLocTextEdited}
-        />
-      )}
-
-      {step === 'result' && frame.mergedImage && (
-        <ResultScreen
-          mergedImage={frame.mergedImage}
-          isMerging={frame.isMerging}
-          downloadName={downloadName}
-          onEditFrame={() => setStep('frame-select')}
-          onHome={handleGoHome}
-          onDownload={handleDownload}
-        />
-      )}
-
-      <footer className="credits">
-        Created by Evan Kristian — <a href="https://www.instagram.com/evankristiannn/" target="_blank" rel="noopener noreferrer">@evankristiannn</a>
-        {APP_VERSION && (
-          <div style={{ marginTop: '8px', color: 'var(--text-muted)', fontWeight: 700 }}>
-            v{APP_VERSION}
+      {/* TOPBAR */}
+      <header className="topbar" style={{ flexShrink: 0 }}>
+        <div className="logo">LDR Photobooth</div>
+        <StepIndicator steps={STEP_LABELS} currentStep={step} />
+        {room.roomCode && (
+          <div id="room-badge">
+            <div className="room-badge">
+              <div className="room-dot"></div>
+              <span>{room.roomCode}</span>
+            </div>
           </div>
         )}
-        <div style={{ marginTop: '10px' }}>
-          <button className="btn-secondary" onClick={handleOpenDonate} style={{ marginTop: '8px' }}>Donate</button>
+      </header>
+
+      <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        {step === 'join' && (
+          <JoinRoomScreen
+            displayName={room.displayName}
+            setDisplayName={room.setDisplayName}
+            roomCode={room.roomCode}
+            setRoomCode={room.setRoomCode}
+            generateRoomCode={() => room.generateRoomCode(uuidv4)}
+            copyRoomCode={room.copyRoomCode}
+            showToast={room.showToast}
+            onJoin={handleJoin}
+          />
+        )}
+
+        {step === 'room' && (
+          <WaitRoomScreen
+            participants={participantsWithSelf}
+            roomCode={room.roomCode}
+            copyRoomCode={room.copyRoomCode}
+            showToast={room.showToast}
+            status={room.status}
+            videoRef={capture.videoRef}
+            onNext={handleGoLayout}
+          />
+        )}
+
+        {step === 'layout-select' && (
+          <LayoutSelectScreen
+            selectedLayout={selectedLayout}
+            onSelectLayout={handleLayoutSelect}
+            onStart={handleStartBooth}
+          />
+        )}
+
+        {(step === 'countdown' || step === 'processing') && (
+          <CaptureScreen
+            videoRef={capture.videoRef}
+            countdown={capture.countdown}
+            totalShots={capture.totalShots}
+            currentShotIndex={capture.currentShotIndex}
+            progress={progress}
+            isProcessing={step === 'processing'}
+            localBlobs={capture.localBlobs}
+          />
+        )}
+
+        {step === 'frame-select' && frame.mergedImage && (
+          <FrameSelectScreen
+            mergedImage={frame.mergedImage}
+            isMerging={frame.isMerging}
+            onContinue={() => setStep('result')}
+            onReapply={handleReapply}
+            framePresets={frame.framePresets}
+            framePresetId={frame.framePresetId}
+            selectFramePreset={frame.selectFramePreset}
+            frameSrc={frame.frameSrc}
+            setFrameSrc={frame.setFrameSrc}
+            setFrameName={frame.setFrameName}
+            setFrameMode={frame.setFrameMode}
+            setFramePresetId={frame.setFramePresetId}
+            handleFrameUpload={frame.handleFrameUpload}
+            frameName={frame.frameName}
+            frameError={frame.frameError}
+            frameMode={frame.frameMode}
+            frameColor={frame.frameColor}
+            setFrameColor={frame.setFrameColor}
+            frameTextColor={frame.frameTextColor}
+            setFrameTextColor={frame.setFrameTextColor}
+            showFrameText={frame.showFrameText}
+            setShowFrameText={frame.setShowFrameText}
+            getDefaultFrameNames={frame.getDefaultFrameNames}
+            locTextLeft={frame.locTextLeft}
+            setLocTextLeft={frame.setLocTextLeft}
+            locTextRight={frame.locTextRight}
+            setLocTextRight={frame.setLocTextRight}
+            setLocTextEdited={frame.setLocTextEdited}
+            userData={room}
+          />
+        )}
+
+        {step === 'result' && frame.mergedImage && (
+          <ResultScreen
+            mergedImage={frame.mergedImage}
+            isMerging={frame.isMerging}
+            downloadName={downloadName}
+            onEditFrame={() => setStep('frame-select')}
+            onHome={handleGoHome}
+            onDownload={handleDownload}
+            onDonate={handleOpenDonate}
+          />
+        )}
+      </main>
+
+      {/* BOTTOM NAV / FOOTER */}
+      <footer style={{ flexShrink: 0, borderTop: '3px solid var(--ink)', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 28px' }}>
+        <div style={{ fontFamily: 'Caveat', fontSize: '16px', opacity: 0.7 }}>
+          Created by Evan Kristian — @evankristiannn
         </div>
-        <div style={{ marginTop: '8px' }}>
-          <a href="https://wa.me/6287779511667?text=Halo%2C%20saya%20mengalami%20masalah%20dengan%20LDR%20Photobooth.%20Bisa%20dibantu%3F" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}>
-            Tell me if u have trouble
-          </a>
-        </div>
+        
+        {(step === 'layout-select' || step === 'frame-select') && (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn-back" onClick={step === 'layout-select' ? handleGoHome : () => setStep('layout-select')} style={{ padding: '6px 16px', fontSize: '15px' }}>
+              ← Back
+            </button>
+            <button 
+              className="btn-next" 
+              onClick={step === 'layout-select' ? handleStartBooth : () => setStep('result')}
+              disabled={step === 'layout-select' && !selectedLayout}
+              style={{ padding: '6px 16px', fontSize: '15px' }}
+            >
+              {step === 'layout-select' ? 'Start Capture →' : 'Continue →'}
+            </button>
+          </div>
+        )}
       </footer>
 
       {donateOpen && (
-        <div className="donate-modal">
-          <div className="donate-dialog">
-            <button className="donate-close" onClick={() => setDonateOpen(false)}>×</button>
-            <h3 style={{ marginTop: 0 }}>Donate</h3>
+        <div className="frame-modal">
+          <div className="frame-modal__backdrop" onClick={() => setDonateOpen(false)} />
+          <div className="frame-modal__content">
+            <div className="frame-modal__header">
+              <div>
+                <h3 className="frame-modal__title">Donate</h3>
+                <p className="frame-modal__subtitle">Pwiiss untuk bayar server hehhe..</p>
+              </div>
+              <button className="btn-secondary" onClick={() => setDonateOpen(false)}>×</button>
+            </div>
 
-            <p className="subtitle" style={{ marginTop: '-6px' }}>Pwiiss untuk bayar server hehhe..</p>
-
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
               {!donateQrMissing ? (
                 <img
                   src="/donate-qr.png"
                   alt="Donate QR"
-                  style={{ width: 320, height: 320, objectFit: 'contain', borderRadius: 12, background: '#fff' }}
+                  style={{ width: '100%', maxWidth: '280px', borderRadius: '12px', border: '3px solid var(--ink)' }}
                   onError={() => setDonateQrMissing(true)}
                 />
               ) : (
-                <div style={{ color: 'var(--text-muted)', fontWeight: 700, textAlign: 'center' }}>
+                <div style={{ textAlign: 'center', fontFamily: 'Caveat', fontSize: '20px' }}>
                   QR belum tersedia.
-                  <div style={{ marginTop: 6, fontWeight: 600 }}>
-                    Taruh file di client/public/donate-qr.png.
-                  </div>
                 </div>
               )}
             </div>
 
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <div className="frame-modal__footer" style={{ gap: '10px' }}>
               {!donateQrMissing && (
-                <a
-                  className="btn-secondary"
-                  href="/donate-qr.png"
-                  download="donate-qr.png"
-                  style={{ textDecoration: 'none' }}
-                >
+                <a className="btn-primary" href="/donate-qr.png" download style={{ textDecoration: 'none' }}>
                   Download QR
                 </a>
               )}
