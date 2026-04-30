@@ -374,14 +374,36 @@ export default function useFrame({ participants }) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
+    // Industry Standard: Resize custom frames to keep merging fast
     const reader = new FileReader();
-    reader.onload = () => {
-      setFrameSrc(reader.result);
-      setFrameName(file.name);
-      setFrameMode('custom');
-      setFramePresetId('upload');
-      setFrameError('');
-      mergeCacheRef.current.clear();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200; // Sufficient for high quality but lightweight
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = (MAX_WIDTH / width) * height;
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Keep as PNG to preserve transparency
+        const compressedDataUrl = canvas.toDataURL('image/png');
+        setFrameSrc(compressedDataUrl);
+        setFrameName(file.name);
+        setFrameMode('custom');
+        setFramePresetId('upload');
+        setFrameError('');
+        mergeCacheRef.current.clear();
+      };
     };
     reader.onerror = () => {
       setFrameError('Gagal membaca file frame.');
