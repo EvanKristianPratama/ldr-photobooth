@@ -15,6 +15,12 @@ export default function HowToUseScreen({ onClose }) {
       color: 'var(--yellow-lt)'
     },
     {
+      icon: '📐',
+      title: 'Pilih Layout',
+      desc: 'Tentukan jumlah foto dan susunan strip yang kalian mau.',
+      color: 'var(--teal-lt)'
+    },
+    {
       icon: '📸',
       title: 'Pose Bareng',
       desc: 'Klik shutter dan tunjukkan pose terbaik kalian!',

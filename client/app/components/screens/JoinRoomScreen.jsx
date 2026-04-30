@@ -21,9 +21,6 @@ export default function JoinRoomScreen({
           LDR
           <span className="outline">Photobooth</span>
         </div>
-        <div style={{ marginTop: '20px', fontFamily: "'Caveat', cursive", fontSize: '18px', color: 'var(--ink)', opacity: 0.7, textAlign: 'center' }}>
-          snap ✦ frame ✦ keep forever
-        </div>
       </div>
 
       <div className="join-right">
