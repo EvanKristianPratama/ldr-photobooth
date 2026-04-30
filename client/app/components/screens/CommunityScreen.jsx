@@ -12,9 +12,7 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
   const [author, setAuthor] = useState('');
   const [file, setFile] = useState(null);
 
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8787' 
-    : 'https://ldr-photobooth.if2372047.workers.dev';
+  const API_BASE = 'https://ldr-photobooth.if2372047.workers.dev';
 
   const [sortBy, setSortBy] = useState('hot'); // 'hot', 'new', 'top'
 
