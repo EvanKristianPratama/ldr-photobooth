@@ -375,6 +375,27 @@ body::before {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+.sort-tab {
+  padding: 4px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--ink);
+  background: white;
+  font-family: 'Gaegu', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-icon {
+  width: 14px;
+  height: 14px;
+  transition: filter 0.2s;
+}
+
 .btn-secondary:hover {
   transform: translate(-2px, -2px);
   box-shadow: 4px 4px 0 var(--ink);
