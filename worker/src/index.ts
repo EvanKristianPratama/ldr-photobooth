@@ -42,69 +42,69 @@ export default {
 
     // ── COMMUNITY API ──
 
-    // 1. Get all frames
+    // 1. Frames API
     if (url.pathname === '/api/community/frames' && request.method === 'GET') {
       try {
-        const { results } = await env.DB.prepare(
-          'SELECT * FROM frames ORDER BY created_at DESC'
-        ).all();
+        const { results } = await env.DB.prepare('SELECT * FROM frames ORDER BY created_at DESC').all();
         return new Response(JSON.stringify(results), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: 'Database error', details: err.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        return new Response(JSON.stringify({ error: 'DB error', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
 
-    // 2. Upload a new frame
     if (url.pathname === '/api/community/frames' && request.method === 'POST') {
       try {
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const title = formData.get('title') as string;
         const author = formData.get('author') as string;
-        const tags = formData.get('tags') as string || '';
-
-        if (!file || !title || !author) {
-          return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-          });
-        }
-
         const id = crypto.randomUUID();
-        // Bersihkan nama file dari spasi dan karakter aneh agar URL aman
         const safeFileName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
         const filename = `frames/${id}-${safeFileName}`;
-
-        // Upload to R2
-        await env.BUCKET.put(filename, file.stream(), {
-          httpMetadata: { contentType: file.type }
-        });
-
-        // Insert into D1
+        await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: file.type } });
         const publicUrl = `${url.origin}/${filename}`; 
-        await env.DB.prepare(
-          'INSERT INTO frames (id, title, author, tags, url, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-        ).bind(id, title, author, tags, publicUrl, new Date().toISOString()).run();
-
-        return new Response(JSON.stringify({ success: true, id }), {
-          status: 201,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        await env.DB.prepare('INSERT INTO frames (id, title, author, url, created_at) VALUES (?, ?, ?, ?, ?)')
+          .bind(id, title, author, publicUrl, new Date().toISOString()).run();
+        return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       } catch (err) {
-        return new Response(JSON.stringify({ error: 'Upload failed', details: err.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        return new Response(JSON.stringify({ error: 'Upload failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
 
-    // 3. Serve images from R2
-    if (url.pathname.startsWith('/frames/')) {
+    // 2. Posts API (Results Gallery)
+    if (url.pathname === '/api/community/posts' && request.method === 'GET') {
+      try {
+        const { results } = await env.DB.prepare('SELECT * FROM posts ORDER BY created_at DESC').all();
+        return new Response(JSON.stringify(results), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'DB error', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+    }
+
+    if (url.pathname === '/api/community/posts' && request.method === 'POST') {
+      try {
+        const formData = await request.formData();
+        const file = formData.get('file') as File; // The photostrip image
+        const author = formData.get('author') as string;
+        const type = formData.get('type') as string || 'solo';
+        const id = crypto.randomUUID();
+        const filename = `posts/${id}.png`;
+        await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: 'image/png' } });
+        const publicUrl = `${url.origin}/${filename}`; 
+        await env.DB.prepare('INSERT INTO posts (id, author, url, type, created_at) VALUES (?, ?, ?, ?, ?)')
+          .bind(id, author, publicUrl, type, new Date().toISOString()).run();
+        return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Post failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+    }
+
+    // 3. Serve images from R2 (Support both /frames/ and /posts/)
+    if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/')) {
       const filename = url.pathname.slice(1);
       const object = await env.BUCKET.get(filename);
       if (!object) {

@@ -1,95 +1,89 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 export default function CommunityScreen({ onBack, framePresets }) {
+  const [activeTab, setActiveTab] = useState('frames'); // 'frames' or 'photos'
   const [showUpload, setShowUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Community frames from BE
+  // Data states
   const [communityFrames, setCommunityFrames] = useState([]);
+  const [communityPosts, setCommunityPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form states
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
-  const [tags, setTags] = useState('');
   const [file, setFile] = useState(null);
 
-  // API Configuration
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8787' 
     : '';
 
-  // Dummy community frames for filler
   const dummyFrames = [
-    { id: 'c1', title: 'Summer Vibe', author: '@sunny', img: 'https://picsum.photos/seed/summer/400/600' },
-    { id: 'c2', title: 'Retro Tokyo', author: '@pixel', img: 'https://picsum.photos/seed/tokyo/400/500' },
-    { id: 'c3', title: 'Cute Cat', author: '@miau', img: 'https://picsum.photos/seed/cat/400/400' },
-    { id: 'c4', title: 'Minimalist', author: '@zen', img: 'https://picsum.photos/seed/zen/400/700' },
-    { id: 'c5', title: 'Space Night', author: '@astro', img: 'https://picsum.photos/seed/space/400/550' },
+    { id: 'df1', title: 'Summer Vibe', author: '@sunny', url: 'https://picsum.photos/seed/summer/400/600' },
+    { id: 'df2', title: 'Retro Tokyo', author: '@pixel', url: 'https://picsum.photos/seed/tokyo/400/500' },
   ];
 
-  const fetchFrames = async () => {
+  const dummyPosts = [
+    { id: 'dp1', author: '@evan', url: 'https://picsum.photos/seed/pic1/400/700', type: 'solo' },
+    { id: 'dp2', author: '@kristian', url: 'https://picsum.photos/seed/pic2/400/600', type: 'duo' },
+  ];
+
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/community/frames`);
+      const endpoint = activeTab === 'frames' ? '/api/community/frames' : '/api/community/posts';
+      const response = await fetch(`${API_BASE}${endpoint}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched community frames:', data);
-        setCommunityFrames(data);
+        if (activeTab === 'frames') setCommunityFrames(data);
+        else setCommunityPosts(data);
       }
     } catch (err) {
-      console.error('Failed to fetch community frames:', err);
+      console.error('Failed to fetch data:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFrames();
-  }, []);
+    fetchData();
+  }, [activeTab]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file || !title || !author) return alert('Please fill all required fields!');
+    if (!file || !author || (activeTab === 'frames' && !title)) return alert('Fill all fields!');
 
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('title', title);
+    if (activeTab === 'frames') formData.append('title', title);
     formData.append('author', author);
-    formData.append('tags', tags);
 
     try {
-      const response = await fetch(`${API_BASE}/api/community/frames`, {
+      const endpoint = activeTab === 'frames' ? '/api/community/frames' : '/api/community/posts';
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
-        alert('Frame uploaded successfully! 🚀');
+        alert('Published successfully! 🚀');
         setShowUpload(false);
-        setTitle(''); setAuthor(''); setTags(''); setFile(null);
-        fetchFrames(); // Refresh list after upload
-      } else {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const err = await response.json();
-          alert(`Upload failed: ${err.error}${err.details ? '\nDetail: ' + err.details : ''}`);
-        } else {
-          const text = await response.text();
-          console.error('Server returned non-JSON:', text);
-          alert(`Upload failed: Server error (Status ${response.status})`);
-        }
+        setFile(null); setTitle('');
+        fetchData();
       }
     } catch (err) {
-      console.error('Fetch error:', err);
-      alert('Network error while uploading. Please check if the backend is running.');
+      alert('Error during upload.');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const combinedFrames = [...communityFrames, ...dummyFrames];
+  const currentItems = activeTab === 'frames' 
+    ? [...communityFrames, ...dummyFrames] 
+    : [...communityPosts, ...dummyPosts];
 
   return (
     <section className="page active" id="page-community">
@@ -100,58 +94,50 @@ export default function CommunityScreen({ onBack, framePresets }) {
       </div>
 
       <div className="comm-header">
-        <h1 className="comm-title">Community <span className="outline">Frames</span></h1>
-        <p className="comm-subtitle">Find your perfect frame style 🎨</p>
-      </div>
-
-      <div className="comm-search-bar">
-        <span className="comm-search-icon">🔍</span>
-        <input 
-          type="text" 
-          className="comm-search-input" 
-          placeholder="Search frames..."
-        />
+        <h1 className="comm-title">Community <span className="outline">Gallery</span></h1>
+        
+        {/* TAB TOGGLE */}
+        <div className="comm-tabs" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+          <button 
+            className={activeTab === 'frames' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('frames')}
+            style={{ borderRadius: '20px', padding: '8px 24px' }}
+          >
+            🎨 Frames
+          </button>
+          <button 
+            className={activeTab === 'photos' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setActiveTab('photos')}
+            style={{ borderRadius: '20px', padding: '8px 24px' }}
+          >
+            📸 Showcase
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
           <div className="room-dot" style={{ margin: '0 auto 20px' }}></div>
-          <p className="comm-subtitle">Loading gallery...</p>
+          <p className="comm-subtitle">Fetching latest {activeTab}...</p>
         </div>
       ) : (
         <div className="comm-grid">
-          {combinedFrames.map((frame) => (
-            <div key={frame.id} className="comm-item">
+          {currentItems.map((item) => (
+            <div key={item.id} className="comm-item">
               <div className="comm-item-img-wrapper">
-                <img src={frame.url || frame.img} alt={frame.title} loading="lazy" />
+                <img src={item.url} alt={item.title || 'Result'} loading="lazy" />
                 <div className="comm-item-overlay">
-                  <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Use Frame</button>
+                  <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                    {activeTab === 'frames' ? 'Use Frame' : 'View Full'}
+                  </button>
                 </div>
               </div>
               <div className="comm-item-info">
                 <div>
-                  <div className="comm-item-title">{frame.title}</div>
-                  <div className="comm-item-author">by {frame.author}</div>
+                  <div className="comm-item-title">{item.title || (item.type === 'solo' ? 'Solo Strip' : 'Duo Strip')}</div>
+                  <div className="comm-item-author">by {item.author}</div>
                 </div>
                 <div className="comm-item-like">❤️</div>
-              </div>
-            </div>
-          ))}
-          
-          {framePresets?.slice(0, 3).map((fp) => (
-            <div key={`real-${fp.id}`} className="comm-item">
-              <div className="comm-item-img-wrapper">
-                <img src={fp.src} alt={fp.label} style={{ height: '350px', objectFit: 'cover' }} />
-                <div className="comm-item-overlay">
-                  <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Use Frame</button>
-                </div>
-              </div>
-              <div className="comm-item-info">
-                <div>
-                  <div className="comm-item-title">{fp.label}</div>
-                  <div className="comm-item-author">by Official</div>
-                </div>
-                <div className="comm-item-like">🤍</div>
               </div>
             </div>
           ))}
@@ -159,42 +145,41 @@ export default function CommunityScreen({ onBack, framePresets }) {
       )}
       
       <div style={{ textAlign: 'center', marginTop: '60px', paddingBottom: '40px' }}>
-        <p className="comm-subtitle">Want to share your own design?</p>
+        <p className="comm-subtitle">Want to share your {activeTab === 'frames' ? 'frame' : 'photo'}?</p>
         <button 
           className="btn-primary" 
           style={{ marginTop: '16px' }}
           onClick={() => setShowUpload(true)}
         >
-          Submit Your Frame ✦
+          {activeTab === 'frames' ? 'Submit Frame ✦' : 'Post Result ✦'}
         </button>
       </div>
 
-      {/* ── UPLOAD MODAL ── */}
       {showUpload && (
         <div className="comm-modal-overlay">
           <div className="comm-modal">
             <button className="comm-modal-close" onClick={() => setShowUpload(false)}>×</button>
-            <h2 className="comm-modal-title">Upload New <span className="outline">Frame</span></h2>
+            <h2 className="comm-modal-title">Share your <span className="outline">{activeTab === 'frames' ? 'Frame' : 'Photo'}</span></h2>
             
             <form onSubmit={handleUpload}>
-              <div className="comm-form-group">
-                <label>Frame Title</label>
-                <input 
-                  type="text" 
-                  className="comm-form-input" 
-                  placeholder="e.g. Summer Flowers"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required 
-                />
-              </div>
+              {activeTab === 'frames' && (
+                <div className="comm-form-group">
+                  <label>Title</label>
+                  <input 
+                    type="text" 
+                    className="comm-form-input" 
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required 
+                  />
+                </div>
+              )}
 
               <div className="comm-form-group">
-                <label>Author Name</label>
+                <label>Author</label>
                 <input 
                   type="text" 
                   className="comm-form-input" 
-                  placeholder="e.g. @creative_user"
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
                   required 
@@ -202,20 +187,16 @@ export default function CommunityScreen({ onBack, framePresets }) {
               </div>
 
               <div className="comm-form-group">
-                <label>Select PNG Frame (Transparent)</label>
+                <label>Select File</label>
                 <div className="comm-file-drop" onClick={() => fileInputRef.current.click()}>
                   <input 
                     type="file" 
                     ref={fileInputRef} 
                     onChange={(e) => setFile(e.target.files[0])}
-                    accept="image/png"
+                    accept="image/png,image/jpeg"
                     hidden 
                   />
-                  {file ? (
-                    <span style={{ color: 'var(--pink)' }}>📄 {file.name}</span>
-                  ) : (
-                    <span>Click to select file ✨</span>
-                  )}
+                  {file ? <span>📄 {file.name}</span> : <span>Click to select ✨</span>}
                 </div>
               </div>
 
@@ -225,7 +206,7 @@ export default function CommunityScreen({ onBack, framePresets }) {
                 style={{ width: '100%', marginTop: '12px' }}
                 disabled={isUploading}
               >
-                {isUploading ? 'Uploading...' : 'Publish to Gallery 🚀'}
+                {isUploading ? 'Uploading...' : 'Publish now 🚀'}
               </button>
             </form>
           </div>

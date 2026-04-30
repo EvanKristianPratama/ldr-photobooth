@@ -32,6 +32,37 @@ export default function ResultScreen({
     }
   };
 
+  const handlePostToCommunity = async () => {
+    const name = window.prompt("Share your photostrip to the community gallery! What is your name? 📸", "Anonymous");
+    if (!name) return;
+
+    try {
+      const response = await fetch(mergedImage);
+      const blob = await response.blob();
+      const file = new File([blob], 'photostrip.png', { type: 'image/png' });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('author', name);
+      formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
+
+      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8787' 
+        : '';
+
+      const res = await fetch(`${API_BASE}/api/community/posts`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        alert("Posted to community! Check the Showcase 🚀");
+      }
+    } catch (err) {
+      alert("Failed to post to community.");
+    }
+  };
+
   return (
     <section className="page active" id="page-download" style={{ flexDirection: 'row', padding: '0 60px', overflow: 'hidden', background: 'var(--cream)', alignItems: 'center', justifyContent: 'center', gap: '80px' }}>
       
@@ -80,6 +111,9 @@ export default function ResultScreen({
           </button>
           <button className="btn-share" onClick={handleShare} style={{ width: '100%', padding: '12px 20px', fontSize: '18px' }}>
             📤 Share Photo
+          </button>
+          <button className="btn-secondary" onClick={handlePostToCommunity} style={{ width: '100%', padding: '12px 20px', fontSize: '16px' }}>
+            🎨 Post to Community
           </button>
           <button className="btn-secondary" onClick={onEditFrame} style={{ width: '100%', padding: '10px 20px', fontSize: '16px', background: 'white' }}>
             Edit Again ↺
