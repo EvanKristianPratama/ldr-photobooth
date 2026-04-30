@@ -4,6 +4,7 @@ export default function CommunityScreen({ onBack, framePresets }) {
   const [activeTab, setActiveTab] = useState('frames'); // 'frames' or 'photos'
   const [showUpload, setShowUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null); // For Full View Modal
   const fileInputRef = useRef(null);
 
   // Data states
@@ -21,13 +22,13 @@ export default function CommunityScreen({ onBack, framePresets }) {
     : '';
 
   const dummyFrames = [
-    { id: 'df1', title: 'Summer Vibe', author: '@sunny', url: 'https://picsum.photos/seed/summer/400/600' },
-    { id: 'df2', title: 'Retro Tokyo', author: '@pixel', url: 'https://picsum.photos/seed/tokyo/400/500' },
+    { id: 'df1', title: 'Summer Vibe', author: '@sunny', url: 'https://picsum.photos/seed/summer/400/600', usage_count: 12 },
+    { id: 'df2', title: 'Retro Tokyo', author: '@pixel', url: 'https://picsum.photos/seed/tokyo/400/500', usage_count: 8 },
   ];
 
   const dummyPosts = [
-    { id: 'dp1', author: '@evan', url: 'https://picsum.photos/seed/pic1/400/700', type: 'solo' },
-    { id: 'dp2', author: '@kristian', url: 'https://picsum.photos/seed/pic2/400/600', type: 'duo' },
+    { id: 'dp1', author: '@evan', url: 'https://picsum.photos/seed/pic1/400/700', type: 'solo', likes: 24 },
+    { id: 'dp2', author: '@kristian', url: 'https://picsum.photos/seed/pic2/400/600', type: 'duo', likes: 15 },
   ];
 
   const fetchData = async () => {
@@ -50,6 +51,19 @@ export default function CommunityScreen({ onBack, framePresets }) {
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  const handleLike = async (e, item) => {
+    e.stopPropagation();
+    try {
+      const type = activeTab === 'frames' ? 'frames' : 'posts';
+      const res = await fetch(`${API_BASE}/api/community/${type}/${item.id}/like`, { method: 'POST' });
+      if (res.ok) {
+        fetchData(); // Refresh to show new count
+      }
+    } catch (err) {
+      console.error('Like failed');
+    }
+  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -81,6 +95,21 @@ export default function CommunityScreen({ onBack, framePresets }) {
     }
   };
 
+  const handleUseFrame = (item) => {
+    // If it's a frame item
+    if (activeTab === 'frames') {
+      alert(`Using frame: ${item.title}. This would trigger the photobooth logic!`);
+      // Integration logic here...
+    } else {
+      // If it's a post, try to find the frame it used
+      if (item.frame_id) {
+        alert(`Pulling frame ${item.frame_id} from this post...`);
+      } else {
+        alert("This post doesn't have a linked frame.");
+      }
+    }
+  };
+
   const currentItems = activeTab === 'frames' 
     ? [...communityFrames, ...dummyFrames] 
     : [...communityPosts, ...dummyPosts];
@@ -96,7 +125,6 @@ export default function CommunityScreen({ onBack, framePresets }) {
       <div className="comm-header">
         <h1 className="comm-title">Community <span className="outline">Gallery</span></h1>
         
-        {/* TAB TOGGLE */}
         <div className="comm-tabs" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
           <button 
             className={activeTab === 'frames' ? 'btn-primary' : 'btn-secondary'}
@@ -123,12 +151,16 @@ export default function CommunityScreen({ onBack, framePresets }) {
       ) : (
         <div className="comm-grid">
           {currentItems.map((item) => (
-            <div key={item.id} className="comm-item">
+            <div key={item.id} className="comm-item" onClick={() => setSelectedItem(item)}>
               <div className="comm-item-img-wrapper">
                 <img src={item.url} alt={item.title || 'Result'} loading="lazy" />
                 <div className="comm-item-overlay">
-                  <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
-                    {activeTab === 'frames' ? 'Use Frame' : 'View Full'}
+                  <button 
+                    className="btn-primary" 
+                    style={{ padding: '8px 16px', fontSize: '14px' }}
+                    onClick={(e) => { e.stopPropagation(); handleUseFrame(item); }}
+                  >
+                    {activeTab === 'frames' ? 'Use Frame' : 'Get Frame'}
                   </button>
                 </div>
               </div>
@@ -137,7 +169,9 @@ export default function CommunityScreen({ onBack, framePresets }) {
                   <div className="comm-item-title">{item.title || (item.type === 'solo' ? 'Solo Strip' : 'Duo Strip')}</div>
                   <div className="comm-item-author">by {item.author}</div>
                 </div>
-                <div className="comm-item-like">❤️</div>
+                <div className="comm-item-like" onClick={(e) => handleLike(e, item)}>
+                  {activeTab === 'frames' ? '✨' : '❤️'} {item.likes || item.usage_count || 0}
+                </div>
               </div>
             </div>
           ))}
@@ -155,6 +189,36 @@ export default function CommunityScreen({ onBack, framePresets }) {
         </button>
       </div>
 
+      {/* ── FULL VIEW MODAL ── */}
+      {selectedItem && (
+        <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
+          <div className="comm-modal full-view" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', display: 'flex', flexDirection: 'row', padding: '0', overflow: 'hidden' }}>
+             <div className="full-view-img" style={{ flex: 1, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                <img src={selectedItem.url} style={{ maxHeight: '80vh', maxWidth: '100%' }} />
+             </div>
+             <div className="full-view-sidebar" style={{ width: '300px', padding: '30px', display: 'flex', flexDirection: 'column' }}>
+                <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
+                <h2 className="comm-modal-title" style={{ textAlign: 'left', marginTop: '20px' }}>{selectedItem.title || 'Photo Strip'}</h2>
+                <p className="comm-item-author">Shared by <b>{selectedItem.author}</b></p>
+                <div style={{ flex: 1, marginTop: '20px' }}>
+                   <p style={{ fontSize: '14px', opacity: 0.7 }}>
+                      {activeTab === 'frames' ? 'A beautiful custom frame for your photobooth sessions.' : `A fun ${selectedItem.type} session captured by the community.`}
+                   </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                   <button className="btn-primary" style={{ flex: 1 }} onClick={() => handleUseFrame(selectedItem)}>
+                      {activeTab === 'frames' ? 'Use Frame' : 'Get Frame'}
+                   </button>
+                   <button className="btn-secondary" onClick={(e) => handleLike(e, selectedItem)}>
+                      {activeTab === 'frames' ? '✨' : '❤️'}
+                   </button>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── UPLOAD MODAL ── */}
       {showUpload && (
         <div className="comm-modal-overlay">
           <div className="comm-modal">

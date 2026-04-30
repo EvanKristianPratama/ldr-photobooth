@@ -9,7 +9,8 @@ export default function ResultScreen({
   onDownload,
   onDonate,
   photoFilter,
-  sessionMode
+  sessionMode,
+  selectedFrameId
 }) {
   const handleShare = async () => {
     if (!mergedImage) return;
@@ -45,6 +46,7 @@ export default function ResultScreen({
       formData.append('file', file);
       formData.append('author', name);
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
+      formData.append('frame_id', selectedFrameId || '');
 
       const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:8787' 

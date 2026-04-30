@@ -88,18 +88,37 @@ export default {
     if (url.pathname === '/api/community/posts' && request.method === 'POST') {
       try {
         const formData = await request.formData();
-        const file = formData.get('file') as File; // The photostrip image
+        const file = formData.get('file') as File; 
         const author = formData.get('author') as string;
         const type = formData.get('type') as string || 'solo';
+        const frameId = formData.get('frame_id') as string || '';
+        
         const id = crypto.randomUUID();
         const filename = `posts/${id}.png`;
         await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: 'image/png' } });
         const publicUrl = `${url.origin}/${filename}`; 
-        await env.DB.prepare('INSERT INTO posts (id, author, url, type, created_at) VALUES (?, ?, ?, ?, ?)')
-          .bind(id, author, publicUrl, type, new Date().toISOString()).run();
+        await env.DB.prepare('INSERT INTO posts (id, author, url, type, frame_id, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(id, author, publicUrl, type, frameId, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       } catch (err) {
         return new Response(JSON.stringify({ error: 'Post failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+    }
+
+    // 3. Like System
+    if (url.pathname.endsWith('/like') && request.method === 'POST') {
+      try {
+        const parts = url.pathname.split('/');
+        const type = parts[3]; // 'frames' or 'posts'
+        const id = parts[4];
+        
+        const table = type === 'frames' ? 'frames' : 'posts';
+        const column = type === 'frames' ? 'usage_count' : 'likes'; // For frames, we count usage as likes/popularity
+
+        await env.DB.prepare(`UPDATE ${table} SET ${column} = ${column} + 1 WHERE id = ?`).bind(id).run();
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Like failed' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
 

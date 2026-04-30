@@ -514,6 +514,7 @@ export default function Page() {
             onDonate={handleOpenDonate}
             photoFilter={frame.photoFilter}
             sessionMode={sessionMode}
+            selectedFrameId={frame.framePresetId}
           />
         )}
       </main>
