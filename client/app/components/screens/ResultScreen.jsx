@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function ResultScreen({
   mergedImage,
@@ -12,6 +12,11 @@ export default function ResultScreen({
   sessionMode,
   selectedFrameId
 }) {
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [postName, setPostName] = useState('Anonymous');
+  const [postCaption, setPostCaption] = useState('Our photobooth moment! ✨');
+  const [isPublishing, setIsPublishing] = useState(false);
+
   const handleShare = async () => {
     if (!mergedImage) return;
     try {
@@ -34,12 +39,7 @@ export default function ResultScreen({
   };
 
   const handlePostToCommunity = async () => {
-    const name = window.prompt("Who is the creator? 👤", "Anonymous");
-    if (!name) return;
-    
-    const caption = window.prompt("Write a short caption... ✍️", "Our photobooth moment! ✨");
-    if (caption === null) return; // Allow empty but not cancel
-
+    setIsPublishing(true);
     try {
       const response = await fetch(mergedImage);
       const blob = await response.blob();
@@ -47,8 +47,8 @@ export default function ResultScreen({
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('author', name);
-      formData.append('title', caption); // Kita simpan caption di kolom 'title'
+      formData.append('author', postName);
+      formData.append('title', postCaption); 
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
       formData.append('frame_id', selectedFrameId || '');
 
@@ -62,10 +62,13 @@ export default function ResultScreen({
       });
 
       if (res.ok) {
-        alert("Posted to community! Check the Showcase 🚀");
+        setShowPostModal(false);
+        alert("Published! Check the Community Showcase 🚀");
       }
     } catch (err) {
-      alert("Failed to post to community.");
+      alert("Failed to post.");
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -118,7 +121,7 @@ export default function ResultScreen({
           <button className="btn-share" onClick={handleShare} style={{ width: '100%', padding: '12px 20px', fontSize: '18px' }}>
             📤 Share Photo
           </button>
-          <button className="btn-secondary" onClick={handlePostToCommunity} style={{ width: '100%', padding: '12px 20px', fontSize: '16px' }}>
+          <button className="btn-secondary" onClick={() => setShowPostModal(true)} style={{ width: '100%', padding: '12px 20px', fontSize: '16px' }}>
             🎨 Post to Community
           </button>
           <button className="btn-secondary" onClick={onEditFrame} style={{ width: '100%', padding: '10px 20px', fontSize: '16px', background: 'white' }}>
@@ -136,6 +139,62 @@ export default function ResultScreen({
           </div>
         </div>
       </div>
+
+      {/* ── COMMUNITY POST MODAL ── */}
+      {showPostModal && (
+        <div className="comm-modal-overlay">
+          <div className="comm-modal" style={{ maxWidth: '400px' }}>
+            <button className="comm-modal-close" onClick={() => setShowPostModal(false)}>×</button>
+            <h2 className="comm-modal-title">Share to <span className="outline">Community</span></h2>
+            <p style={{ fontFamily: 'Gaegu', textAlign: 'center', opacity: 0.7, marginBottom: '15px' }}>Let others see your cute moment! ✨</p>
+            
+            {/* PHOTO PREVIEW */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <img 
+                src={mergedImage} 
+                alt="Preview" 
+                style={{ 
+                  maxHeight: '180px', 
+                  borderRadius: '6px', 
+                  border: '2px solid var(--ink)', 
+                  boxShadow: '4px 4px 0 var(--ink)' 
+                }} 
+              />
+            </div>
+
+            <div className="comm-form-group">
+              <label>Your Name 👤</label>
+              <input 
+                type="text" 
+                className="comm-form-input" 
+                value={postName}
+                onChange={(e) => setPostName(e.target.value)}
+                placeholder="Ex: Evan & Kristian"
+              />
+            </div>
+
+            <div className="comm-form-group">
+              <label>Short Caption ✍️</label>
+              <textarea 
+                className="comm-form-input" 
+                style={{ height: '80px', paddingTop: '10px' }}
+                value={postCaption}
+                onChange={(e) => setPostCaption(e.target.value)}
+                placeholder="Tell something about this photo..."
+              />
+            </div>
+
+            <button 
+              className="btn-primary" 
+              style={{ width: '100%', marginTop: '10px' }}
+              onClick={handlePostToCommunity}
+              disabled={isPublishing}
+            >
+              {isPublishing ? 'Publishing...' : 'Publish now 🚀'}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
