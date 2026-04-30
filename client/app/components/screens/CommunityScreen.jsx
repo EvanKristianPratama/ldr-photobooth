@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CommunityScreen({ onBack, framePresets }) {
-  const [activeTab, setActiveTab] = useState('photos'); // 'photos' first
+export default function CommunityScreen({ onBack }) {
+  const [activeTab, setActiveTab] = useState('photos'); // 'photos' or 'frames'
   const [showUpload, setShowUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null); // For Full View Modal
@@ -20,16 +20,6 @@ export default function CommunityScreen({ onBack, framePresets }) {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8787' 
     : '';
-
-  const dummyFrames = [
-    { id: 'df1', title: 'Summer Vibe', author: '@sunny', url: 'https://picsum.photos/seed/summer/400/600', usage_count: 12 },
-    { id: 'df2', title: 'Retro Tokyo', author: '@pixel', url: 'https://picsum.photos/seed/tokyo/400/500', usage_count: 8 },
-  ];
-
-  const dummyPosts = [
-    { id: 'dp1', author: '@evan', url: 'https://picsum.photos/seed/pic1/400/700', type: 'solo', likes: 24 },
-    { id: 'dp2', author: '@kristian', url: 'https://picsum.photos/seed/pic2/400/600', type: 'duo', likes: 15 },
-  ];
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -58,7 +48,7 @@ export default function CommunityScreen({ onBack, framePresets }) {
       const type = activeTab === 'frames' ? 'frames' : 'posts';
       const res = await fetch(`${API_BASE}/api/community/${type}/${item.id}/like`, { method: 'POST' });
       if (res.ok) {
-        fetchData(); // Refresh to show new count
+        fetchData();
       }
     } catch (err) {
       console.error('Like failed');
@@ -95,145 +85,107 @@ export default function CommunityScreen({ onBack, framePresets }) {
     }
   };
 
-  const handleUseFrame = (item) => {
-    // If it's a frame item
-    if (activeTab === 'frames') {
-      alert(`Using frame: ${item.title}. This would trigger the photobooth logic!`);
-      // Integration logic here...
-    } else {
-      // If it's a post, try to find the frame it used
-      if (item.frame_id) {
-        alert(`Pulling frame ${item.frame_id} from this post...`);
-      } else {
-        alert("This post doesn't have a linked frame.");
-      }
-    }
-  };
-
-  const currentItems = activeTab === 'frames' 
-    ? [...communityFrames, ...dummyFrames] 
-    : [...communityPosts, ...dummyPosts];
-
   return (
-    <section className="page active" id="page-community">
-      <div className="comm-mobile-nav">
-        <button className="btn-primary" onClick={onBack} style={{ width: '100%', borderRadius: '15px' }}>
-          ← Back to Home
-        </button>
-      </div>
-
-      <div className="comm-header">
-        <h1 className="comm-title">Community <span className="outline">Gallery</span></h1>
-        
-        <div className="comm-tabs" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
-          <button 
-            className={activeTab === 'photos' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setActiveTab('photos')}
-            style={{ borderRadius: '20px', padding: '8px 24px' }}
-          >
-            📸 Showcase
-          </button>
-          <button 
-            className={activeTab === 'frames' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setActiveTab('frames')}
-            style={{ borderRadius: '20px', padding: '8px 24px' }}
-          >
-            🎨 Frames
-          </button>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <div className="room-dot" style={{ margin: '0 auto 20px' }}></div>
-          <p className="comm-subtitle">Fetching latest {activeTab}...</p>
-        </div>
-      ) : (
-        <div className="comm-grid">
-          {currentItems.map((item) => (
-            <div key={item.id} className="comm-item" onClick={() => setSelectedItem(item)}>
-              <div className="comm-item-img-wrapper">
-                <img src={item.url} alt={item.title || 'Result'} loading="lazy" />
-                <div className="comm-item-overlay">
-                  <div className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px', pointerEvents: 'none' }}>
-                    View Full ✨
-                  </div>
-                </div>
-              </div>
-              <div className="comm-item-info">
-                <div>
-                  <div className="comm-item-title">{item.title || (item.type === 'solo' ? 'Solo Strip' : 'Duo Strip')}</div>
-                  <div className="comm-item-author">by {item.author}</div>
-                </div>
-                <div className="comm-item-like" onClick={(e) => handleLike(e, item)}>
-                  {activeTab === 'frames' ? '✨' : '❤️'} {item.likes || item.usage_count || 0}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+    <section className="page active comm-layout-root" id="page-community">
       
-      <div style={{ textAlign: 'center', marginTop: '60px', paddingBottom: '40px' }}>
-        <p className="comm-subtitle">Want to share your {activeTab === 'frames' ? 'frame' : 'photo'}?</p>
-        <button 
-          className="btn-primary" 
-          style={{ marginTop: '16px' }}
-          onClick={() => {
-            if (activeTab === 'frames') setShowUpload(true);
-            else onBack(); // Arahkan ke Home
-          }}
-        >
-          {activeTab === 'frames' ? 'Submit Frame ✦' : 'Take a Photo Now 📸'}
-        </button>
-      </div>
+      {/* ── SIDEBAR (INSTAGRAM STYLE) ── */}
+      <aside className="comm-sidebar">
+        <div className="comm-sidebar-top">
+          <div className="comm-sidebar-logo" onClick={onBack}>
+            <span className="outline">LDR</span> Community
+          </div>
+          
+          <nav className="comm-sidebar-nav">
+            <button 
+              className={`comm-nav-item ${activeTab === 'photos' ? 'active' : ''}`}
+              onClick={() => setActiveTab('photos')}
+            >
+              <span className="nav-icon">📸</span>
+              <span className="nav-label">Showcase</span>
+            </button>
+            <button 
+              className={`comm-nav-item ${activeTab === 'frames' ? 'active' : ''}`}
+              onClick={() => setActiveTab('frames')}
+            >
+              <span className="nav-icon">🎨</span>
+              <span className="nav-label">Frames</span>
+            </button>
+            <button 
+              className="comm-nav-item upload-trigger"
+              onClick={() => setShowUpload(true)}
+            >
+              <span className="nav-icon">➕</span>
+              <span className="nav-label">Upload</span>
+            </button>
+          </nav>
+        </div>
 
-      {/* ── CREDITS ── */}
-      <footer className="comm-footer" style={{ 
-        textAlign: 'center', 
-        padding: '40px 20px 60px', 
-        fontFamily: "'Gaegu', cursive", 
-        fontSize: '18px', 
-        fontWeight: '600',
-        opacity: 0.6
-      }}>
-        By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
-      </footer>
-
-      {/* ── FULL VIEW MODAL ── */}
-      {selectedItem && (
-        <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
-          <div className="comm-modal full-view" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', display: 'flex', flexDirection: 'row', padding: '0', overflow: 'hidden' }}>
-             <div className="full-view-img" style={{ flex: 1, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-                <img src={selectedItem.url} style={{ maxHeight: '80vh', maxWidth: '100%' }} />
-             </div>
-             <div className="full-view-sidebar" style={{ width: '300px', padding: '30px', display: 'flex', flexDirection: 'column' }}>
-                <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
-                <h2 className="comm-modal-title" style={{ textAlign: 'left', marginTop: '20px' }}>{selectedItem.title || (activeTab === 'frames' ? 'Untitled Frame' : 'Photo Strip')}</h2>
-                <p className="comm-item-author">Shared by <b>{selectedItem.author}</b></p>
-                <div style={{ flex: 1, marginTop: '20px' }}>
-                   <p style={{ fontSize: '14px', opacity: 0.7 }}>
-                      {activeTab === 'frames' 
-                        ? (selectedItem.title ? `"${selectedItem.title}" - A beautiful custom frame for your photobooth sessions.` : 'A beautiful custom frame for your photobooth sessions.')
-                        : (selectedItem.title || `A fun ${selectedItem.type} session captured by the community.`)}
-                   </p>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                   <button className="btn-secondary" style={{ flex: 1 }} onClick={(e) => handleLike(e, selectedItem)}>
-                      {activeTab === 'frames' ? '✨ Like Frame' : '❤️ Like Photo'}
-                   </button>
-                </div>
-             </div>
+        <div className="comm-sidebar-bottom">
+          <button className="comm-nav-item back-btn" onClick={onBack}>
+            <span className="nav-icon">🏠</span>
+            <span className="nav-label">Home</span>
+          </button>
+          
+          <div className="comm-sidebar-credits">
+             By Evan Kristian<br/>
+             <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer">@evankristiannn</a>
           </div>
         </div>
-      )}
+      </aside>
+
+      {/* ── MAIN CONTENT (PINTEREST STYLE) ── */}
+      <main className="comm-main-content">
+        <header className="comm-mobile-header">
+           <button className="back-circle" onClick={onBack}>←</button>
+           <h1 className="comm-title-mini">{activeTab === 'photos' ? 'Showcase' : 'Frames'}</h1>
+        </header>
+
+        <div className="comm-scroll-area">
+          <div className="comm-grid-container">
+            {isLoading ? (
+              <div style={{ textAlign: 'center', padding: '100px' }}>
+                <div className="room-dot" style={{ margin: '0 auto 20px' }} />
+                <p style={{ fontFamily: 'Gaegu', fontSize: '24px' }}>Loading magic...</p>
+              </div>
+            ) : (
+              <div className="comm-grid">
+                {(activeTab === 'frames' ? communityFrames : communityPosts).map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="comm-item"
+                    onClick={() => setSelectedItem(item)}
+                  >
+                    <div className="comm-item-img-wrapper">
+                      <img src={item.url} alt={item.title || 'Result'} loading="lazy" />
+                      <div className="comm-item-overlay">
+                        <div className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px', pointerEvents: 'none' }}>
+                          View ✨
+                        </div>
+                      </div>
+                    </div>
+                    <div className="comm-item-info">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="comm-item-title">{item.title || (activeTab === 'photos' ? 'Photo Strip' : 'Untitled')}</span>
+                        <div className="comm-item-stats">
+                          <span onClick={(e) => handleLike(e, item)} style={{ cursor: 'pointer' }}>❤️ {item.likes || item.usage_count || 0}</span>
+                        </div>
+                      </div>
+                      <span className="comm-item-author">by {item.author}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
 
       {/* ── UPLOAD MODAL ── */}
       {showUpload && (
-        <div className="comm-modal-overlay">
-          <div className="comm-modal">
+        <div className="comm-modal-overlay" onClick={() => setShowUpload(false)}>
+          <div className="comm-modal" onClick={e => e.stopPropagation()}>
             <button className="comm-modal-close" onClick={() => setShowUpload(false)}>×</button>
-            <h2 className="comm-modal-title">Share your <span className="outline">{activeTab === 'frames' ? 'Frame' : 'Photo'}</span></h2>
+            <h2 className="comm-modal-title">Share to <span className="outline">Community</span></h2>
             
             <form onSubmit={handleUpload}>
               {activeTab === 'frames' && (
@@ -283,6 +235,30 @@ export default function CommunityScreen({ onBack, framePresets }) {
                 {isUploading ? 'Uploading...' : 'Publish now 🚀'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── FULL VIEW MODAL ── */}
+      {selectedItem && (
+        <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
+          <div className="comm-modal full-view" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', display: 'flex', flexDirection: 'row', padding: '0', overflow: 'hidden' }}>
+             <div className="full-view-img" style={{ flex: 1, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                <img src={selectedItem.url} alt="Full View" style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }} />
+             </div>
+             <div className="full-view-sidebar" style={{ width: '300px', padding: '30px', display: 'flex', flexDirection: 'column' }}>
+                <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
+                <h2 className="comm-modal-title" style={{ textAlign: 'left', marginTop: '20px' }}>{selectedItem.title || (activeTab === 'photos' ? 'Photo Strip' : 'Untitled Frame')}</h2>
+                <p className="comm-item-author">Shared by <b>{selectedItem.author}</b></p>
+                <div style={{ flex: 1, marginTop: '20px' }}>
+                   <p style={{ fontSize: '14px', opacity: 0.7 }}>A beautiful creation shared with the community.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                   <button className="btn-secondary" style={{ flex: 1 }} onClick={(e) => handleLike(e, selectedItem)}>
+                      {activeTab === 'frames' ? '✨ Like Frame' : '❤️ Like Photo'}
+                   </button>
+                </div>
+             </div>
           </div>
         </div>
       )}
