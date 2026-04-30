@@ -25,7 +25,6 @@ import { LAYOUTS, STEP_LABELS, CHUNK_SIZE } from './constants/layout';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
 const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
-const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '';
 
 export default function Page() {
   const [step, setStep] = useState('mode-select');
@@ -294,7 +293,6 @@ export default function Page() {
   const handleModeSelect = (mode) => {
     setSessionMode(mode);
     if (mode === 'solo') {
-      // For solo, we bypass join/room but still need a placeholder ID
       const myId = room.selfId || 'solo-user';
       room.setDisplayName('You');
       room.setParticipants([{ id: myId, displayName: 'You' }]);
@@ -379,26 +377,12 @@ export default function Page() {
       {isFlash && <div className="flash-effect" />}
 
       {/* TOPBAR */}
-      <header className="topbar" style={{ flexShrink: 0 }}>
-        {step === 'community' ? (
-          <>
-            <button 
-              className="btn-secondary desktop-only" 
-              onClick={() => setStep('mode-select')}
-              style={{ padding: '6px 16px', fontSize: '14px' }}
-            >
-              ← Back
-            </button>
-            <div className="logo" style={{ marginLeft: '12px' }}>Community Gallery</div>
-            <div style={{ flex: 1 }}></div>
-          </>
-        ) : (
-          <>
-            <div className="logo">LDR Photobooth</div>
-            <StepIndicator steps={STEP_LABELS} currentStep={step} />
-          </>
-        )}
-      </header>
+      {step !== 'community' && (
+        <header className="topbar" style={{ flexShrink: 0 }}>
+          <div className="logo">LDR Photobooth</div>
+          <StepIndicator steps={STEP_LABELS} currentStep={step} />
+        </header>
+      )}
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {step === 'mode-select' && (
@@ -408,7 +392,6 @@ export default function Page() {
         {step === 'community' && (
           <CommunityScreen 
             onBack={() => setStep('mode-select')} 
-            framePresets={frame.framePresets} 
           />
         )}
 
@@ -520,35 +503,35 @@ export default function Page() {
       </main>
 
       {/* BOTTOM NAV / FOOTER */}
-      <footer className="footer-main" style={{ 
-        flexShrink: 0, 
-        borderTop: '3px solid var(--ink)', 
-        background: 'var(--cream)', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'flex-end', 
-        padding: '10px 28px',
-        position: 'relative',
-        minHeight: '60px'
-      }}>
-        <div className="credits" style={{ 
-          fontFamily: "'Gaegu', cursive", 
-          fontSize: '18px', 
-          fontWeight: '600',
-          opacity: 0.6,
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          whiteSpace: 'nowrap',
-          letterSpacing: '0.5px'
+      {step !== 'community' && (
+        <footer className="footer-main" style={{ 
+          flexShrink: 0, 
+          borderTop: '3px solid var(--ink)', 
+          background: 'var(--cream)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'flex-end', 
+          padding: '10px 28px',
+          position: 'relative',
+          minHeight: '60px'
         }}>
-          By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
-        </div>
-        
-        {/* Buttons removed because they are now inside the screens */}
-      </footer>
+          <div className="credits" style={{ 
+            fontFamily: "'Gaegu', cursive", 
+            fontSize: '18px', 
+            fontWeight: '600',
+            opacity: 0.6,
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            letterSpacing: '0.5px'
+          }}>
+            By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
+          </div>
+        </footer>
+      )}
 
       {donateOpen && (
         <div className="frame-modal">
