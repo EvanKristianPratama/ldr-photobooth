@@ -81,7 +81,7 @@ export default function ResultScreen({
           <div className="confetti-row">★ ✦ ♥ ✦ ★</div>
           <div className="done-big">
             READY<br />
-            <span className="outline-pink">TO PRINT!</span>
+            <span className="outline-pink">TO SHARE!</span>
           </div>
         </div>
 
