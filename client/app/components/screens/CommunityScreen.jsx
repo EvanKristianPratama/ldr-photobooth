@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CommunityScreen({ onBack }) {
-  const [activeTab, setActiveTab] = useState('photos');
-  const [showUpload, setShowUpload] = useState(false);
+export default function CommunityScreen({ onBack, activeTab, setActiveTab, showUpload, setShowUpload }) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const fileInputRef = useRef(null);
@@ -10,20 +8,21 @@ export default function CommunityScreen({ onBack }) {
   const [communityFrames, setCommunityFrames] = useState([]);
   const [communityPosts, setCommunityPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [file, setFile] = useState(null);
 
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8787' 
-    : '';
+    : 'https://ldr-photobooth.if2372047.workers.dev';
+
+  const [sortBy, setSortBy] = useState('hot'); // 'hot', 'new', 'top'
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const endpoint = activeTab === 'frames' ? '/api/community/frames' : '/api/community/posts';
-      const response = await fetch(`${API_BASE}${endpoint}`);
+      const response = await fetch(`${API_BASE}${endpoint}?sort=${sortBy}`);
       if (response.ok) {
         const data = await response.json();
         if (activeTab === 'frames') setCommunityFrames(data);
@@ -38,7 +37,7 @@ export default function CommunityScreen({ onBack }) {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, sortBy]);
 
   const handleLike = async (e, item) => {
     e.stopPropagation();
@@ -69,51 +68,46 @@ export default function CommunityScreen({ onBack }) {
     } catch (err) { alert('Error during upload.'); }
     finally { setIsUploading(false); }
   };
-
   // Icon Paths
   const iconBase = "/doodle icons/SVG/interface";
 
-  return (
-    <section className="page active comm-pin-root" id="page-community">
-      
-      {/* ── EXPANDABLE SIDEBAR WITH LOCAL DOODLE ICONS ── */}
-      <aside className="comm-pin-sidebar expandable">
-        <div className="pin-sidebar-top">
-          <div className="pin-logo" onClick={onBack}>
-             <img src={`${iconBase}/camera.svg`} className="logo-img" alt="logo" />
-             <span className="logo-text">LDR Gallery</span>
-          </div>
-          <nav className="pin-nav">
-            <button className={`pin-nav-item ${activeTab === 'photos' ? 'active' : ''}`} onClick={() => setActiveTab('photos')}>
-               <span className="nav-icon"><img src={`${iconBase}/home.svg`} alt="home" /></span>
-               <span className="nav-label">Showcase</span>
-            </button>
-            <button className={`pin-nav-item ${activeTab === 'frames' ? 'active' : ''}`} onClick={() => setActiveTab('frames')}>
-               <span className="nav-icon"><img src={`${iconBase}/grid.svg`} alt="frames" /></span>
-               <span className="nav-label">Frames</span>
-            </button>
-            <button className="pin-nav-item" onClick={() => setShowUpload(true)}>
-               <span className="nav-icon"><img src={`${iconBase}/upload.svg`} alt="upload" /></span>
-               <span className="nav-label">Create</span>
-            </button>
-          </nav>
-        </div>
-        <div className="pin-sidebar-bottom">
-           <button className="pin-nav-item" onClick={onBack}>
-              <span className="nav-icon"><img src={`${iconBase}/logout.svg`} alt="back" /></span>
-              <span className="nav-label">Back Home</span>
-           </button>
-        </div>
-      </aside>
+  // URL Resolver to handle relative and full URLs
+  const resolveUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) {
+      // If we are local and the URL is from an external domain, rewrite it to use our local API_BASE
+      if (API_BASE && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+        try {
+          const path = new URL(url).pathname;
+          return `${API_BASE}${path}`;
+        } catch (e) { return url; }
+      }
+      return url;
+    }
+    return `${API_BASE}${url}`;
+  };
 
+  const handleImageError = (e) => {
+    e.target.src = 'https://placehold.co/400x600?text=Image+Not+Found';
+    e.target.style.opacity = '0.5';
+  };
+
+  return (
+    <>
       {/* ── MAIN CONTENT AREA ── */}
       <div className="comm-pin-main">
         <header className="comm-pin-header">
-           <div className="pin-search-container">
-              <img src={`${iconBase}/search.svg`} className="search-icon-img" alt="search" />
-              <input type="text" placeholder="Cari karya seru..." className="pin-search-input" />
-           </div>
-           <div className="pin-user-circle">E</div>
+          <div className="comm-sort-tabs">
+            <button className={`sort-tab ${sortBy === 'hot' ? 'active' : ''}`} onClick={() => setSortBy('hot')}>
+              🔥 Hot
+            </button>
+            <button className={`sort-tab ${sortBy === 'new' ? 'active' : ''}`} onClick={() => setSortBy('new')}>
+              ✨ New
+            </button>
+            <button className={`sort-tab ${sortBy === 'top' ? 'active' : ''}`} onClick={() => setSortBy('top')}>
+              🏆 Top
+            </button>
+          </div>
         </header>
 
         <div className="pin-scroll-area">
@@ -127,7 +121,12 @@ export default function CommunityScreen({ onBack }) {
                 (activeTab === 'frames' ? communityFrames : communityPosts).map((item) => (
                   <div key={item.id} className="pin-item" onClick={() => setSelectedItem(item)}>
                     <div className="pin-item-inner">
-                      <img src={item.url} alt="Inspiration" loading="lazy" />
+                      <img 
+                        src={resolveUrl(item.url)} 
+                        alt="Inspiration" 
+                        loading="lazy" 
+                        onError={handleImageError}
+                      />
                       <div className="pin-item-hover">
                          <button className="pin-save-btn" onClick={(e) => handleLike(e, item)}>
                             ❤️ {item.likes || item.usage_count || 0}
@@ -175,7 +174,12 @@ export default function CommunityScreen({ onBack }) {
         <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
           <div className="comm-modal full-view" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', display: 'flex', flexDirection: 'row', padding: '0', overflow: 'hidden', borderRadius: '32px' }}>
              <div className="full-view-img" style={{ flex: 1, background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={selectedItem.url} alt="Full View" style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain' }} />
+                <img 
+                  src={resolveUrl(selectedItem.url)} 
+                  alt="Full View" 
+                  style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain' }} 
+                  onError={handleImageError}
+                />
              </div>
              <div className="full-view-sidebar" style={{ width: '320px', padding: '40px', display: 'flex', flexDirection: 'column' }}>
                 <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
@@ -188,6 +192,6 @@ export default function CommunityScreen({ onBack }) {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }

@@ -23,7 +23,9 @@ import useDebouncedValue from './hooks/useDebouncedValue';
 import usePhotoTransfer from './hooks/usePhotoTransfer';
 import { LAYOUTS, STEP_LABELS, CHUNK_SIZE } from './constants/layout';
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
+const SERVER_URL = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8787' 
+  : 'https://ldr-photobooth.if2372047.workers.dev';
 const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
 
 export default function Page() {
@@ -39,6 +41,10 @@ export default function Page() {
   const [downloadName, setDownloadName] = useState('');
   const autoApplyReadyRef = useRef(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const [activeTab, setActiveTab] = useState('photos');
+  const [showUpload, setShowUpload] = useState(false);
+
+  const iconBase = "/doodle icons/SVG/interface";
 
   const handlePartnerPause = () => {
     if (pausedRef.current) return;
@@ -373,8 +379,42 @@ export default function Page() {
   };
 
   return (
-    <div style={{ position: 'relative', zIndex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className={step === 'community' ? 'comm-pin-root' : ''} style={{ position: 'relative', zIndex: 1, height: '100vh', display: 'flex', flexDirection: 'row' }}>
       {isFlash && <div className="flash-effect" />}
+
+      {/* ── GLOBAL EXPANDABLE SIDEBAR (for Community) ── */}
+      {step === 'community' && (
+        <aside className="comm-pin-sidebar expandable">
+          <div className="pin-sidebar-top">
+            <div className="pin-logo" onClick={handleGoHome}>
+              <img src={`${iconBase}/camera.svg`} className="logo-img" alt="logo" />
+              <span className="logo-text">LDR Gallery</span>
+            </div>
+            <nav className="pin-nav">
+              <button className={`pin-nav-item ${activeTab === 'photos' ? 'active' : ''}`} onClick={() => setActiveTab('photos')}>
+                <span className="nav-icon"><img src="/doodle icons/SVG/misc/rocket.svg" alt="showcase" /></span>
+                <span className="nav-label">Showcase</span>
+              </button>
+              <button className={`pin-nav-item ${activeTab === 'frames' ? 'active' : ''}`} onClick={() => setActiveTab('frames')}>
+                <span className="nav-icon"><img src={`${iconBase}/grid.svg`} alt="frames" /></span>
+                <span className="nav-label">Frames</span>
+              </button>
+              <button className="pin-nav-item" onClick={() => setShowUpload(true)}>
+                <span className="nav-icon"><img src={`${iconBase}/upload.svg`} alt="upload" /></span>
+                <span className="nav-label">Publish Frame</span>
+              </button>
+            </nav>
+          </div>
+          <div className="pin-sidebar-bottom">
+            <button className="pin-nav-item" onClick={handleGoHome}>
+              <span className="nav-icon"><img src={`${iconBase}/home.svg`} alt="back" /></span>
+              <span className="nav-label">Back Home</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
       {/* TOPBAR */}
       {step !== 'community' && (
@@ -391,7 +431,11 @@ export default function Page() {
 
         {step === 'community' && (
           <CommunityScreen 
-            onBack={() => setStep('mode-select')} 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            showUpload={showUpload}
+            setShowUpload={setShowUpload}
+            onBack={handleGoHome} 
           />
         )}
 
@@ -572,6 +616,7 @@ export default function Page() {
         </div>
       )}
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
+      </div>
     </div>
   );
 }

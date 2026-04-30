@@ -40,13 +40,30 @@ export default {
       });
     }
 
+    const calculateHotScore = (points: number, createdAt: string) => {
+      const hours = (Date.now() - new Date(createdAt).getTime()) / 36e5;
+      return (points + 1) / Math.pow(hours + 2, 1.5);
+    };
+
     // ── COMMUNITY API ──
 
     // 1. Frames API
     if (url.pathname === '/api/community/frames' && request.method === 'GET') {
       try {
-        const { results } = await env.DB.prepare('SELECT * FROM frames ORDER BY created_at DESC').all();
-        return new Response(JSON.stringify(results), {
+        const sort = url.searchParams.get('sort') || 'hot';
+        const { results } = await env.DB.prepare('SELECT * FROM frames').all();
+        
+        let sorted = results as any[];
+        if (sort === 'new') {
+          sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else if (sort === 'top') {
+          sorted.sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0));
+        } else {
+          // hot
+          sorted.sort((a, b) => calculateHotScore(b.usage_count || 0, b.created_at) - calculateHotScore(a.usage_count || 0, a.created_at));
+        }
+
+        return new Response(JSON.stringify(sorted), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       } catch (err) {
@@ -64,7 +81,7 @@ export default {
         const safeFileName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
         const filename = `frames/${id}-${safeFileName}`;
         await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: file.type } });
-        const publicUrl = `${url.origin}/${filename}`; 
+        const publicUrl = `/${filename}`; 
         await env.DB.prepare('INSERT INTO frames (id, title, author, url, created_at) VALUES (?, ?, ?, ?, ?)')
           .bind(id, title, author, publicUrl, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
@@ -76,8 +93,20 @@ export default {
     // 2. Posts API (Results Gallery)
     if (url.pathname === '/api/community/posts' && request.method === 'GET') {
       try {
-        const { results } = await env.DB.prepare('SELECT * FROM posts ORDER BY created_at DESC').all();
-        return new Response(JSON.stringify(results), {
+        const sort = url.searchParams.get('sort') || 'hot';
+        const { results } = await env.DB.prepare('SELECT * FROM posts').all();
+        
+        let sorted = results as any[];
+        if (sort === 'new') {
+          sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else if (sort === 'top') {
+          sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        } else {
+          // hot
+          sorted.sort((a, b) => calculateHotScore(b.likes || 0, b.created_at) - calculateHotScore(a.likes || 0, a.created_at));
+        }
+
+        return new Response(JSON.stringify(sorted), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       } catch (err) {
@@ -97,7 +126,7 @@ export default {
         const id = crypto.randomUUID();
         const filename = `posts/${id}.png`;
         await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: 'image/png' } });
-        const publicUrl = `${url.origin}/${filename}`; 
+        const publicUrl = `/${filename}`; 
         await env.DB.prepare('INSERT INTO posts (id, title, author, url, type, frame_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .bind(id, title, author, publicUrl, type, frameId, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });

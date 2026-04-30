@@ -15,7 +15,7 @@ new_sqlite_classes = ["RoomDurableObject"]
 [[d1_databases]]
 binding = "DB"
 database_name = "ldr-photobooth-db"
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "10c4ff4c-1b7f-4e43-9ff8-ac4bc0468eac"
 
 # ── COMMUNITY STORAGE (R2) ──
 [[r2_buckets]]
