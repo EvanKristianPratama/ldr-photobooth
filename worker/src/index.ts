@@ -55,9 +55,6 @@ export default {
       );
     }
 
-      );
-    }
-
     // ── COMMUNITY API ──
 
     // 1. Get all frames
