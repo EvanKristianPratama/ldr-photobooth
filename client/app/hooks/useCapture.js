@@ -21,6 +21,7 @@ export default function useCapture({
   const [countdown, setCountdown] = useState(null);
   const [currentShotIndex, setCurrentShotIndex] = useState(0);
   const [totalShots, setTotalShots] = useState(0);
+  const [localBlobs, setLocalBlobs] = useState([]);
 
   const attachStream = useCallback(() => {
     if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
@@ -125,6 +126,7 @@ export default function useCapture({
     if (typeof onFlash === 'function') onFlash(false);
 
     localBlobsRef.current[index] = blob;
+    setLocalBlobs([...localBlobsRef.current]); // Update state to trigger re-render
     await sendPhotoToPeer(blob, index, chunkSize);
   };
 
@@ -167,6 +169,7 @@ export default function useCapture({
   const resetCapture = () => {
     localBlobsRef.current = [];
     remoteBlobsRef.current = [];
+    setLocalBlobs([]);
     setCurrentShotIndex(0);
     setTotalShots(0);
     setCountdown(null);
@@ -180,6 +183,7 @@ export default function useCapture({
     countdown,
     currentShotIndex,
     totalShots,
+    localBlobs,
     setTotalShots,
     startCamera,
     attachStream,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export default function CaptureScreen({
   videoRef,
@@ -6,8 +6,17 @@ export default function CaptureScreen({
   totalShots,
   currentShotIndex,
   progress,
-  isProcessing
+  isProcessing,
+  localBlobs = [] // Mengambil data foto yang sudah diambil
 }) {
+  // Membuat URL untuk preview foto agar bisa ditampilkan
+  const photoPreviews = useMemo(() => {
+    return Array.from({ length: totalShots }).map((_, i) => {
+      const blob = localBlobs[i];
+      return blob ? URL.createObjectURL(blob) : null;
+    });
+  }, [localBlobs, totalShots]);
+
   if (isProcessing) {
     return (
       <section className="page active" id="page-processing">
@@ -25,7 +34,7 @@ export default function CaptureScreen({
 
         <div className="processing-steps">
           <div className={`p-step ${progress > 10 ? 'done' : ''}`} id="ps1"><div className="p-dot"></div><span>Scanning frames...</span></div>
-          <div className={`p-step ${progress > 40 ? 'done' : ''}`} id="ps2"><div className="p-dot"></div><span>Adding grain & contrast...</span></div>
+          <div className={`p-step ${progress > 40 ? 'done' : ''}`} id="ps2"><div className="p-dot"></div><span>Adding grain &amp; contrast...</span></div>
           <div className={`p-step ${progress > 70 ? 'done' : ''}`} id="ps3"><div className="p-dot"></div><span>Composing strip layout...</span></div>
           <div className={`p-step ${progress === 100 ? 'done' : ''}`} id="ps4"><div className="p-dot"></div><span>Finalising print — almost there!</span></div>
         </div>
@@ -35,43 +44,81 @@ export default function CaptureScreen({
 
   return (
     <section className="page active" id="page-capture">
-      <div className="capture-main">
-        {countdown !== null && <div className="countdown" id="countdown">{countdown}</div>}
-        <div className="camera-frame">
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', borderRadius: '8px' }} 
+      <div className="capture-full">
+
+        {/* ── Timer row ── */}
+        <div className="capture-timer-row">
+          <div className="capture-shot-badge">
+            <span className="shot-badge-num">{currentShotIndex + 1}</span>
+            <span className="shot-badge-sep">/</span>
+            <span className="shot-badge-total">{totalShots}</span>
+          </div>
+
+          <div className={`capture-countdown-box ${countdown !== null ? 'active' : ''}`} id="countdown">
+            {countdown !== null ? countdown : '✦'}
+          </div>
+
+          <div style={{ width: '120px' }}></div>
+        </div>
+
+        {/* ── Camera frame full card ── */}
+        <div className="camera-card">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+              borderRadius: '10px',
+              display: 'block',
+            }}
           />
-          {!videoRef.current?.srcObject && !countdown && (
-            <div className="camera-placeholder">
-              <div className="cam-icon"><div className="cam-lens"></div></div>
-              <div className="cam-text">CAMERA READY</div>
+
+          {/* Countdown overlay inside camera */}
+          {countdown !== null && (
+            <div className="cam-countdown-overlay">
+              <span className="cam-countdown-num">{countdown}</span>
             </div>
           )}
-        </div>
-        <div className="capture-bar">
-          <span className="shutter-hint" id="shot-label">
-            Shot {currentShotIndex + 1} of <span id="total-shots">{totalShots}</span>
-          </span>
-          <div className="btn-shutter" style={{ cursor: 'default' }}></div>
-          <span className="shutter-hint">Auto timer</span>
-        </div>
-      </div>
 
-      <aside className="capture-sidebar">
-        <div className="sidebar-title">Your Strip ✦</div>
-        <div className="shot-strip" id="shot-strip">
-          {Array.from({ length: totalShots }).map((_, i) => (
-            <div key={i} className={`shot-slot ${i < currentShotIndex ? 'taken' : ''}`} id={`slot-${i}`}>
-              <span className="shot-num">0{i + 1}</span>
-              <span>{i < currentShotIndex ? '✓ Taken!' : 'empty'}</span>
-            </div>
-          ))}
+          {/* Bottom info bar inside card */}
+          <div className="cam-info-bar">
+            <span className="cam-info-left">📸 Shot {currentShotIndex + 1} of {totalShots}</span>
+            <span className="cam-info-right">Auto timer ✦</span>
+          </div>
         </div>
-      </aside>
+
+        {/* ── Progress strip (Tanpa tombol bulat kiri) ── */}
+        <div className="capture-strip-bar" style={{ justifyContent: 'center' }}>
+          <div className="strip-bar-slots" style={{ justifyContent: 'center', flex: 'none' }}>
+            {Array.from({ length: totalShots }).map((_, i) => (
+              <div
+                key={i}
+                className={`strip-thumb ${i < currentShotIndex ? 'taken' : i === currentShotIndex ? 'current' : ''}`}
+                style={{ width: '100px', height: '75px', overflow: 'hidden', background: '#000' }}
+              >
+                {photoPreviews[i] ? (
+                  <img 
+                    src={photoPreviews[i]} 
+                    alt={`Shot ${i+1}`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
+                  />
+                ) : (
+                  <>
+                    <span className="strip-thumb-num">0{i + 1}</span>
+                    <span className="strip-thumb-label">{i === currentShotIndex ? '📸' : '—'}</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
     </section>
   );
 }

@@ -11,6 +11,7 @@ import LayoutSelectScreen from './components/screens/LayoutSelectScreen';
 import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import StepIndicator from './components/ui/StepIndicator';
+import HowToUseScreen from './components/screens/HowToUseScreen';
 
 import useRoom from './hooks/useRoom';
 import useWebRTC from './hooks/useWebRTC';
@@ -35,6 +36,7 @@ export default function Page() {
   const [locationsById, setLocationsById] = useState({});
   const [downloadName, setDownloadName] = useState('');
   const autoApplyReadyRef = useRef(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   const handlePartnerPause = () => {
     if (pausedRef.current) return;
@@ -47,6 +49,11 @@ export default function Page() {
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
+      customClass: {
+        popup: 'swal-doodle',
+        title: 'swal2-title',
+        htmlContainer: 'swal2-html-container'
+      },
       didOpen: () => {
         Swal.showLoading();
       }
@@ -62,7 +69,12 @@ export default function Page() {
       title: 'Connected!',
       text: 'Resuming session...',
       timer: 1500,
-      showConfirmButton: false
+      showConfirmButton: false,
+      customClass: {
+        popup: 'swal-doodle',
+        title: 'swal2-title',
+        htmlContainer: 'swal2-html-container'
+      }
     });
   };
 
@@ -133,7 +145,8 @@ export default function Page() {
     frame.frameColor,
     frame.frameTextColor,
     frame.locTextLeft,
-    frame.locTextRight
+    frame.locTextRight,
+    frame.photoFilter
   ].join('|'), [
     frame.frameMode,
     frame.framePresetId,
@@ -142,7 +155,8 @@ export default function Page() {
     frame.frameColor,
     frame.frameTextColor,
     frame.locTextLeft,
-    frame.locTextRight
+    frame.locTextRight,
+    frame.photoFilter
   ]);
 
   const debouncedMergeDeps = useDebouncedValue(mergeDeps, 200);
@@ -309,9 +323,13 @@ export default function Page() {
   };
 
   const handleDownload = () => {
-    if (!downloadName) {
-      setDownloadName(`ldr-photo-${Date.now()}.jpg`);
-    }
+    if (!frame.mergedImage) return;
+    const link = document.createElement('a');
+    link.href = frame.mergedImage;
+    link.download = downloadName || `ldr-photo-${Date.now()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleReapply = () => {
@@ -350,16 +368,19 @@ export default function Page() {
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {step === 'join' && (
-          <JoinRoomScreen
-            displayName={room.displayName}
-            setDisplayName={room.setDisplayName}
-            roomCode={room.roomCode}
-            setRoomCode={room.setRoomCode}
-            generateRoomCode={() => room.generateRoomCode(uuidv4)}
-            copyRoomCode={room.copyRoomCode}
-            showToast={room.showToast}
-            onJoin={handleJoin}
-          />
+          <>
+            <button className="btn-help" onClick={() => setShowHowTo(true)} title="Cara Pakai">?</button>
+            <JoinRoomScreen
+              displayName={room.displayName}
+              setDisplayName={room.setDisplayName}
+              roomCode={room.roomCode}
+              setRoomCode={room.setRoomCode}
+              generateRoomCode={() => room.generateRoomCode(uuidv4)}
+              copyRoomCode={room.copyRoomCode}
+              showToast={room.showToast}
+              onJoin={handleJoin}
+            />
+          </>
         )}
 
         {step === 'room' && (
@@ -424,6 +445,8 @@ export default function Page() {
             locTextRight={frame.locTextRight}
             setLocTextRight={frame.setLocTextRight}
             setLocTextEdited={frame.setLocTextEdited}
+            photoFilter={frame.photoFilter}
+            setPhotoFilter={frame.setPhotoFilter}
             userData={room}
           />
         )}
@@ -437,31 +460,38 @@ export default function Page() {
             onHome={handleGoHome}
             onDownload={handleDownload}
             onDonate={handleOpenDonate}
+            photoFilter={frame.photoFilter}
           />
         )}
       </main>
 
       {/* BOTTOM NAV / FOOTER */}
-      <footer style={{ flexShrink: 0, borderTop: '3px solid var(--ink)', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 28px' }}>
-        <div style={{ fontFamily: 'Caveat', fontSize: '16px', opacity: 0.7 }}>
-          Created by Evan Kristian — @evankristiannn
+      <footer style={{ 
+        flexShrink: 0, 
+        borderTop: '3px solid var(--ink)', 
+        background: 'var(--cream)', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'flex-end', 
+        padding: '10px 28px',
+        position: 'relative',
+        minHeight: '60px'
+      }}>
+        <div style={{ 
+          fontFamily: "'Pastel Crayon', cursive", 
+          fontSize: '16px', 
+          opacity: 0.8,
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          whiteSpace: 'nowrap'
+        }}>
+          Created by Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
         </div>
         
-        {(step === 'layout-select' || step === 'frame-select') && (
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn-back" onClick={step === 'layout-select' ? handleGoHome : () => setStep('layout-select')} style={{ padding: '6px 16px', fontSize: '15px' }}>
-              ← Back
-            </button>
-            <button 
-              className="btn-next" 
-              onClick={step === 'layout-select' ? handleStartBooth : () => setStep('result')}
-              disabled={step === 'layout-select' && !selectedLayout}
-              style={{ padding: '6px 16px', fontSize: '15px' }}
-            >
-              {step === 'layout-select' ? 'Start Capture →' : 'Continue →'}
-            </button>
-          </div>
-        )}
+        {/* Buttons removed because they are now inside the screens */}
       </footer>
 
       {donateOpen && (
@@ -502,6 +532,7 @@ export default function Page() {
           </div>
         </div>
       )}
+      {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
     </div>
   );
 }

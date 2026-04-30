@@ -35,7 +35,7 @@ export default function JoinRoomScreen({
             className="form-input" 
             value={displayName} 
             onChange={e => setDisplayName(e.target.value)} 
-            placeholder="e.g. Rania" 
+            placeholder="e.g. Evan" 
             autoComplete="off" 
             maxLength="30"
           />

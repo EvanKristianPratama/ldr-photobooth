@@ -7,7 +7,8 @@ export default function ResultScreen({
   onEditFrame,
   onHome,
   onDownload,
-  onDonate
+  onDonate,
+  photoFilter
 }) {
   return (
     <section className="page active" id="page-download" style={{ flexDirection: 'row', padding: '0 60px', overflow: 'hidden', background: 'var(--cream)', alignItems: 'center', justifyContent: 'center', gap: '80px' }}>
@@ -33,7 +34,17 @@ export default function ResultScreen({
             <img 
               src={mergedImage} 
               alt="Final Strip" 
-              style={{ width: '100%', borderRadius: '4px', border: '3.5px solid var(--ink)', boxShadow: '10px 10px 0 var(--ink)' }} 
+              style={{ 
+                width: '100%', 
+                borderRadius: '4px', 
+                border: '3.5px solid var(--ink)', 
+                boxShadow: '10px 10px 0 var(--ink)',
+                filter: photoFilter === 'bw' ? 'grayscale(100%)' :
+                        photoFilter === 'sepia' ? 'sepia(100%)' :
+                        photoFilter === 'vintage' ? 'sepia(50%) contrast(120%) brightness(90%)' :
+                        photoFilter === 'warm' ? 'sepia(30%) saturate(140%)' :
+                        photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none'
+              }} 
             />
           )}
         </div>

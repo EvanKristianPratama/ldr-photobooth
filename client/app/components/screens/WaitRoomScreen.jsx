@@ -9,70 +9,100 @@ export default function WaitRoomScreen({
   videoRef,
   onNext
 }) {
+  const isReady = participants.length >= 2;
+
   return (
-    <section className="page active" id="page-room" style={{ flexDirection: 'column', padding: '20px 28px', gap: '16px' }}>
-      <div className="page-title-row" style={{ marginBottom: '12px' }}>
-        <div className="page-title" style={{ fontSize: '36px' }}>Waiting Room ✦</div>
-        <div className="room-badge" style={{ padding: '4px 12px', fontSize: '14px' }}>
-          <div className={`room-dot ${status?.startsWith?.('Connected') ? 'active' : ''}`} />
-          <span>{status}</span>
+    <section className="page active" id="page-room" style={{ flexDirection: 'column', padding: '40px 48px' }}>
+      <div className="page-title-row" style={{ marginBottom: '40px' }}>
+        <h1 className="page-title" style={{ fontSize: '72px', fontFamily: "'Gaegu', cursive" }}>
+          Waiting Room ✦
+        </h1>
+        <div className="room-badge">
+          <div className={`room-dot ${isReady ? 'active' : ''}`} />
+          {/* Teks Connected dihapus sesuai permintaan */}
         </div>
       </div>
 
-      <div className="wr__meta" style={{ marginBottom: '10px', gap: '12px' }}>
-        <div className="wr__participants squiggle" style={{ padding: '12px 16px' }}>
-          <div className="wr__participants-head" style={{ fontSize: '18px', marginBottom: '8px' }}>
-            <span>Crew List</span>
-            <span>{participants.length} / 2</span>
+      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+        
+        {/* ── LEFT: CAMERA ── */}
+        <div style={{ flex: 1.2 }}>
+          <div className="camera-frame squiggle" style={{ width: '100%', height: 'auto', aspectRatio: '16/9', margin: 0, position: 'relative' }}>
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', borderRadius: '8px' }} 
+            />
+            {/* Teks dipindah ke dalam preview */}
+            <div className="cam-info-bar" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 100%)', padding: '15px' }}>
+              <span className="cam-info-left" style={{ color: 'white', fontSize: '18px' }}>
+                Dandan dulu gih sebelum mulai! ✨
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {participants.map((p, i) => (
-              <div key={i} className="wr__participant" style={{ fontSize: '16px', margin: 0 }}>
-                <div className="wr__participant-dot" />
-                {p.displayName} {p.isYou ? '(You)' : ''}
-              </div>
-            ))}
-            {participants.length < 2 && (
-              <div className="wr__participant" style={{ opacity: 0.4, fontSize: '16px', margin: 0 }}>
-                <div className="wr__participant-dot" style={{ background: '#ccc' }} />
-                Waiting...
+        </div>
+
+        {/* ── RIGHT: PARTNER & NEXT ── */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          <div className="wr__participants squiggle" style={{ margin: 0, padding: '24px' }}>
+            <div className="wr__participants-head" style={{ marginBottom: '16px' }}>
+              <span style={{ fontSize: '22px' }}>Crew List</span>
+              <span style={{ fontSize: '18px', opacity: 0.6 }}>{participants.length} / 2</span>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {participants.map((p, i) => (
+                <div key={i} className="wr__participant" style={{ margin: 0, padding: '8px 16px', fontSize: '18px' }}>
+                  <div className="wr__participant-dot" />
+                  {p.displayName} {p.isYou ? '(You)' : ''}
+                </div>
+              ))}
+              {participants.length < 2 && (
+                <div className="wr__participant" style={{ opacity: 0.4, margin: 0, padding: '8px 16px', fontSize: '18px' }}>
+                  <div className="wr__participant-dot" style={{ background: '#ccc' }} />
+                  Waiting...
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="wr__code-box" style={{ margin: 0 }}>
+            <span style={{ 
+              fontFamily: "'Pastel Crayon', cursive", 
+              fontSize: '16px', 
+              color: '#888', 
+              marginBottom: '8px', 
+              display: 'block' 
+            }}>
+              Share Link:
+            </span>
+            <div className="code-display squiggle" onClick={copyRoomCode} style={{ cursor: 'pointer', position: 'relative', fontSize: '24px' }}>
+              <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Copied!</div>
+              {roomCode || '—'}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+            {isReady ? (
+              <button className="btn-primary" onClick={onNext} style={{ width: '100%', padding: '18px' }}>
+                Mulai Pilih Layout →
+              </button>
+            ) : (
+              <div style={{ 
+                fontFamily: "'Pastel Crayon', cursive", 
+                color: 'var(--ink)', 
+                fontSize: '18px', 
+                textAlign: 'center',
+                opacity: 0.7 
+              }}>
+                ⌛ Menunggu partner join...
               </div>
             )}
           </div>
-        </div>
 
-        <div className="wr__code-box">
-          <div
-            className="code-display"
-            onClick={copyRoomCode}
-            style={{ padding: '8px 16px', fontSize: '18px' }}
-          >
-            <div className={`copy-toast ${showToast ? 'visible' : ''}`} style={{ top: '-35px' }}>Link Copied!</div>
-            Code: {roomCode || '—'}
-          </div>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', flex: 1, justifyContent: 'center' }}>
-        <div className="camera-frame" style={{ width: '100%', maxWidth: '440px', aspectRatio: '16/9' }}>
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', borderRadius: '8px' }} 
-          />
-        </div>
-
-        {participants.length >= 2 ? (
-          <button className="btn-primary" onClick={onNext} style={{ maxWidth: '300px', padding: '12px 24px', fontSize: '18px' }}>
-            Next: Pick Layout →
-          </button>
-        ) : (
-          <div className="shutter-hint" style={{ color: 'var(--ink)', fontSize: '16px' }}>
-            ⌛ Waiting for your partner...
-          </div>
-        )}
       </div>
     </section>
   );

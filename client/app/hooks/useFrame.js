@@ -13,6 +13,7 @@ export default function useFrame({ participants }) {
   const [locTextLeft, setLocTextLeft] = useState('');
   const [locTextRight, setLocTextRight] = useState('');
   const [locTextEdited, setLocTextEdited] = useState(false);
+  const [photoFilter, setPhotoFilter] = useState('none');
   const [mergedImage, setMergedImage] = useState(null);
   const [lastMergeCount, setLastMergeCount] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
@@ -80,7 +81,8 @@ export default function useFrame({ participants }) {
       frameColor,
       frameTextColor,
       locTextLeft,
-      locTextRight
+      locTextRight,
+      photoFilter
     ].join('|');
   }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight]);
 
@@ -206,6 +208,15 @@ export default function useFrame({ participants }) {
 
         const rowY = headerH + gap + (i * (cellH + gap));
 
+        ctx.save();
+        if (photoFilter !== 'none') {
+          if (photoFilter === 'bw') ctx.filter = 'grayscale(100%)';
+          else if (photoFilter === 'sepia') ctx.filter = 'sepia(100%)';
+          else if (photoFilter === 'vintage') ctx.filter = 'sepia(50%) contrast(120%) brightness(90%)';
+          else if (photoFilter === 'warm') ctx.filter = 'sepia(30%) saturate(140%)';
+          else if (photoFilter === 'cold') ctx.filter = 'saturate(80%) hue-rotate(180deg) brightness(110%)';
+        }
+
         if (isUserA) {
           ctx.drawImage(remoteImg, gap, rowY, cellW, cellH);
           ctx.drawImage(localImg, gap * 2 + cellW, rowY, cellW, cellH);
@@ -213,6 +224,7 @@ export default function useFrame({ participants }) {
           ctx.drawImage(localImg, gap, rowY, cellW, cellH);
           ctx.drawImage(remoteImg, gap * 2 + cellW, rowY, cellW, cellH);
         }
+        ctx.restore();
       }
 
       drawHeaderFooter();
@@ -229,11 +241,11 @@ export default function useFrame({ participants }) {
     framePresetId,
     frameSrc,
     showFrameText,
-    frameColor,
     frameTextColor,
     locTextLeft,
     locTextRight,
     locTextEdited,
+    photoFilter,
     getDefaultFrameNames,
     getAutoLocationString,
     mergeKey
@@ -290,6 +302,7 @@ export default function useFrame({ participants }) {
     setLocTextLeft('');
     setLocTextRight('');
     setLocTextEdited(false);
+    setPhotoFilter('none');
     setMergedImage(null);
     setLastMergeCount(0);
     setIsMerging(false);
@@ -327,6 +340,8 @@ export default function useFrame({ participants }) {
     mergedImage,
     lastMergeCount,
     isMerging,
+    photoFilter,
+    setPhotoFilter,
     framePresets,
     mergePhotos,
     handleFrameUpload,

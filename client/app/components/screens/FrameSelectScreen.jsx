@@ -29,6 +29,8 @@ export default function FrameSelectScreen({
   locTextRight,
   setLocTextRight,
   setLocTextEdited,
+  photoFilter,
+  setPhotoFilter,
   userData
 }) {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
@@ -55,11 +57,21 @@ export default function FrameSelectScreen({
             <img 
               src={mergedImage} 
               alt="Strip Preview" 
-              style={{ width: '100%', borderRadius: '4px', border: '2px solid var(--ink)' }} 
+              style={{ 
+                width: '100%', 
+                borderRadius: '4px', 
+                border: '2px solid var(--ink)',
+                filter: photoFilter === 'bw' ? 'grayscale(100%)' :
+                        photoFilter === 'sepia' ? 'sepia(100%)' :
+                        photoFilter === 'vintage' ? 'sepia(50%) contrast(120%) brightness(90%)' :
+                        photoFilter === 'warm' ? 'sepia(30%) saturate(140%)' :
+                        photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none',
+                transition: 'filter 0.2s ease'
+              }} 
             />
           )}
           <div className="strip-label" id="strip-name" style={{ color: frameTextColor }}>
-            {userData?.displayName || 'your name'}
+            {userData?.displayName || 'Evan'}
           </div>
           <div className="strip-date" id="strip-date" style={{ color: frameTextColor, opacity: 0.6 }}>
             {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
@@ -69,6 +81,50 @@ export default function FrameSelectScreen({
 
       <div className="frame-controls">
         <div className="ctrl-title">Edit Frame ✦</div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">PHOTO FILTER</div>
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px' }}>
+            {[
+              { id: 'none', label: 'Normal', color: '#eee' },
+              { id: 'bw', label: 'B&W', color: '#666' },
+              { id: 'sepia', label: 'Sepia', color: '#a68069' },
+              { id: 'vintage', label: 'Retro', color: '#8e735b' },
+              { id: 'warm', label: 'Warm', color: '#ffb38a' },
+              { id: 'cold', label: 'Cold', color: '#8ac6ff' },
+            ].map(f => (
+              <button 
+                key={f.id}
+                className={`btn-secondary ${photoFilter === f.id ? 'active' : ''}`}
+                style={{ 
+                  flexShrink: 0, 
+                  padding: '8px 12px', 
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '14px',
+                  fontFamily: "'Gaegu', cursive",
+                  background: photoFilter === f.id ? 'var(--yellow)' : 'white',
+                  border: '2px solid var(--ink)',
+                  borderRadius: '12px'
+                }}
+                onClick={() => {
+                  setPhotoFilter(f.id);
+                  onReapply();
+                }}
+              >
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  borderRadius: '50%', 
+                  background: f.color,
+                  border: '1px solid var(--ink)'
+                }} />
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="ctrl-section">
           <div className="ctrl-label">FRAME PRESETS</div>
@@ -127,7 +183,7 @@ export default function FrameSelectScreen({
                 />
               </div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Caveat', fontSize: '18px', cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8 }}>
               <input 
                 type="checkbox" 
                 checked={showFrameText} 
@@ -156,6 +212,16 @@ export default function FrameSelectScreen({
           </label>
           {frameName && <p className="form-hint" style={{ textAlign: 'center' }}>{frameName}</p>}
           {frameError && <p className="error-msg show">{frameError}</p>}
+        </div>
+
+        <div style={{ marginTop: 'auto', paddingTop: '32px' }}>
+          <button 
+            className="btn-primary" 
+            onClick={onContinue} 
+            style={{ width: '100%', padding: '16px', fontSize: '20px' }}
+          >
+            Finish & Download →
+          </button>
         </div>
       </div>
 

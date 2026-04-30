@@ -12,18 +12,18 @@ export default function LayoutSelectScreen({
   ];
 
   return (
-    <section className="page active" id="page-layout">
-      <div className="page-title-row">
+    <section className="page active" id="page-layout" style={{ alignItems: 'center', textAlign: 'center' }}>
+      <div className="page-title-row" style={{ justifyContent: 'center', marginBottom: '48px' }}>
         <div className="page-title">Pick a layout ✦</div>
-        <div className="page-badge">Step 02 / 07</div>
       </div>
 
-      <div className="layout-grid">
+      <div className="layout-grid" style={{ justifyContent: 'center', gap: '24px' }}>
         {layouts.map((layout) => (
           <div 
             key={layout.id}
-            className={`layout-card ${selectedLayout === layout.id ? 'selected' : ''}`} 
+            className={`layout-card squiggle ${selectedLayout === layout.id ? 'selected' : ''}`} 
             onClick={() => onSelectLayout(layout.id)}
+            style={{ minWidth: '220px' }}
           >
             <div className="layout-preview" style={{ flexDirection: layout.direction || 'row', gap: layout.gap || '6px' }}>
               {layout.slots.map((slot, i) => (
@@ -36,6 +36,17 @@ export default function LayoutSelectScreen({
             </div>
           </div>
         ))}
+      </div>
+
+      <div style={{ marginTop: '60px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <button 
+          className="btn-primary" 
+          disabled={!selectedLayout}
+          onClick={onStart}
+          style={{ width: 'auto', minWidth: '300px', padding: '20px 40px', fontSize: '24px' }}
+        >
+          {selectedLayout ? 'Start Capture →' : 'Pilih Layout Dulu ✨'}
+        </button>
       </div>
     </section>
   );

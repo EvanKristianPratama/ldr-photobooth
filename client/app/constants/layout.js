@@ -5,11 +5,11 @@ export const LAYOUTS = {
 };
 
 export const FRAME_CANVAS = {
-  cellW: 1200,
-  cellH: 1800,
-  gap: 100,
-  headerH: 170,
-  footerH: 260
+  cellW: 500,
+  cellH: 750,
+  gap: 40,
+  headerH: 150,
+  footerH: 200
 };
 
 export const COUNTDOWN_SECONDS = 6;
