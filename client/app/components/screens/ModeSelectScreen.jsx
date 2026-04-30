@@ -3,7 +3,7 @@ import React from 'react';
 export default function ModeSelectScreen({ onSelectMode }) {
   return (
     <section className="page active" id="page-mode-select">
-      <div className="mode-left">
+      <div className="mode-left vibe-bg">
         <div className="deco-circle" style={{ width: '200px', height: '200px', top: '-60px', left: '-60px' }}></div>
         <div className="deco-circle" style={{ width: '120px', height: '120px', bottom: '40px', right: '-30px' }}></div>
         <div className="deco-circle" style={{ width: '60px', height: '60px', top: '40%', left: '20px' }}></div>

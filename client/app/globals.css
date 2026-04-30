@@ -2436,6 +2436,18 @@ body::before {
   border-right: 3px solid var(--ink);
 }
 
+.vibe-bg {
+  background: linear-gradient(135deg, #ffd93d 0%, #ff9a8b 50%, #9b87f5 100%);
+  background-size: 400% 400%;
+  animation: vibeGradient 10s ease infinite;
+}
+
+@keyframes vibeGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .mode-left .big-doodle {
   font-family: 'Gaegu', cursive;
   font-size: clamp(60px, 9vw, 110px);
@@ -2726,10 +2738,10 @@ body::before {
 }
 
 .mode-option-card.community:hover {
-  background: #fdfdfd !important;
-  transform: none !important;
-  box-shadow: 4px 4px 0 var(--ink) !important;
-  cursor: help;
+  background: #fffdf0 !important;
+  transform: translate(-4px, -4px) !important;
+  box-shadow: 10px 10px 0 var(--yellow) !important;
+  cursor: pointer;
 }
 
 /* ── COMMUNITY SCREEN ── */
