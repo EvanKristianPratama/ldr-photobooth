@@ -3025,6 +3025,40 @@ body::before {
   background: #f0f0f0;
 }
 
+.btn-community-hot {
+  background: linear-gradient(135deg, #ff6b9d 0%, #ff9a8b 50%, #ffd93d 100%);
+  background-size: 200% 200%;
+  animation: gradientFlow 3s ease infinite;
+  color: white;
+  border: 3.5px solid var(--ink);
+  padding: 16px 24px;
+  border-radius: 20px;
+  font-family: 'Gaegu', cursive;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 var(--ink);
+  transition: all 0.2s;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  margin-bottom: 8px;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.btn-community-hot:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.btn-community-hot:active {
+  transform: translateY(2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
 .comm-modal-close {
   position: absolute;
   top: 16px;

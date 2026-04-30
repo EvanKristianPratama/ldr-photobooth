@@ -142,14 +142,14 @@ export default function ResultScreen({
           </div>
 
           <div className="result-actions-stack">
+            <button className="btn-community-hot" onClick={() => setShowPostModal(true)}>
+              🔥 Post to Community 🔥
+            </button>
             <button className="btn-dl" onClick={onDownload}>
               ↓ Download Strip
             </button>
             <button className="btn-share" onClick={handleShare}>
               📤 Share Photo
-            </button>
-            <button className="btn-secondary" onClick={() => setShowPostModal(true)} style={{ background: '#fff' }}>
-              🎨 Post to Community
             </button>
             <button className="btn-secondary" onClick={onEditFrame} style={{ background: 'white', opacity: 0.8, fontSize: '14px' }}>
               Edit Again ↺
