@@ -22,8 +22,39 @@ export default function useFrame({ participants }) {
   const [orientation, setOrientation] = useState('portrait');
   const mergeCacheRef = useRef(new Map());
 
+  const [communityPresets, setCommunityPresets] = useState([]);
+
+  useEffect(() => {
+    const fetchCommunityFrames = async () => {
+      try {
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:8787' 
+          : '';
+        const response = await fetch(`${API_BASE}/api/community/frames`);
+        if (response.ok) {
+          const data = await response.json();
+          const mapped = data.map(f => ({
+            id: f.id,
+            label: f.title,
+            mode: 'custom',
+            src: f.url,
+            description: `by ${f.author}`
+          }));
+          setCommunityPresets(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load community presets');
+      }
+    };
+    fetchCommunityFrames();
+  }, []);
+
   const framePresets = useMemo(() => {
     const basePresets = FRAME_PRESETS;
+    
+    // Gabungkan: Official + Community
+    const combined = [...basePresets, ...communityPresets];
+
     if (frameName || (frameMode === 'custom' && frameSrc && frameSrc !== DEFAULT_FRAME_SRC)) {
       const customPreset = {
         id: 'upload',
@@ -32,10 +63,10 @@ export default function useFrame({ participants }) {
         src: frameSrc,
         description: 'Frame pilihanmu'
       };
-      return [basePresets[0], customPreset, ...basePresets.slice(1)];
+      return [combined[0], customPreset, ...combined.slice(1)];
     }
-    return basePresets;
-  }, [frameName, frameMode, frameSrc]);
+    return combined;
+  }, [frameName, frameMode, frameSrc, communityPresets]);
 
   const getDefaultFrameNames = useCallback(() => {
     const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
