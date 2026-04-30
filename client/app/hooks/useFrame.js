@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_FRAME_SRC, FRAME_CANVAS, FRAME_PRESETS } from '../constants/layout';
 
 export default function useFrame({ participants }) {
