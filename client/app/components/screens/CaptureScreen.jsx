@@ -46,20 +46,6 @@ export default function CaptureScreen({
     <section className="page active" id="page-capture">
       <div className="capture-full">
 
-        {/* ── Timer row ── */}
-        <div className="capture-timer-row">
-          <div className="capture-shot-badge">
-            <span className="shot-badge-num">{currentShotIndex + 1}</span>
-            <span className="shot-badge-sep">/</span>
-            <span className="shot-badge-total">{totalShots}</span>
-          </div>
-
-          <div className={`capture-countdown-box ${countdown !== null ? 'active' : ''}`} id="countdown">
-            {countdown !== null ? countdown : '✦'}
-          </div>
-
-          <div style={{ width: '120px' }}></div>
-        </div>
 
         {/* ── Camera frame full card ── */}
         <div className="camera-card">
@@ -78,6 +64,18 @@ export default function CaptureScreen({
             }}
           />
 
+          {/* Guide overlay */}
+          <div className="cam-guide-overlay">
+            <div className="guide-box">
+              <div className="guide-corner tl"></div>
+              <div className="guide-corner tr"></div>
+              <div className="guide-corner bl"></div>
+              <div className="guide-corner br"></div>
+              <div className="guide-lines-v"></div>
+              <div className="guide-lines-h"></div>
+            </div>
+          </div>
+
           {/* Countdown overlay inside camera */}
           {countdown !== null && (
             <div className="cam-countdown-overlay">
@@ -85,11 +83,6 @@ export default function CaptureScreen({
             </div>
           )}
 
-          {/* Bottom info bar inside card */}
-          <div className="cam-info-bar">
-            <span className="cam-info-left">Take {currentShotIndex + 1} of {totalShots}</span>
-            <span className="cam-info-right">Auto timer ✦</span>
-          </div>
         </div>
 
         {/* ── Progress strip (Tanpa tombol bulat kiri) ── */}
@@ -109,8 +102,8 @@ export default function CaptureScreen({
                   />
                 ) : (
                   <>
-                    <span className="strip-thumb-num">0{i + 1}</span>
-                    <span className="strip-thumb-label">{i === currentShotIndex ? 'NOW' : '—'}</span>
+                    <span className="strip-thumb-num">{i + 1}</span>
+                    <span className="strip-thumb-label">{i === currentShotIndex ? 'READY' : ''}</span>
                   </>
                 )}
               </div>

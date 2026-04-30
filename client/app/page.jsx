@@ -12,6 +12,7 @@ import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import StepIndicator from './components/ui/StepIndicator';
 import HowToUseScreen from './components/screens/HowToUseScreen';
+import ModeSelectScreen from './components/screens/ModeSelectScreen';
 
 import useRoom from './hooks/useRoom';
 import useWebRTC from './hooks/useWebRTC';
@@ -26,7 +27,8 @@ const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '';
 
 export default function Page() {
-  const [step, setStep] = useState('join');
+  const [step, setStep] = useState('mode-select');
+  const [sessionMode, setSessionMode] = useState(null); // 'solo' or 'duo'
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [progress, setProgress] = useState(0);
   const pausedRef = useRef(false);
@@ -185,6 +187,26 @@ export default function Page() {
     capture.attachStream();
   }, [step, capture.attachStream]);
 
+  const startBoothSession = async ({ startTime, layout }) => {
+    if (layout) setSelectedLayout(layout);
+
+    frameRef.current.bumpSessionSeed();
+    captureRef.current.resetCapture();
+    setProgress(0);
+
+    const shots = LAYOUTS[layout || selectedLayoutRef.current]?.shots || 1;
+
+    if (startTime) {
+      const delay = Math.max(0, startTime - Date.now());
+      if (delay > 0) await new Promise(r => setTimeout(r, delay));
+    }
+
+    setStep('countdown');
+    await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
+    setStep('processing');
+    await captureRef.current.checkProcessingComplete(sessionMode);
+  };
+
   useEffect(() => {
     if (!room.socket) return;
 
@@ -208,25 +230,7 @@ export default function Page() {
       setStep('layout-select');
     };
 
-    const handleSessionStart = async ({ startTime, layout }) => {
-      if (layout) setSelectedLayout(layout);
-
-      frameRef.current.bumpSessionSeed();
-      captureRef.current.resetCapture();
-      setProgress(0);
-
-      const shots = LAYOUTS[layout || selectedLayoutRef.current]?.shots || 1;
-
-      if (startTime) {
-        const delay = Math.max(0, startTime - Date.now());
-        if (delay > 0) await new Promise(r => setTimeout(r, delay));
-      }
-
-      setStep('countdown');
-      await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
-      setStep('processing');
-      captureRef.current.checkProcessingComplete();
-    };
+    const handleSessionStart = (payload) => startBoothSession(payload);
 
     const handleSessionReset = () => {
       setStep('layout-select');
@@ -286,6 +290,20 @@ export default function Page() {
     }
   }, [step, frame.mergedImage]);
 
+  const handleModeSelect = (mode) => {
+    setSessionMode(mode);
+    if (mode === 'solo') {
+      // For solo, we bypass join/room but still need a placeholder ID
+      const myId = room.selfId || 'solo-user';
+      room.setDisplayName('You');
+      room.setParticipants([{ id: myId, displayName: 'You' }]);
+      capture.startCamera();
+      setStep('layout-select');
+    } else {
+      setStep('join');
+    }
+  };
+
   const handleJoin = () => {
     const ok = room.joinRoom();
     if (ok) {
@@ -306,12 +324,17 @@ export default function Page() {
 
   const handleStartBooth = () => {
     if (!selectedLayout) return;
-    room.emitSessionStart(selectedLayout);
+    if (sessionMode === 'solo') {
+      startBoothSession({ layout: selectedLayout });
+    } else {
+      room.emitSessionStart(selectedLayout);
+    }
   };
 
   const handleGoHome = () => {
     room.leaveRoom();
-    setStep('join');
+    setStep('mode-select');
+    setSessionMode(null);
     room.setRoomCode('');
     setSelectedLayout(null);
     setProgress(0);
@@ -359,6 +382,10 @@ export default function Page() {
       </header>
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        {step === 'mode-select' && (
+          <ModeSelectScreen onSelectMode={handleModeSelect} />
+        )}
+
         {step === 'join' && (
           <>
             <button className="btn-help" onClick={() => setShowHowTo(true)} title="Cara Pakai">?</button>
@@ -444,6 +471,9 @@ export default function Page() {
             addSticker={frame.addSticker}
             addRandomSticker={frame.addRandomSticker}
             clearStickers={frame.clearStickers}
+            sessionMode={sessionMode}
+            orientation={frame.orientation}
+            setOrientation={frame.setOrientation}
           />
         )}
 
@@ -457,6 +487,7 @@ export default function Page() {
             onDownload={handleDownload}
             onDonate={handleOpenDonate}
             photoFilter={frame.photoFilter}
+            sessionMode={sessionMode}
           />
         )}
       </main>

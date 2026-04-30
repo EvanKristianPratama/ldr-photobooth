@@ -35,7 +35,10 @@ export default function FrameSelectScreen({
   stickers,
   addSticker,
   addRandomSticker,
-  clearStickers
+  clearStickers,
+  sessionMode,
+  orientation,
+  setOrientation
 }) {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
 
@@ -51,7 +54,11 @@ export default function FrameSelectScreen({
   return (
     <section className="page active" id="page-frame">
       <div className="frame-editor">
-        <div className="photo-strip" id="preview-strip" style={{ background: frameColor }}>
+        <div 
+          className={`photo-strip ${sessionMode === 'solo' ? 'photo-strip--solo' : ''} ${orientation === 'landscape' ? 'photo-strip--landscape' : ''}`} 
+          id="preview-strip" 
+          style={{ background: frameColor }}
+        >
           {isMerging ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '10px' }}>
               <div className="room-dot" style={{ width: '20px', height: '20px' }}></div>
@@ -85,6 +92,26 @@ export default function FrameSelectScreen({
 
       <div className="frame-controls">
         <div className="ctrl-title">Edit Frame ✦</div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">ORIENTATION</div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              className={`btn-secondary ${orientation === 'portrait' ? 'active' : ''}`}
+              style={{ flex: 1, background: orientation === 'portrait' ? 'var(--yellow)' : 'white' }}
+              onClick={() => { setOrientation('portrait'); onReapply(); }}
+            >
+              Portrait 📱
+            </button>
+            <button 
+              className={`btn-secondary ${orientation === 'landscape' ? 'active' : ''}`}
+              style={{ flex: 1, background: orientation === 'landscape' ? 'var(--yellow)' : 'white' }}
+              onClick={() => { setOrientation('landscape'); onReapply(); }}
+            >
+              Landscape 💻
+            </button>
+          </div>
+        </div>
 
         <div className="ctrl-section">
           <div className="ctrl-label">PHOTO FILTER</div>

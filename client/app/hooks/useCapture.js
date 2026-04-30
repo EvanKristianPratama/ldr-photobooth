@@ -81,29 +81,13 @@ export default function useCapture({
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 1800;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-
-    const vRatio = video.videoWidth / video.videoHeight;
-    const cRatio = canvas.width / canvas.height;
-    let sw, sh, sx, sy;
-
-    if (vRatio > cRatio) {
-      sh = video.videoHeight;
-      sw = sh * cRatio;
-      sx = (video.videoWidth - sw) / 2;
-      sy = 0;
-    } else {
-      sw = video.videoWidth;
-      sh = sw / cRatio;
-      sx = 0;
-      sy = (video.videoHeight - sh) / 2;
-    }
 
     ctx.save();
     ctx.scale(-1, 1);
-    ctx.drawImage(video, sx, sy, sw, sh, -canvas.width, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, -canvas.width, 0, canvas.width, canvas.height);
     ctx.restore();
 
     canvas.toBlob(blob => {
@@ -143,14 +127,18 @@ export default function useCapture({
     }
   };
 
-  const checkProcessingComplete = async () => {
+  const checkProcessingComplete = async (sessionMode) => {
     let retries = 0;
-    while (remoteBlobsRef.current.filter(Boolean).length < totalShots && retries < PROCESSING_RETRY_LIMIT) {
-      const received = remoteBlobsRef.current.filter(Boolean).length;
-      const percentage = 50 + Math.round((received / totalShots) * 50);
-      if (typeof onProgress === 'function') onProgress(percentage);
-      await new Promise(r => setTimeout(r, PROCESSING_RETRY_DELAY_MS));
-      retries++;
+    const isSolo = sessionMode === 'solo';
+
+    if (!isSolo) {
+      while (remoteBlobsRef.current.filter(Boolean).length < totalShots && retries < PROCESSING_RETRY_LIMIT) {
+        const received = remoteBlobsRef.current.filter(Boolean).length;
+        const percentage = 50 + Math.round((received / totalShots) * 50);
+        if (typeof onProgress === 'function') onProgress(percentage);
+        await new Promise(r => setTimeout(r, PROCESSING_RETRY_DELAY_MS));
+        retries++;
+      }
     }
 
     if (typeof onProgress === 'function') onProgress(100);

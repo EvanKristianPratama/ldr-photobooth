@@ -51,6 +51,7 @@ export const FRAME_PRESETS = [
 ];
 
 export const STEP_LABELS = [
+  { id: 'mode-select', label: 'Mode', icon: '✨' },
   { id: 'join', label: 'Join', icon: '👋' },
   { id: 'room', label: 'Room', icon: '🏠' },
   { id: 'layout-select', label: 'Layout', icon: '🎨' },

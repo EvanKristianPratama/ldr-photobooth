@@ -8,8 +8,30 @@ export default function ResultScreen({
   onHome,
   onDownload,
   onDonate,
-  photoFilter
+  photoFilter,
+  sessionMode
 }) {
+  const handleShare = async () => {
+    if (!mergedImage) return;
+    try {
+      const response = await fetch(mergedImage);
+      const blob = await response.blob();
+      const file = new File([blob], downloadName || 'photobooth.jpg', { type: 'image/jpeg' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'LDR Photobooth',
+          text: 'Check out our photo strip! ✨',
+        });
+      } else {
+        alert('Web Share is not supported in this browser. Please download and share manually! ✌️');
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+    }
+  };
+
   return (
     <section className="page active" id="page-download" style={{ flexDirection: 'row', padding: '0 60px', overflow: 'hidden', background: 'var(--cream)', alignItems: 'center', justifyContent: 'center', gap: '80px' }}>
       
@@ -24,7 +46,10 @@ export default function ResultScreen({
 
       {/* Right: Actions/Preview */}
       <div style={{ display: 'flex', gap: '48px', alignItems: 'center' }}>
-        <div className="fs__preview-box" style={{ maxWidth: '260px', flexShrink: 0 }}>
+        <div 
+          className="fs__preview-box" 
+          style={{ maxWidth: sessionMode === 'solo' ? '160px' : '260px', flexShrink: 0 }}
+        >
           {isMerging ? (
             <div className="fs__loading" style={{ padding: '60px' }}>
               <div className="room-dot" />
@@ -53,7 +78,10 @@ export default function ResultScreen({
           <button className="btn-dl" onClick={onDownload} style={{ width: '100%', padding: '12px 20px', fontSize: '18px' }}>
             ↓ Download Strip
           </button>
-          <button className="btn-share" onClick={onEditFrame} style={{ width: '100%', padding: '12px 20px', fontSize: '18px' }}>
+          <button className="btn-share" onClick={handleShare} style={{ width: '100%', padding: '12px 20px', fontSize: '18px' }}>
+            📤 Share Photo
+          </button>
+          <button className="btn-secondary" onClick={onEditFrame} style={{ width: '100%', padding: '10px 20px', fontSize: '16px', background: 'white' }}>
             Edit Again ↺
           </button>
           
