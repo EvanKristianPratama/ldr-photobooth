@@ -155,13 +155,15 @@ export default function CommunityScreen({ onBack, framePresets }) {
               <div className="comm-item-img-wrapper">
                 <img src={item.url} alt={item.title || 'Result'} loading="lazy" />
                 <div className="comm-item-overlay">
-                  <button 
-                    className="btn-primary" 
-                    style={{ padding: '8px 16px', fontSize: '14px' }}
-                    onClick={(e) => { e.stopPropagation(); handleUseFrame(item); }}
-                  >
-                    {activeTab === 'frames' ? 'Use Frame' : 'Get Frame'}
-                  </button>
+                  {activeTab === 'frames' && (
+                    <button 
+                      className="btn-primary" 
+                      style={{ padding: '8px 16px', fontSize: '14px' }}
+                      onClick={(e) => { e.stopPropagation(); handleUseFrame(item); }}
+                    >
+                      Use Frame
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="comm-item-info">
@@ -211,11 +213,13 @@ export default function CommunityScreen({ onBack, framePresets }) {
                    </p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                   <button className="btn-primary" style={{ flex: 1 }} onClick={() => handleUseFrame(selectedItem)}>
-                      {activeTab === 'frames' ? 'Use Frame' : 'Get Frame'}
-                   </button>
-                   <button className="btn-secondary" onClick={(e) => handleLike(e, selectedItem)}>
-                      {activeTab === 'frames' ? '✨' : '❤️'}
+                   {activeTab === 'frames' && (
+                     <button className="btn-primary" style={{ flex: 1 }} onClick={() => handleUseFrame(selectedItem)}>
+                        Use Frame
+                     </button>
+                   )}
+                   <button className="btn-secondary" style={activeTab === 'photos' ? { flex: 1 } : {}} onClick={(e) => handleLike(e, selectedItem)}>
+                      {activeTab === 'frames' ? '✨' : '❤️ Like'}
                    </button>
                 </div>
              </div>
