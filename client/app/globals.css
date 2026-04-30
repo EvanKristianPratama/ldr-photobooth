@@ -3123,26 +3123,6 @@ body::before {
   transform: translateX(5px);
 }
 
-.pin-nav-item.active { 
-  background: #f0f0f0;
-  font-weight: 800; 
-}
-
-.nav-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.nav-label {
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-}
-
 .pin-sidebar-bottom {
   margin-top: auto;
 }
