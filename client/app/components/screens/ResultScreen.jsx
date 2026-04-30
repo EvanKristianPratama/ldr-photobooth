@@ -34,8 +34,11 @@ export default function ResultScreen({
   };
 
   const handlePostToCommunity = async () => {
-    const name = window.prompt("Share your photostrip to the community gallery! What is your name? 📸", "Anonymous");
+    const name = window.prompt("Who is the creator? 👤", "Anonymous");
     if (!name) return;
+    
+    const caption = window.prompt("Write a short caption... ✍️", "Our photobooth moment! ✨");
+    if (caption === null) return; // Allow empty but not cancel
 
     try {
       const response = await fetch(mergedImage);
@@ -45,6 +48,7 @@ export default function ResultScreen({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('author', name);
+      formData.append('title', caption); // Kita simpan caption di kolom 'title'
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
       formData.append('frame_id', selectedFrameId || '');
 

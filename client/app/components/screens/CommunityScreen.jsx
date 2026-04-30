@@ -201,11 +201,13 @@ export default function CommunityScreen({ onBack, framePresets }) {
              </div>
              <div className="full-view-sidebar" style={{ width: '300px', padding: '30px', display: 'flex', flexDirection: 'column' }}>
                 <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
-                <h2 className="comm-modal-title" style={{ textAlign: 'left', marginTop: '20px' }}>{selectedItem.title || 'Photo Strip'}</h2>
+                <h2 className="comm-modal-title" style={{ textAlign: 'left', marginTop: '20px' }}>{selectedItem.title || (activeTab === 'frames' ? 'Untitled Frame' : 'Photo Strip')}</h2>
                 <p className="comm-item-author">Shared by <b>{selectedItem.author}</b></p>
                 <div style={{ flex: 1, marginTop: '20px' }}>
                    <p style={{ fontSize: '14px', opacity: 0.7 }}>
-                      {activeTab === 'frames' ? 'A beautiful custom frame for your photobooth sessions.' : `A fun ${selectedItem.type} session captured by the community.`}
+                      {activeTab === 'frames' 
+                        ? (selectedItem.title ? `"${selectedItem.title}" - A beautiful custom frame for your photobooth sessions.` : 'A beautiful custom frame for your photobooth sessions.')
+                        : (selectedItem.title || `A fun ${selectedItem.type} session captured by the community.`)}
                    </p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>

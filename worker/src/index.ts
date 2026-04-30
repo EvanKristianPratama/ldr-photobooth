@@ -90,6 +90,7 @@ export default {
         const formData = await request.formData();
         const file = formData.get('file') as File; 
         const author = formData.get('author') as string;
+        const title = formData.get('title') as string || '';
         const type = formData.get('type') as string || 'solo';
         const frameId = formData.get('frame_id') as string || '';
         
@@ -97,8 +98,8 @@ export default {
         const filename = `posts/${id}.png`;
         await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: 'image/png' } });
         const publicUrl = `${url.origin}/${filename}`; 
-        await env.DB.prepare('INSERT INTO posts (id, author, url, type, frame_id, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(id, author, publicUrl, type, frameId, new Date().toISOString()).run();
+        await env.DB.prepare('INSERT INTO posts (id, title, author, url, type, frame_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(id, title, author, publicUrl, type, frameId, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       } catch (err) {
         return new Response(JSON.stringify({ error: 'Post failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
