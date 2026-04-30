@@ -132,13 +132,16 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
         <header className="comm-pin-header">
           <div className="comm-sort-tabs">
             <button className={`sort-tab ${sortBy === 'hot' ? 'active' : ''}`} onClick={() => setSortBy('hot')}>
-              🔥 Hot
+              <img src="/doodle icons/SVG/misc/fire.svg" className="tab-icon" alt="hot" />
+              Hot
             </button>
             <button className={`sort-tab ${sortBy === 'new' ? 'active' : ''}`} onClick={() => setSortBy('new')}>
-              ✨ New
+              <img src="/doodle icons/SVG/misc/rocket.svg" className="tab-icon" alt="new" />
+              New
             </button>
             <button className={`sort-tab ${sortBy === 'top' ? 'active' : ''}`} onClick={() => setSortBy('top')}>
-              🏆 Top
+              <img src="/doodle icons/SVG/misc/trophy.svg" className="tab-icon" alt="top" />
+              Top
             </button>
           </div>
         </header>
