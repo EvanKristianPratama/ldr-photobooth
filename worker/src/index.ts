@@ -6,6 +6,7 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // ── CORS PREFLIGHT ──
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
@@ -17,42 +18,26 @@ export default {
       });
     }
 
+    // ── WEBSOCKET SIGNALING ──
     if (url.pathname === '/ws') {
       const roomId = url.searchParams.get('room');
       if (!roomId) {
         return new Response(JSON.stringify({ error: 'Missing room parameter' }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }
-
-      if (!/^[a-zA-Z0-9]{1,20}$/.test(roomId)) {
-        return new Response(JSON.stringify({ error: 'Invalid room code' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-
       const id = env.ROOM.idFromName(roomId.toUpperCase());
       const roomDO = env.ROOM.get(id);
       return roomDO.fetch(request);
     }
 
+    // ── HEALTH CHECK ──
     if (url.pathname === '/health') {
-      return new Response(
-        JSON.stringify({
-          status: 'ok',
-          service: 'ldr-photobooth',
-          timestamp: new Date().toISOString()
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        }
-      );
+      return new Response(JSON.stringify({ status: 'ok', service: 'ldr-photobooth' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     // ── COMMUNITY API ──
@@ -63,7 +48,6 @@ export default {
         const { results } = await env.DB.prepare(
           'SELECT * FROM frames ORDER BY created_at DESC'
         ).all();
-        
         return new Response(JSON.stringify(results), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
@@ -92,7 +76,9 @@ export default {
         }
 
         const id = crypto.randomUUID();
-        const filename = `frames/${id}-${file.name}`;
+        // Bersihkan nama file dari spasi dan karakter aneh agar URL aman
+        const safeFileName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        const filename = `frames/${id}-${safeFileName}`;
 
         // Upload to R2
         await env.BUCKET.put(filename, file.stream(), {
@@ -100,9 +86,7 @@ export default {
         });
 
         // Insert into D1
-        // Gunakan origin dari request agar URL dinamis (localhost atau domain asli)
         const publicUrl = `${url.origin}/${filename}`; 
-        
         await env.DB.prepare(
           'INSERT INTO frames (id, title, author, tags, url, created_at) VALUES (?, ?, ?, ?, ?, ?)'
         ).bind(id, title, author, tags, publicUrl, new Date().toISOString()).run();
@@ -121,21 +105,19 @@ export default {
 
     // 3. Serve images from R2
     if (url.pathname.startsWith('/frames/')) {
-      const filename = url.pathname.slice(1); // Ambil "frames/uuid-name.png"
+      const filename = url.pathname.slice(1);
       const object = await env.BUCKET.get(filename);
-
       if (!object) {
         return new Response('Image not found', { status: 404 });
       }
-
       const headers = new Headers();
       object.writeHttpMetadata(headers);
       headers.set('etag', object.httpEtag);
       headers.set('Access-Control-Allow-Origin', '*');
-
       return new Response(object.body, { headers });
     }
 
+    // ── ROOT / API INFO ──
     if (url.pathname === '/' || url.pathname === '/api') {
       return new Response(
         JSON.stringify({
@@ -149,20 +131,14 @@ export default {
         }),
         {
           status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         }
       );
     }
 
     return new Response(JSON.stringify({ error: 'Not Found' }), {
       status: 404,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
 };

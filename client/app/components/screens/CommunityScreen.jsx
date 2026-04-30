@@ -34,6 +34,7 @@ export default function CommunityScreen({ onBack, framePresets }) {
       const response = await fetch(`${API_BASE}/api/community/frames`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched community frames:', data);
         setCommunityFrames(data);
       }
     } catch (err) {
