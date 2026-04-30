@@ -107,10 +107,30 @@ export default function Page() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get('view');
+    const mode = params.get('mode');
+    const savedStep = params.get('step');
+
     if (view === 'community') {
       setStep('community');
+    } else if (mode === 'solo') {
+      setSessionMode('solo');
+      // Only restore steps that don't depend on volatile in-memory blobs
+      if (savedStep && ['layout-select', 'join'].includes(savedStep)) {
+        setStep(savedStep);
+      }
     }
   }, []);
+
+  // Sync state to URL for Solo Mode
+  useEffect(() => {
+    if (sessionMode === 'solo' && !['countdown', 'processing'].includes(step)) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('mode', 'solo');
+      params.set('step', step);
+      const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+  }, [step, sessionMode]);
 
   const navigateToCommunity = () => {
     const newUrl = `${window.location.origin}${window.location.pathname}?view=community`;
@@ -122,6 +142,7 @@ export default function Page() {
     const newUrl = `${window.location.origin}${window.location.pathname}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
     setStep('mode-select');
+    setSessionMode(null);
   };
 
   const participantsWithSelf = useMemo(() => {
@@ -323,6 +344,13 @@ export default function Page() {
     }
     setSessionMode(mode);
     if (mode === 'solo') {
+      // Sync URL immediately
+      const params = new URLSearchParams(window.location.search);
+      params.set('mode', 'solo');
+      params.set('step', 'layout-select');
+      const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
       const myId = room.selfId || 'solo-user';
       room.setDisplayName('You');
       room.setParticipants([{ id: myId, displayName: 'You' }]);
