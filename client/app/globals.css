@@ -2549,6 +2549,199 @@ body::before{
   cursor: pointer;
 }
 
+/* ── PINTEREST STYLE ROOT ── */
+.comm-pin-root {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  height: 100vh !important;
+  background: white !important;
+  overflow: hidden !important;
+}
+
+/* Slim Sidebar */
+.comm-pin-sidebar {
+  width: 80px;
+  height: 100vh;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 0;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.pin-logo {
+  font-size: 28px;
+  margin-bottom: 30px;
+  cursor: pointer;
+}
+
+.pin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pin-nav-item {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pin-nav-item:hover { background: #f0f0f0; }
+.pin-nav-item.active { background: var(--ink); color: white; }
+
+/* Main Content */
+.comm-pin-main {
+  flex: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+/* Top Header / Search */
+.comm-pin-header {
+  height: 80px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  z-index: 10;
+}
+
+.pin-search-container {
+  flex: 1;
+  height: 48px;
+  background: #efefef;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+}
+
+.pin-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-family: 'Nunito', sans-serif;
+  color: #333;
+}
+
+.pin-user-circle {
+  width: 32px;
+  height: 32px;
+  background: var(--blue);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Masonry Scroll Area */
+.pin-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 40px 100px;
+}
+
+.pin-grid {
+  columns: 5;
+  column-gap: 16px;
+}
+
+.pin-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.pin-item img {
+  width: 100%;
+  display: block;
+  border-radius: 16px;
+  transition: filter 0.3s;
+}
+
+.pin-item-hover {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.pin-item:hover .pin-item-hover { opacity: 1; }
+.pin-item:hover img { filter: brightness(0.9); }
+
+.pin-save-btn {
+  background: var(--pink);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: 'Gaegu', cursive;
+}
+
+.pin-loading {
+  text-align: center;
+  padding: 100px;
+  grid-column: 1/-1;
+  font-family: 'Gaegu', cursive;
+  font-size: 24px;
+}
+
+/* Responsive */
+@media (max-width: 1400px) { .pin-grid { columns: 4; } }
+@media (max-width: 1000px) { .pin-grid { columns: 3; } }
+@media (max-width: 768px) {
+  .comm-pin-root { flex-direction: column !important; }
+  .comm-pin-sidebar {
+    width: 100% !important;
+    height: 60px !important;
+    flex-direction: row !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    padding: 0 20px !important;
+    border-top: 1px solid #eee !important;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+  }
+  .pin-logo, .pin-sidebar-bottom { display: none !important; }
+  .pin-nav { flex-direction: row !important; justify-content: space-around !important; width: 100% !important; gap: 0 !important; }
+  .comm-pin-header { padding: 0 20px; height: 60px; }
+  .pin-scroll-area { padding: 10px 12px 100px; }
+  .pin-grid { columns: 2; column-gap: 12px; }
+}
+
 /* ── COMMUNITY SIDEBAR LAYOUT ── */
 .comm-layout-root {
   display: flex !important;
