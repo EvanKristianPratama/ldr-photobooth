@@ -104,7 +104,6 @@ export default function ResultScreen({
         
         {/* Left/Top: Branding/Title */}
         <div className="result-branding">
-          <div className="confetti-row">★ ✦ ♥ ✦ ★</div>
           <div className="done-big">
             READY<br />
             <span className="outline-pink">TO SHARE!</span>
@@ -115,7 +114,7 @@ export default function ResultScreen({
         <div className="result-main-content">
           <div 
             className="fs__preview-box" 
-            style={{ maxWidth: sessionMode === 'solo' ? '150px' : '240px' }}
+            style={{ maxWidth: sessionMode === 'solo' ? '320px' : '480px' }}
           >
             {isMerging ? (
               <div className="fs__loading">
