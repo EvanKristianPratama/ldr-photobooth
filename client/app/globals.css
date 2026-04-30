@@ -3950,3 +3950,39 @@ body::before {
     box-shadow: 4px 4px 0 var(--ink);
   }
 }
+
+/* ── WAITING ANIMATIONS ── */
+.waiting-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.rotating-icon {
+  display: inline-block;
+  animation: rotateIcon 2.5s ease-in-out infinite;
+  font-size: 24px;
+}
+
+@keyframes rotateIcon {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.dots-anim::after {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  text-align: left;
+  animation: dotsSequence 2s steps(4, end) infinite;
+}
+
+@keyframes dotsSequence {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: '....'; }
+}

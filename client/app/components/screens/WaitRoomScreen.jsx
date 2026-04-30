@@ -93,7 +93,9 @@ export default function WaitRoomScreen({
                 textAlign: 'center',
                 opacity: 0.7 
               }}>
-                ⌛ Menunggu partner join...
+              <div className="waiting-status">
+                <span className="rotating-icon">⌛</span> Menunggu partner join<span className="dots-anim"></span>
+              </div>
               </div>
             )}
           </div>
