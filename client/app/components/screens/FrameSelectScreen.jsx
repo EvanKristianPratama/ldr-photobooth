@@ -31,7 +31,11 @@ export default function FrameSelectScreen({
   setLocTextEdited,
   photoFilter,
   setPhotoFilter,
-  userData
+  userData,
+  stickers,
+  addSticker,
+  addRandomSticker,
+  clearStickers
 }) {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
 
@@ -191,6 +195,52 @@ export default function FrameSelectScreen({
               />
               Show location on strip
             </label>
+          </div>
+        </div>
+
+        <div className="ctrl-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div className="ctrl-label" style={{ marginBottom: 0 }}>STICKERS</div>
+            {stickers.length > 0 && (
+              <button 
+                onClick={() => { clearStickers(); onReapply(); }} 
+                style={{ background: 'none', border: 'none', color: '#ff6b9d', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer' }}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+          <div className="swatch-row" style={{ gap: '10px', marginBottom: '12px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '8px', alignItems: 'center' }}>
+            <button 
+              className="btn-secondary" 
+              style={{ flexShrink: 0, padding: '4px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', minHeight: '32px', borderRadius: '10px' }}
+              onClick={() => { addRandomSticker(); onReapply(); }}
+            >
+              🎲 Random
+            </button>
+            <div style={{ width: '2px', height: '24px', background: '#eee', flexShrink: 0 }} />
+            {['✨', '💖', '⭐', '🎈', '🍀', '🎀', '🍭', '🌸', '🌈', '🍦', '🍩', '🦋', '🐱', '🐶'].map(s => (
+              <button 
+                key={s} 
+                className="sticker" 
+                onClick={() => { addSticker(s); onReapply(); }}
+                style={{ 
+                  flexShrink: 0,
+                  fontSize: '16px', 
+                  width: '32px', 
+                  height: '32px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  background: 'white',
+                  border: '2px solid var(--ink)',
+                  borderRadius: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
 

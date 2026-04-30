@@ -137,6 +137,7 @@ export default function useWebRTC({
       if (ignoreOfferRef.current) return;
 
       await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      await processCandidatesQueue();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socketRef.current.emit('webrtc:answer', { to: from, sdp: answer });
@@ -150,6 +151,7 @@ export default function useWebRTC({
       if (pcRef.current && !ignoreOfferRef.current) {
         if (pcRef.current.signalingState === 'stable') return;
         await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+        await processCandidatesQueue();
       }
     } catch (err) {
       console.error('Error handling answer:', err);
@@ -157,16 +159,32 @@ export default function useWebRTC({
     }
   }, [enableSocketFallback]);
 
+  const candidatesQueueRef = useRef([]);
   const handleCandidate = useCallback(async ({ candidate }) => {
     if (pcRef.current) {
       try {
+        if (!pcRef.current.remoteDescription) {
+          candidatesQueueRef.current.push(candidate);
+          return;
+        }
         await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
         console.error('ICE candidate error:', err);
-        enableSocketFallback('candidate-error');
       }
     }
-  }, [enableSocketFallback]);
+  }, []);
+
+  const processCandidatesQueue = useCallback(async () => {
+    if (!pcRef.current || !pcRef.current.remoteDescription) return;
+    while (candidatesQueueRef.current.length > 0) {
+      const candidate = candidatesQueueRef.current.shift();
+      try {
+        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error('Error adding queued candidate:', err);
+      }
+    }
+  }, []);
 
   const connectPeers = useCallback(async (participants, socketOnly) => {
     if (socketOnly) {

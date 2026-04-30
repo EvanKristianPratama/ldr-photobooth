@@ -1516,8 +1516,7 @@ body::before{
   }
 
   .topbar {
-    padding: 0 16px !important;
-    height: 54px !important;
+    display: none !important;
   }
 
   .logo {
@@ -1586,23 +1585,77 @@ body::before{
   }
 
   #page-layout .layout-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
     width: 100% !important;
+    max-width: 280px !important; /* Shrink the grid width on mobile */
+    margin: 0 auto !important;
   }
 
   .layout-card {
-    min-width: 0 !important; /* Override inline minWidth */
+    min-width: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    height: auto !important;
   }
 
   .layout-preview {
-    height: 110px !important;
+    width: 80px !important; /* Narrower but taller */
+    height: 130px !important; /* Much taller to fit vertical stack */
+    flex-shrink: 0 !important;
+    border-bottom: none !important;
+    border-right: 3px solid var(--ink) !important;
+    padding: 8px 4px !important;
+    display: flex !important;
+    flex-direction: column !important; /* Stack slots vertically */
+    align-items: center !important;
+    justify-content: center !important;
+    background: #f8f6ee !important;
+    gap: 4px !important;
+  }
+
+  .preview-slot {
+    width: 45px !important; /* Wider slots for vertical stack */
+    height: 30px !important;
+    transform: none !important;
+    border-width: 2px !important;
+  }
+
+  /* Ensure vertical stacking regardless of inline styles */
+  .layout-preview[style*="row"], 
+  .layout-preview[style*="column"] {
+    flex-direction: column !important;
+  }
+
+  .layout-info {
+    flex: 1 !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    height: 130px !important;
+  }
+
+  .layout-name {
+    font-size: 18px !important;
+    text-align: left !important;
+  }
+
+  .layout-count {
+    font-size: 13px !important;
+    padding: 2px 10px !important;
+    margin-left: 0 !important;
   }
 
   #page-layout .btn-primary {
-    min-width: 0 !important;
-    width: 100% !important;
-    margin-top: 30px !important;
+    max-width: 280px !important;
+    margin-top: 24px !important;
+    padding: 14px !important;
+    font-size: 16px !important;
   }
 
   /* Wait Room */
@@ -1635,25 +1688,16 @@ body::before{
 
   /* Capture Screen */
   .capture-full {
-    height: auto !important;
-    min-height: 100vh;
+    height: 100vh !important;
     display: flex !important;
     flex-direction: column !important;
+    justify-content: center !important; /* Center camera vertically */
+    padding: 20px !important;
+    gap: 20px !important;
   }
 
   .capture-timer-row {
-    padding: 10px 16px !important;
-  }
-
-  .capture-shot-badge {
-    padding: 4px 12px !important;
-  }
-
-  .shot-badge-num { font-size: 18px !important; }
-
-  .capture-countdown-box {
-    font-size: 32px !important;
-    width: 50px !important;
+    display: none !important; /* Hide the small timer and shot count at the top */
   }
 
   .camera-card {
@@ -1664,11 +1708,14 @@ body::before{
   }
 
   .cam-countdown-num {
-    font-size: 70px !important;
+    font-size: 140px !important;
+    font-family: 'Gaegu', cursive !important;
+    color: white !important;
+    font-weight: 700 !important;
   }
 
   .capture-strip-bar {
-    padding: 10px 16px !important;
+    padding: 10px !important;
     justify-content: center !important;
   }
 
@@ -1676,14 +1723,14 @@ body::before{
     gap: 8px !important;
     overflow-x: auto !important;
     padding: 4px !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
+    justify-content: center !important;
+    width: auto !important;
   }
 
   .strip-thumb {
-    width: 80px !important; /* Smaller thumbnails on mobile */
-    height: 60px !important;
-    min-width: 80px !important;
+    width: 70px !important;
+    height: 50px !important;
+    min-width: 70px !important;
   }
 
   /* Processing Screen */
@@ -1724,9 +1771,101 @@ body::before{
 
   .frame-controls {
     width: 100% !important;
-    padding: 24px 20px !important;
+    padding: 12px 16px !important;
     height: auto !important;
-    overflow-y: visible !important;
+    max-height: 55vh !important; /* Allow internal scrolling */
+    overflow-y: auto !important;
+    background: white !important;
+    border-top: 3px solid var(--ink) !important;
+    z-index: 10 !important;
+  }
+
+  .frame-controls .ctrl-title {
+    font-size: 18px !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .frame-controls .ctrl-section {
+    margin-bottom: 8px !important;
+  }
+
+
+  .frame-controls .ctrl-label {
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .swatch {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .swatch-row {
+    gap: 6px !important;
+  }
+
+  .color-input {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .sticker {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+  }
+
+  .filter-btn {
+    padding: 4px 6px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+  }
+
+  .frame-controls .btn-secondary {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    min-height: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .frame-controls .form-input {
+    padding: 6px 10px !important;
+    font-size: 14px !important;
+    border-width: 2px !important;
+  }
+
+  .frame-controls .field-label {
+    font-size: 12px !important;
+  }
+
+  /* Stack Left/Right inputs Vertically */
+  .frame-controls div[style*="gap: 8px"]:not([style*="column"]) {
+    display: flex !important;
+    flex-direction: column !important; /* Back to vertical stack */
+    gap: 8px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  .frame-controls div[style*="gap: 8px"] > div {
+    flex: none !important;
+    width: 100% !important;
+  }
+
+  .frame-controls label[style*="Pastel Crayon"] {
+    font-size: 13px !important;
+  }
+
+  /* Shrink the Finish button area */
+  .frame-controls div:last-child {
+    padding-top: 12px !important;
+  }
+
+  .frame-controls .btn-primary {
+    padding: 10px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
   }
 
   /* Result Screen */
@@ -1804,10 +1943,33 @@ body::before{
     font-size: 24px !important;
   }
 
+  .footer-main {
+    background: none !important;
+    border: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
   /* Credits */
   .credits {
-    padding: 20px !important;
-    font-size: 15px !important;
+    position: fixed !important;
+    top: auto !important;
+    bottom: 8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 0 !important;
+    font-family: 'Pastel Crayon', cursive !important;
+    font-size: 13px !important;
+    background: none !important;
+    width: auto !important;
+    pointer-events: none !important;
+    opacity: 0.3 !important;
+    z-index: 5 !important;
+    text-shadow: 0 0 10px white; /* Make it readable on different backgrounds */
+  }
+  
+  .credits a {
+    pointer-events: auto !important;
   }
 }
 

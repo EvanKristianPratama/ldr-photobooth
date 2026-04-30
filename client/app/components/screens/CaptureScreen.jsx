@@ -87,7 +87,7 @@ export default function CaptureScreen({
 
           {/* Bottom info bar inside card */}
           <div className="cam-info-bar">
-            <span className="cam-info-left">📸 Shot {currentShotIndex + 1} of {totalShots}</span>
+            <span className="cam-info-left">Take {currentShotIndex + 1} of {totalShots}</span>
             <span className="cam-info-right">Auto timer ✦</span>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function CaptureScreen({
                 ) : (
                   <>
                     <span className="strip-thumb-num">0{i + 1}</span>
-                    <span className="strip-thumb-label">{i === currentShotIndex ? '📸' : '—'}</span>
+                    <span className="strip-thumb-label">{i === currentShotIndex ? 'NOW' : '—'}</span>
                   </>
                 )}
               </div>

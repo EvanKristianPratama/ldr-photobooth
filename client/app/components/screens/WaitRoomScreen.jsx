@@ -17,10 +17,6 @@ export default function WaitRoomScreen({
         <h1 className="page-title" style={{ fontSize: '72px', fontFamily: "'Gaegu', cursive" }}>
           Waiting Room ✦
         </h1>
-        <div className="room-badge">
-          <div className={`room-dot ${isReady ? 'active' : ''}`} />
-          {/* Teks Connected dihapus sesuai permintaan */}
-        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>

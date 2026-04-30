@@ -18,6 +18,7 @@ export default function useFrame({ participants }) {
   const [lastMergeCount, setLastMergeCount] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [sessionSeed, setSessionSeed] = useState(0);
+  const [stickers, setStickers] = useState([]);
   const mergeCacheRef = useRef(new Map());
 
   const framePresets = useMemo(() => {
@@ -82,7 +83,8 @@ export default function useFrame({ participants }) {
       frameTextColor,
       locTextLeft,
       locTextRight,
-      photoFilter
+      photoFilter,
+      JSON.stringify(stickers)
     ].join('|');
   }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight]);
 
@@ -228,6 +230,18 @@ export default function useFrame({ participants }) {
       }
 
       drawHeaderFooter();
+      
+      // Draw stickers
+      stickers.forEach(s => {
+        ctx.save();
+        ctx.translate(s.x * totalW, s.y * totalH);
+        ctx.rotate(s.rotation);
+        ctx.font = `${Math.round(s.size * totalW)}px Quicksand, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(s.text, 0, 0);
+        ctx.restore();
+      });
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       mergeCacheRef.current.set(key, dataUrl);
@@ -248,8 +262,32 @@ export default function useFrame({ participants }) {
     photoFilter,
     getDefaultFrameNames,
     getAutoLocationString,
-    mergeKey
+    mergeKey,
+    stickers
   ]);
+
+  const addSticker = useCallback((text) => {
+    const newSticker = {
+      text,
+      x: 0.1 + Math.random() * 0.8,
+      y: 0.1 + Math.random() * 0.8,
+      size: 0.03 + Math.random() * 0.03, // Smaller stickers (3-6% of width)
+      rotation: (Math.random() - 0.5) * 0.5
+    };
+    setStickers(prev => [...prev, newSticker]);
+    mergeCacheRef.current.clear();
+  }, []);
+
+  const addRandomSticker = useCallback(() => {
+    const emojis = ['✨', '💖', '⭐', '🎈', '🍀', '🎀', '🍭', '🌸', '🌈', '🍦', '🍩', '🦋', '🐱', '🐶', '🦄', '🍎', '🍓', '🍕', '🍔', '🍟'];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    addSticker(emoji);
+  }, [addSticker]);
+
+  const clearStickers = useCallback(() => {
+    setStickers([]);
+    mergeCacheRef.current.clear();
+  }, []);
 
   const handleFrameUpload = (event) => {
     const file = event.target.files && event.target.files[0];
@@ -348,6 +386,10 @@ export default function useFrame({ participants }) {
     selectFramePreset,
     getDefaultFrameNames,
     resetFrame,
-    bumpSessionSeed
+    bumpSessionSeed,
+    stickers,
+    addSticker,
+    addRandomSticker,
+    clearStickers
   };
 }

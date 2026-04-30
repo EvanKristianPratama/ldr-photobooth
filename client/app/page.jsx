@@ -356,14 +356,6 @@ export default function Page() {
       <header className="topbar" style={{ flexShrink: 0 }}>
         <div className="logo">LDR Photobooth</div>
         <StepIndicator steps={STEP_LABELS} currentStep={step} />
-        {room.roomCode && (
-          <div id="room-badge">
-            <div className="room-badge">
-              <div className="room-dot"></div>
-              <span>{room.roomCode}</span>
-            </div>
-          </div>
-        )}
       </header>
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -448,6 +440,10 @@ export default function Page() {
             photoFilter={frame.photoFilter}
             setPhotoFilter={frame.setPhotoFilter}
             userData={room}
+            stickers={frame.stickers}
+            addSticker={frame.addSticker}
+            addRandomSticker={frame.addRandomSticker}
+            clearStickers={frame.clearStickers}
           />
         )}
 
@@ -466,7 +462,7 @@ export default function Page() {
       </main>
 
       {/* BOTTOM NAV / FOOTER */}
-      <footer style={{ 
+      <footer className="footer-main" style={{ 
         flexShrink: 0, 
         borderTop: '3px solid var(--ink)', 
         background: 'var(--cream)', 
@@ -477,18 +473,20 @@ export default function Page() {
         position: 'relative',
         minHeight: '60px'
       }}>
-        <div style={{ 
-          fontFamily: "'Pastel Crayon', cursive", 
-          fontSize: '16px', 
-          opacity: 0.8,
+        <div className="credits" style={{ 
+          fontFamily: "'Gaegu', cursive", 
+          fontSize: '18px', 
+          fontWeight: '600',
+          opacity: 0.6,
           position: 'absolute',
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
           textAlign: 'center',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          letterSpacing: '0.5px'
         }}>
-          Created by Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
+          By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
         </div>
         
         {/* Buttons removed because they are now inside the screens */}
