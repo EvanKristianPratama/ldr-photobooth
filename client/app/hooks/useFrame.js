@@ -35,7 +35,7 @@ export default function useFrame({ participants }) {
             id: f.id,
             label: f.title,
             mode: 'custom',
-            src: f.url,
+            src: f.url.startsWith('http') ? f.url : `${API_BASE}${f.url}`,
             description: `by ${f.author}`
           }));
           setCommunityPresets(mapped);
