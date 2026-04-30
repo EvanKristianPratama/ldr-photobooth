@@ -206,22 +206,26 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
 
       {selectedItem && (
         <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
-          <div className="comm-modal full-view" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', display: 'flex', flexDirection: 'row', padding: '0', overflow: 'hidden', borderRadius: '32px' }}>
-             <div className="full-view-img" style={{ flex: 1, background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img 
-                  src={resolveUrl(selectedItem.url)} 
-                  alt="Full View" 
-                  style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain' }} 
-                  onError={handleImageError}
-                />
-             </div>
-             <div className="full-view-sidebar" style={{ width: '320px', padding: '40px', display: 'flex', flexDirection: 'column' }}>
-                <button className="comm-modal-close" onClick={() => setSelectedItem(null)} style={{ position: 'relative', top: '0', right: '0', alignSelf: 'flex-end' }}>×</button>
-                <h2 className="comm-modal-title" style={{ textAlign: 'left', fontSize: '28px' }}>{selectedItem.title || (activeTab === 'photos' ? 'Photo Strip' : 'Frame')}</h2>
-                <p style={{ fontFamily: 'Gaegu', fontSize: '18px' }}>by <b>{selectedItem.author}</b></p>
-                <button className="btn-primary" style={{ width: '100%', borderRadius: '24px', marginTop: 'auto' }} onClick={(e) => handleLike(e, selectedItem)}>
-                   ❤️ Beri Like
-                </button>
+          <div className="comm-modal-card" onClick={e => e.stopPropagation()}>
+             <button className="comm-modal-close" onClick={() => setSelectedItem(null)}>×</button>
+             <div className="comm-modal-body">
+               <div className="comm-modal-img-wrap">
+                  <img 
+                    src={resolveUrl(selectedItem.url)} 
+                    alt="Full View" 
+                    onError={handleImageError}
+                  />
+               </div>
+               <div className="comm-modal-info">
+                  <h2 className="comm-modal-title">{selectedItem.title || (activeTab === 'photos' ? 'Photo Strip' : 'Frame')}</h2>
+                  <p className="comm-modal-author">by <b>{selectedItem.author}</b></p>
+                  
+                  <div style={{ marginTop: 'auto' }}>
+                    <button className="comm-like-big" onClick={(e) => handleLike(e, selectedItem)}>
+                       ❤️ Beri Like
+                    </button>
+                  </div>
+               </div>
              </div>
           </div>
         </div>
