@@ -125,21 +125,11 @@ export default function CommunityScreen({ onBack }) {
             <span className="nav-icon">🏠</span>
             <span className="nav-label">Home</span>
           </button>
-          
-          <div className="comm-sidebar-credits">
-             By Evan Kristian<br/>
-             <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer">@evankristiannn</a>
-          </div>
         </div>
       </aside>
 
       {/* ── MAIN CONTENT (PINTEREST STYLE) ── */}
       <main className="comm-main-content">
-        <header className="comm-mobile-header">
-           <button className="back-circle" onClick={onBack}>←</button>
-           <h1 className="comm-title-mini">{activeTab === 'photos' ? 'Showcase' : 'Frames'}</h1>
-        </header>
-
         <div className="comm-scroll-area">
           <div className="comm-grid-container">
             {isLoading ? (
