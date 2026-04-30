@@ -454,7 +454,7 @@ var src_default = {
         await env.BUCKET.put(filename, file.stream(), {
           httpMetadata: { contentType: file.type }
         });
-        const publicUrl = `https://frames.ldr-photobooth.workers.dev/${filename}`;
+        const publicUrl = `${url.origin}/${filename}`;
         await env.DB.prepare(
           "INSERT INTO frames (id, title, author, tags, url, created_at) VALUES (?, ?, ?, ?, ?, ?)"
         ).bind(id, title, author, tags, publicUrl, (/* @__PURE__ */ new Date()).toISOString()).run();
@@ -469,16 +469,28 @@ var src_default = {
         });
       }
     }
+    if (url.pathname.startsWith("/frames/")) {
+      const filename = url.pathname.slice(1);
+      const object = await env.BUCKET.get(filename);
+      if (!object) {
+        return new Response("Image not found", { status: 404 });
+      }
+      const headers = new Headers();
+      object.writeHttpMetadata(headers);
+      headers.set("etag", object.httpEtag);
+      headers.set("Access-Control-Allow-Origin", "*");
+      return new Response(object.body, { headers });
+    }
     if (url.pathname === "/" || url.pathname === "/api") {
       return new Response(
         JSON.stringify({
           name: "LDR Photobooth Signaling Server",
-          version: "1.0.0",
+          version: "1.1.0",
           endpoints: {
             websocket: "/ws?room=ROOMCODE",
-            health: "/health"
-          },
-          usage: "Connect via WebSocket to /ws?room=YOUR_ROOM_CODE"
+            health: "/health",
+            community_frames: "/api/community/frames"
+          }
         }),
         {
           status: 200,
