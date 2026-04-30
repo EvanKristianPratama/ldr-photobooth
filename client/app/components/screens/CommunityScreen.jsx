@@ -46,15 +46,46 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
     } catch (err) { console.error('Like failed'); }
   };
 
+  const compressImage = (file, maxWidth = 800, quality = 0.6) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = (maxWidth / width) * height;
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+        };
+      };
+    });
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file || !author || (activeTab === 'frames' && !title)) return alert('Fill all fields!');
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    if (activeTab === 'frames') formData.append('title', title);
-    formData.append('author', author);
+    
     try {
+      // Industry Standard: Compress before upload
+      const compressedBlob = await compressImage(file, 800, 0.6);
+      const finalFile = new File([compressedBlob], 'upload.jpg', { type: 'image/jpeg' });
+
+      const formData = new FormData();
+      formData.append('file', finalFile);
+      if (activeTab === 'frames') formData.append('title', title);
+      formData.append('author', author);
+
       const endpoint = activeTab === 'frames' ? '/api/community/frames' : '/api/community/posts';
       const response = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', body: formData });
       if (response.ok) {
@@ -63,8 +94,12 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
         setFile(null); setTitle('');
         fetchData();
       }
-    } catch (err) { alert('Error during upload.'); }
-    finally { setIsUploading(false); }
+    } catch (err) { 
+      alert('Error during upload.'); 
+      console.error(err);
+    } finally { 
+      setIsUploading(false); 
+    }
   };
   // Icon Paths
   const iconBase = "/doodle icons/SVG/interface";
@@ -123,6 +158,7 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
                         src={resolveUrl(item.url)} 
                         alt="Inspiration" 
                         loading="lazy" 
+                        onLoad={(e) => e.target.classList.add('loaded')}
                         onError={handleImageError}
                       />
                       <div className="pin-item-hover">

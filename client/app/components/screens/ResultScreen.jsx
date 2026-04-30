@@ -38,15 +38,43 @@ export default function ResultScreen({
     }
   };
 
+  const compressImage = (file, maxWidth = 800, quality = 0.6) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = (maxWidth / width) * height;
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+        };
+      };
+    });
+  };
+
   const handlePostToCommunity = async () => {
     setIsPublishing(true);
     try {
       const response = await fetch(mergedImage);
       const blob = await response.blob();
-      const file = new File([blob], 'photostrip.png', { type: 'image/png' });
+      
+      // Industry Standard: Compress before upload
+      const compressedBlob = await compressImage(blob, 1000, 0.6);
+      const finalFile = new File([compressedBlob], 'photostrip.jpg', { type: 'image/jpeg' });
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', finalFile);
       formData.append('author', postName);
       formData.append('title', postCaption); 
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
