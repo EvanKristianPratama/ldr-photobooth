@@ -13,6 +13,7 @@ import ResultScreen from './components/screens/ResultScreen';
 import StepIndicator from './components/ui/StepIndicator';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelectScreen';
+import CommunityScreen from './components/screens/CommunityScreen';
 
 import useRoom from './hooks/useRoom';
 import useWebRTC from './hooks/useWebRTC';
@@ -299,6 +300,8 @@ export default function Page() {
       room.setParticipants([{ id: myId, displayName: 'You' }]);
       capture.startCamera();
       setStep('layout-select');
+    } else if (mode === 'community') {
+      setStep('community');
     } else {
       setStep('join');
     }
@@ -377,13 +380,36 @@ export default function Page() {
 
       {/* TOPBAR */}
       <header className="topbar" style={{ flexShrink: 0 }}>
-        <div className="logo">LDR Photobooth</div>
-        <StepIndicator steps={STEP_LABELS} currentStep={step} />
+        {step === 'community' ? (
+          <>
+            <button 
+              className="btn-secondary desktop-only" 
+              onClick={() => setStep('mode-select')}
+              style={{ padding: '6px 16px', fontSize: '14px' }}
+            >
+              ← Back
+            </button>
+            <div className="logo" style={{ marginLeft: '12px' }}>Community Gallery</div>
+            <div style={{ flex: 1 }}></div>
+          </>
+        ) : (
+          <>
+            <div className="logo">LDR Photobooth</div>
+            <StepIndicator steps={STEP_LABELS} currentStep={step} />
+          </>
+        )}
       </header>
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {step === 'mode-select' && (
           <ModeSelectScreen onSelectMode={handleModeSelect} />
+        )}
+
+        {step === 'community' && (
+          <CommunityScreen 
+            onBack={() => setStep('mode-select')} 
+            framePresets={frame.framePresets} 
+          />
         )}
 
         {step === 'join' && (

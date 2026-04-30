@@ -36,6 +36,17 @@ export default function ModeSelectScreen({ onSelectMode }) {
             <div className="mode-title">Duo Mode (LDR)</div>
           </div>
         </div>
+
+        <div 
+          className="mode-option-card community" 
+          onClick={() => onSelectMode('community')}
+        >
+          <div className="mode-icon" style={{ background: '#eee' }}>✨</div>
+          <div className="mode-details">
+            <div className="mode-title">Community</div>
+            <div style={{ fontSize: '13px', color: 'var(--pink)', fontFamily: "'Gaegu', cursive", fontWeight: 700 }}>EXPLORE GALLERY</div>
+          </div>
+        </div>
       </div>
     </section>
   );
