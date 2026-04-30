@@ -3239,9 +3239,21 @@ body::before {
 }
 
 .sort-tab.active {
-  background: var(--ink);
-  color: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  background: #fffdf0;
+  border: 3px dashed var(--yellow);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 rgba(255, 217, 61, 0.3);
+  transform: translateY(-2px);
+}
+
+.tab-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Remove inversion to keep original icon colors */
+.sort-tab.active .tab-icon {
+  filter: none;
 }
 
 .pin-item {
