@@ -52,9 +52,7 @@ export default function ResultScreen({
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
       formData.append('frame_id', selectedFrameId || '');
 
-      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:8787' 
-        : '';
+      const API_BASE = 'https://ldr-photobooth.if2372047.workers.dev';
 
       const res = await fetch(`${API_BASE}/api/community/posts`, {
         method: 'POST',
