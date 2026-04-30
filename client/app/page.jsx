@@ -104,6 +104,26 @@ export default function Page() {
     onPartnerResume: handlePartnerResume
   });
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view === 'community') {
+      setStep('community');
+    }
+  }, []);
+
+  const navigateToCommunity = () => {
+    const newUrl = `${window.location.origin}${window.location.pathname}?view=community`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+    setStep('community');
+  };
+
+  const navigateToHome = () => {
+    const newUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+    setStep('mode-select');
+  };
+
   const participantsWithSelf = useMemo(() => {
     return room.participants.map(p => ({
       ...p,
@@ -297,6 +317,10 @@ export default function Page() {
   }, [step, frame.mergedImage]);
 
   const handleModeSelect = (mode) => {
+    if (mode === 'community') {
+      navigateToCommunity();
+      return;
+    }
     setSessionMode(mode);
     if (mode === 'solo') {
       const myId = room.selfId || 'solo-user';
@@ -304,8 +328,6 @@ export default function Page() {
       room.setParticipants([{ id: myId, displayName: 'You' }]);
       capture.startCamera();
       setStep('layout-select');
-    } else if (mode === 'community') {
-      setStep('community');
     } else {
       setStep('join');
     }
@@ -339,8 +361,8 @@ export default function Page() {
   };
 
   const handleGoHome = () => {
+    navigateToHome();
     room.leaveRoom();
-    setStep('mode-select');
     setSessionMode(null);
     room.setRoomCode('');
     setSelectedLayout(null);
