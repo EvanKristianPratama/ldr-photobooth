@@ -183,9 +183,12 @@ export default function CommunityScreen({ onBack, framePresets }) {
         <button 
           className="btn-primary" 
           style={{ marginTop: '16px' }}
-          onClick={() => setShowUpload(true)}
+          onClick={() => {
+            if (activeTab === 'frames') setShowUpload(true);
+            else onBack(); // Arahkan ke Home
+          }}
         >
-          {activeTab === 'frames' ? 'Submit Frame ✦' : 'Post Result ✦'}
+          {activeTab === 'frames' ? 'Submit Frame ✦' : 'Take a Photo Now 📸'}
         </button>
       </div>
 
