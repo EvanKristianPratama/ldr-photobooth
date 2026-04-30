@@ -341,10 +341,17 @@ export default function FrameSelectScreen({
                     setShowPresetsModal(false);
                   }}
                 >
-                  <div 
-                    className="frame-card__thumb" 
-                    style={{ backgroundImage: `url(${fp.src})` }}
-                  />
+                  <div className="frame-card__thumb">
+                    <img 
+                      src={fp.src} 
+                      alt={fp.label} 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<span style="font-size:12px;opacity:0.5">Err</span>';
+                      }}
+                    />
+                  </div>
                   <div className="frame-card__title">{fp.label}</div>
                 </div>
               ))}

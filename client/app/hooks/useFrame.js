@@ -31,13 +31,22 @@ export default function useFrame({ participants }) {
         const response = await fetch(`${API_BASE}/api/community/frames`);
         if (response.ok) {
           const data = await response.json();
-          const mapped = data.map(f => ({
-            id: f.id,
-            label: f.title,
-            mode: 'custom',
-            src: f.url.startsWith('http') ? f.url : `${API_BASE}${f.url}`,
-            description: `by ${f.author}`
-          }));
+          const mapped = data.map(f => {
+            let finalUrl = f.url;
+            if (!finalUrl.startsWith('http')) {
+              // Ensure no double slashes
+              const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+              const cleanPath = f.url.startsWith('/') ? f.url : `/${f.url}`;
+              finalUrl = `${cleanBase}${cleanPath}`;
+            }
+            return {
+              id: f.id,
+              label: f.title,
+              mode: 'custom',
+              src: finalUrl,
+              description: `by ${f.author}`
+            };
+          });
           setCommunityPresets(mapped);
         }
       } catch (err) {
