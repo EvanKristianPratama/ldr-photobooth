@@ -55,6 +55,71 @@ export default {
       );
     }
 
+      );
+    }
+
+    // ── COMMUNITY API ──
+
+    // 1. Get all frames
+    if (url.pathname === '/api/community/frames' && request.method === 'GET') {
+      try {
+        const { results } = await env.DB.prepare(
+          'SELECT * FROM frames ORDER BY created_at DESC'
+        ).all();
+        
+        return new Response(JSON.stringify(results), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Database error', details: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    // 2. Upload a new frame
+    if (url.pathname === '/api/community/frames' && request.method === 'POST') {
+      try {
+        const formData = await request.formData();
+        const file = formData.get('file') as File;
+        const title = formData.get('title') as string;
+        const author = formData.get('author') as string;
+        const tags = formData.get('tags') as string || '';
+
+        if (!file || !title || !author) {
+          return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+
+        const id = crypto.randomUUID();
+        const filename = `frames/${id}-${file.name}`;
+
+        // Upload to R2
+        await env.BUCKET.put(filename, file.stream(), {
+          httpMetadata: { contentType: file.type }
+        });
+
+        // Insert into D1
+        const publicUrl = `https://frames.ldr-photobooth.workers.dev/${filename}`; // Placeholder URL
+        await env.DB.prepare(
+          'INSERT INTO frames (id, title, author, tags, url, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(id, title, author, tags, publicUrl, new Date().toISOString()).run();
+
+        return new Response(JSON.stringify({ success: true, id }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Upload failed', details: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
     if (url.pathname === '/' || url.pathname === '/api') {
       return new Response(
         JSON.stringify({
@@ -88,4 +153,6 @@ export default {
 
 interface Env {
   ROOM: DurableObjectNamespace;
+  DB: D1Database;
+  BUCKET: R2Bucket;
 }

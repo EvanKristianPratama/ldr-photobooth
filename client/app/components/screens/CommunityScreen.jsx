@@ -1,19 +1,50 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
 export default function CommunityScreen({ onBack, framePresets }) {
-  // Generate some dummy community frames with real random images
-  const dummyFrames = [
-    { id: 'c1', title: 'Summer Vibe', author: '@sunny', img: 'https://picsum.photos/seed/summer/400/600' },
-    { id: 'c2', title: 'Retro Tokyo', author: '@pixel', img: 'https://picsum.photos/seed/tokyo/400/500' },
-    { id: 'c3', title: 'Cute Cat', author: '@miau', img: 'https://picsum.photos/seed/cat/400/400' },
-    { id: 'c4', title: 'Minimalist', author: '@zen', img: 'https://picsum.photos/seed/zen/400/700' },
-    { id: 'c5', title: 'Space Night', author: '@astro', img: 'https://picsum.photos/seed/space/400/550' },
-    { id: 'c6', title: 'Flower Garden', author: '@bloom', img: 'https://picsum.photos/seed/flower/400/650' },
-    { id: 'c7', title: 'Old School', author: '@retro', img: 'https://picsum.photos/seed/old/400/480' },
-    { id: 'c8', title: 'Vibrant Pop', author: '@art', img: 'https://picsum.photos/seed/pop/400/520' },
-    { id: 'c9', title: 'Coffee Time', author: '@brew', img: 'https://picsum.photos/seed/coffee/400/600' },
-    { id: 'c10', title: 'Beach Day', author: '@wave', img: 'https://picsum.photos/seed/beach/400/450' },
-  ];
+  const [showUpload, setShowUpload] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Form states
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [tags, setTags] = useState('');
+  const [file, setFile] = useState(null);
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!file || !title || !author) return alert('Please fill all required fields!');
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    formData.append('author', author);
+    formData.append('tags', tags);
+
+    try {
+      // Ganti URL dengan URL Worker kamu saat deploy
+      const response = await fetch('/api/community/frames', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert('Frame uploaded successfully! 🚀');
+        setShowUpload(false);
+        // Reset form
+        setTitle(''); setAuthor(''); setTags(''); setFile(null);
+      } else {
+        const err = await response.json();
+        alert(`Upload failed: ${err.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while uploading. Is your backend ready?');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <section className="page active" id="page-community">
@@ -80,11 +111,74 @@ export default function CommunityScreen({ onBack, framePresets }) {
         <button 
           className="btn-primary" 
           style={{ marginTop: '16px' }}
-          onClick={() => alert('Creator Portal is coming soon! 🚀')}
+          onClick={() => setShowUpload(true)}
         >
           Submit Your Frame ✦
         </button>
       </div>
+
+      {/* ── UPLOAD MODAL ── */}
+      {showUpload && (
+        <div className="comm-modal-overlay">
+          <div className="comm-modal">
+            <button className="comm-modal-close" onClick={() => setShowUpload(false)}>×</button>
+            <h2 className="comm-modal-title">Upload New <span className="outline">Frame</span></h2>
+            
+            <form onSubmit={handleUpload}>
+              <div className="comm-form-group">
+                <label>Frame Title</label>
+                <input 
+                  type="text" 
+                  className="comm-form-input" 
+                  placeholder="e.g. Summer Flowers"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required 
+                />
+              </div>
+
+              <div className="comm-form-group">
+                <label>Author Name</label>
+                <input 
+                  type="text" 
+                  className="comm-form-input" 
+                  placeholder="e.g. @creative_user"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  required 
+                />
+              </div>
+
+              <div className="comm-form-group">
+                <label>Select PNG Frame (Transparent)</label>
+                <div className="comm-file-drop" onClick={() => fileInputRef.current.click()}>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={(e) => setFile(e.target.files[0])}
+                    accept="image/png"
+                    hidden 
+                  />
+                  {file ? (
+                    <span style={{ color: 'var(--pink)' }}>📄 {file.name}</span>
+                  ) : (
+                    <span>Click to select file ✨</span>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                style={{ width: '100%', marginTop: '12px' }}
+                disabled={isUploading}
+              >
+                {isUploading ? 'Uploading...' : 'Publish to Gallery 🚀'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
