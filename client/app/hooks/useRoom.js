@@ -119,7 +119,7 @@ export default function useRoom({
     }
     if (!roomCode) return false;
 
-    const newUrl = `${window.location.origin}${window.location.pathname}?code=${roomCode}`;
+    const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
 
     socketRef.current.emit('room:join', { code: roomCode, displayName });
@@ -157,9 +157,8 @@ export default function useRoom({
   const copyRoomCode = async () => {
     if (!roomCode) return;
     try {
-      const url = `${window.location.origin}?code=${roomCode}`;
-      const textToCopy = `Join my LDR Photobooth!\nRoom Code: ${roomCode}\nLink: ${url}`;
-      await navigator.clipboard.writeText(textToCopy);
+      const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+      await navigator.clipboard.writeText(url);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     } catch {
@@ -229,9 +228,9 @@ export default function useRoom({
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const codeParam = params.get('code');
-    if (codeParam) {
-      setRoomCode(codeParam.toUpperCase());
+    const roomParam = params.get('room');
+    if (roomParam) {
+      setRoomCode(roomParam.toUpperCase());
     }
   }, []);
 

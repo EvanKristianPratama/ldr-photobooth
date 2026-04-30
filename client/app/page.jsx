@@ -109,12 +109,17 @@ export default function Page() {
     const view = params.get('view');
     const mode = params.get('mode');
     const savedStep = params.get('step');
+    const sharedRoom = params.get('room');
 
     if (view === 'community') {
       setStep('community');
+    } else if (sharedRoom) {
+      // Auto-join from shared link
+      setSessionMode('duo');
+      setStep('join');
+      room.setRoomCode(sharedRoom.toUpperCase());
     } else if (mode === 'solo') {
       setSessionMode('solo');
-      // Only restore steps that don't depend on volatile in-memory blobs
       if (savedStep && ['layout-select', 'join'].includes(savedStep)) {
         setStep(savedStep);
       }
