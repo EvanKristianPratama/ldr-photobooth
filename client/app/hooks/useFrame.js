@@ -154,7 +154,8 @@ export default function useFrame({ participants }) {
       const headerH = FRAME_CANVAS.headerH;
       const footerH = FRAME_CANVAS.footerH;
 
-      const sorted = [...participants];
+      // Sort participants by ID to ensure consistent order across all peers
+      const sorted = [...participants].sort((a, b) => a.id.localeCompare(b.id));
       const participantCount = sorted.length;
       const isStack = participantCount === 3;
       const isQuad2x2 = participantCount === 4;
@@ -294,7 +295,7 @@ export default function useFrame({ participants }) {
           }
           
           let imgBlob = null;
-          if (participant.id === participants.find(p => p.isYou)?.id) {
+          if (participant.isYou) {
             imgBlob = localBlobs[i];
           } else {
             const peerBlobs = remoteBlobsByPeer.get(participant.id);
