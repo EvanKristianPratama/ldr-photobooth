@@ -58,7 +58,6 @@ export default function CaptureScreen({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              transform: 'scaleX(-1)',
               borderRadius: '10px',
               display: 'block',
             }}
@@ -98,7 +97,7 @@ export default function CaptureScreen({
                   <img 
                     src={photoPreviews[i]} 
                     alt={`Shot ${i+1}`} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   />
                 ) : (
                   <>
