@@ -3,33 +3,33 @@ import React from 'react';
 export default function HowToUseScreen({ onClose }) {
   const steps = [
     {
-      icon: '🏠',
-      title: 'Buat Ruangan',
-      desc: 'Klik "Create Room" untuk dapet kode unik kamu.',
-      color: 'var(--pink-lt)'
+      icon: '✨',
+      title: 'Pilih Mode',
+      desc: 'Pilih "Solo" kalau sendiri, atau "Duo" buat foto bareng ayang/bestie secara real-time.',
+      color: 'var(--yellow-lt)'
     },
     {
-      icon: '🔗',
-      title: 'Ajak Partner',
-      desc: 'Copy kodenya dan kirim ke orang tersayang buat join!',
-      color: 'var(--yellow-lt)'
+      icon: '🏠',
+      title: 'Buat Ruangan',
+      desc: '(Khusus Duo) Klik "Create Room", copy kodenya, dan kirim ke partner kamu buat join!',
+      color: 'var(--pink-lt)'
     },
     {
       icon: '📐',
       title: 'Pilih Layout',
-      desc: 'Tentukan jumlah foto dan susunan strip yang kalian mau.',
+      desc: 'Tentukan jumlah foto dan susunan strip yang kalian inginkan.',
       color: 'var(--teal-lt)'
     },
     {
       icon: '📸',
       title: 'Pose Bareng',
-      desc: 'Klik shutter dan tunjukkan pose terbaik kalian!',
+      desc: 'Tunggu countdown dan tunjukkan pose terbaik kalian di depan kamera!',
       color: 'var(--teal-lt)'
     },
     {
       icon: '🎨',
       title: 'Hias & Simpan',
-      desc: 'Pilih frame favorit, kasih sticker, lalu download deh!',
+      desc: 'Pilih frame favorit, tambahkan sticker lucu, lalu download hasilnya!',
       color: 'var(--purple-lt)'
     }
   ];

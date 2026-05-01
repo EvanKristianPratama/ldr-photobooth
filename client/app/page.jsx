@@ -481,7 +481,7 @@ export default function Page() {
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {step === 'mode-select' && (
-          <ModeSelectScreen onSelectMode={handleModeSelect} />
+          <ModeSelectScreen onSelectMode={handleModeSelect} onShowHelp={() => setShowHowTo(true)} />
         )}
 
         {step === 'community' && (

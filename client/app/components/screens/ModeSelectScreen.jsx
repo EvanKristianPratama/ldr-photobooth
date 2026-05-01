@@ -1,8 +1,25 @@
 import React from 'react';
 
-export default function ModeSelectScreen({ onSelectMode }) {
+export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
   return (
     <section className="page active" id="page-mode-select">
+      <div className="help-hint-container" style={{ position: 'absolute', top: '22px', right: '75px', display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
+        <span style={{ 
+          fontFamily: "'Gaegu', cursive", 
+          fontSize: '16px', 
+          color: 'var(--ink)', 
+          background: 'white',
+          padding: '4px 10px',
+          borderRadius: '12px 12px 0 12px',
+          border: '2px solid var(--ink)',
+          boxShadow: '2px 2px 0 var(--ink)',
+          whiteSpace: 'nowrap',
+          animation: 'float-x 2s ease-in-out infinite'
+        }}>
+          kalau bingung klik aku 👉
+        </span>
+      </div>
+      <button className="btn-help" onClick={onShowHelp} title="Cara Pakai">?</button>
       <div className="mode-left vibe-bg">
         <div className="deco-circle" style={{ width: '200px', height: '200px', top: '-60px', left: '-60px' }}></div>
         <div className="deco-circle" style={{ width: '120px', height: '120px', bottom: '40px', right: '-30px' }}></div>
