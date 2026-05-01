@@ -81,13 +81,13 @@ export default function useRoom({
     });
 
     socket.on('room:joined', ({ participants: joined, selfId: serverSelfId }) => {
-      setParticipants(joined || []);
       if (serverSelfId) {
         setSelfId(serverSelfId);
-        // Sync socket adapter ID with server-assigned ID
-        // so WebRTC peer filtering uses the correct identity
+        // Sync socket adapter ID IMMEDIATELY before updating participants
         socket.id = serverSelfId;
       }
+      
+      setParticipants(joined || []);
 
       if (typeof onPartnerPauseRef.current === 'function' && joined?.length < 2 && (stepRef.current === 'countdown' || stepRef.current === 'processing')) {
         onPartnerPauseRef.current();

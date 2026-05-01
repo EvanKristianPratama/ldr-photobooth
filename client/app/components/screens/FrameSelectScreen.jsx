@@ -90,12 +90,6 @@ export default function FrameSelectScreen({
               }} 
             />
           )}
-          <div className="strip-label" id="strip-name" style={{ color: frameTextColor }}>
-            {userData?.displayName || 'Evan'}
-          </div>
-          <div className="strip-date" id="strip-date" style={{ color: frameTextColor, opacity: 0.6 }}>
-            {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-          </div>
         </div>
       </div>
 
