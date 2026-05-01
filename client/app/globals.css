@@ -1943,15 +1943,21 @@ body::before {
     font-size: 13px !important;
   }
 
-  /* Join Screen */
-  #page-join {
+  .page {
+    height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: none;
     flex-direction: column !important;
-    height: auto !important;
-    display: block !important;
   }
 
-  .page.active#page-join {
-    display: block !important;
+  .page.active {
+    display: flex !important;
+  }
+
+  /* Join Screen */
+  #page-join {
+    padding-bottom: 60px !important;
   }
 
   .join-left,
@@ -1983,11 +1989,13 @@ body::before {
 
   /* Layout Screen */
   #page-layout {
-    padding: 24px 16px !important;
-    height: auto !important;
+    padding: 24px 16px 60px !important;
+    height: 100% !important;
+    overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   #page-layout .page-title-row {
@@ -2080,10 +2088,7 @@ body::before {
 
   /* Wait Room */
   #page-room {
-    padding: 24px 16px !important;
-    height: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
+    padding: 24px 16px 60px !important;
   }
 
   #page-room .page-title-row {
@@ -2550,10 +2555,7 @@ body::before {
 
 @media (max-width: 768px) {
   #page-mode-select {
-    flex-direction: column !important;
-    height: auto !important;
-    display: block !important;
-    overflow-y: visible !important;
+    padding-bottom: 60px !important;
   }
 
   .mode-left,
