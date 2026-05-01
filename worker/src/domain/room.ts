@@ -10,6 +10,7 @@ export interface RoomSnapshot {
   participants: Participant[];
   state: RoomState;
   layout: string | null;
+  groupSize: number;
 }
 
 /**
@@ -20,9 +21,16 @@ export class RoomEngine {
   private participants = new Map<string, Participant>();
   private state: RoomState = ROOM_STATES.IDLE;
   private layout: string | null = null;
+  private groupSize: number = 2;
 
   join(id: string, displayName: string): void {
     this.participants.set(id, { id, displayName });
+  }
+
+  setGroupSize(size: number): void {
+    if (size >= 1 && size <= 4) {
+      this.groupSize = size;
+    }
   }
 
   leave(id: string): void {
@@ -63,7 +71,8 @@ export class RoomEngine {
     return {
       participants: [...this.participants.values()],
       state: this.state,
-      layout: this.layout
+      layout: this.layout,
+      groupSize: this.groupSize
     };
   }
 }

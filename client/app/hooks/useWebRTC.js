@@ -7,181 +7,227 @@ export default function useWebRTC({
   onSocketPhotoReceive,
   onEnableSocketFallback
 }) {
-  const pcRef = useRef(null);
-  const dcRef = useRef(null);
-  const makingOfferRef = useRef(false);
-  const ignoreOfferRef = useRef(false);
+  const pcsRef = useRef(new Map()); // Map<peerId, RTCPeerConnection>
+  const dcsRef = useRef(new Map()); // Map<peerId, RTCDataChannel>
+  const makingOffersRef = useRef(new Map()); // Map<peerId, boolean>
+  const ignoreOffersRef = useRef(new Map()); // Map<peerId, boolean>
   const socketOnlyRef = useRef(false);
-  const incomingFileRef = useRef({ id: null, chunks: [], receivedSize: 0, meta: null });
+  
+  // incomingFilesRef: Map<peerId, { chunks: [], meta: null }>
+  const incomingFilesRef = useRef(new Map());
+  const candidatesQueuesRef = useRef(new Map()); // Map<peerId, candidate[]>
+
+  // Use refs for callbacks to avoid stale closures in event handlers
+  const onDataChannelMessageRef = useRef(onDataChannelMessage);
+  const onSocketPhotoReceiveRef = useRef(onSocketPhotoReceive);
+  const onEnableSocketFallbackRef = useRef(onEnableSocketFallback);
+
+  useEffect(() => {
+    onDataChannelMessageRef.current = onDataChannelMessage;
+    onSocketPhotoReceiveRef.current = onSocketPhotoReceive;
+    onEnableSocketFallbackRef.current = onEnableSocketFallback;
+  }, [onDataChannelMessage, onSocketPhotoReceive, onEnableSocketFallback]);
 
   useEffect(() => {
     return () => {
-      try {
-        if (pcRef.current) pcRef.current.close();
-      } catch {
-        // ignore
-      }
+      pcsRef.current.forEach(pc => {
+        try { pc.close(); } catch (e) {}
+      });
+      pcsRef.current.clear();
+      dcsRef.current.clear();
     };
   }, []);
 
-  const handleDataChannelMessage = useCallback((e) => {
+  const handleDataChannelMessage = useCallback((peerId, e) => {
     const data = e.data;
     if (typeof data === 'string') {
       const msg = JSON.parse(data);
       if (msg.type === 'meta') {
-        incomingFileRef.current = {
+        incomingFilesRef.current.set(peerId, {
           chunks: [],
-          meta: msg,
-          received: 0
-        };
+          meta: msg
+        });
       } else if (msg.type === 'done') {
-        const blobs = incomingFileRef.current.chunks;
-        const meta = incomingFileRef.current.meta;
-        const resultBlob = new Blob(blobs, { type: meta.mime });
-        const idx = meta.index || 0;
-        if (typeof onDataChannelMessage === 'function') {
-          onDataChannelMessage({ index: idx, blob: resultBlob });
+        const fileData = incomingFilesRef.current.get(peerId);
+        if (!fileData) return;
+        
+        const resultBlob = new Blob(fileData.chunks, { type: fileData.meta.mime });
+        const idx = fileData.meta.index || 0;
+        
+        if (typeof onDataChannelMessageRef.current === 'function') {
+          onDataChannelMessageRef.current({ from: peerId, index: idx, blob: resultBlob });
         }
+        incomingFilesRef.current.delete(peerId);
       }
     } else {
-      incomingFileRef.current.chunks.push(data);
+      const fileData = incomingFilesRef.current.get(peerId);
+      if (fileData) {
+        fileData.chunks.push(data);
+      }
     }
   }, [onDataChannelMessage]);
 
-  const setupDataChannel = useCallback((dc) => {
-    dcRef.current = dc;
+  const setupDataChannel = useCallback((peerId, dc) => {
+    dcsRef.current.set(peerId, dc);
     dc.binaryType = 'arraybuffer';
-    dc.onmessage = handleDataChannelMessage;
+    dc.onmessage = (e) => handleDataChannelMessage(peerId, e);
+    dc.onclose = () => dcsRef.current.delete(peerId);
   }, [handleDataChannelMessage]);
 
-  const getOrCreatePC = useCallback((socket, remoteId) => {
-    if (pcRef.current) return pcRef.current;
+  const getOrCreatePC = useCallback((remoteId) => {
+    if (pcsRef.current.has(remoteId)) return pcsRef.current.get(remoteId);
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
     pc.onicecandidate = e => {
-      if (e.candidate) socket.emit('webrtc:candidate', { to: remoteId, candidate: e.candidate });
+      if (e.candidate) socketRef.current.emit('webrtc:candidate', { to: remoteId, candidate: e.candidate });
     };
 
-    pc.ondatachannel = e => setupDataChannel(e.channel);
+    pc.ondatachannel = e => setupDataChannel(remoteId, e.channel);
 
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'connected') {
-        setStatus('P2P Ready');
+        setStatus(`Connected to ${remoteId.slice(0, 4)}`);
       } else if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
-        enableSocketFallback(pc.connectionState);
+        pcsRef.current.delete(remoteId);
+        dcsRef.current.delete(remoteId);
       }
     };
 
-    pcRef.current = pc;
+    pcsRef.current.set(remoteId, pc);
     return pc;
-  }, [setStatus, setupDataChannel]);
+  }, [setStatus, setupDataChannel, socketRef]);
 
-  const sendPhotoToPeer = useCallback(async (blob, index, chunkSize) => {
-    if (!socketOnlyRef.current && dcRef.current && dcRef.current.readyState === 'open') {
-      const buffer = await blob.arrayBuffer();
-      const fileId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-
-      dcRef.current.send(JSON.stringify({
-        type: 'meta',
-        id: fileId,
-        size: blob.size,
-        mime: blob.type,
-        index
-      }));
-
-      let offset = 0;
-      while (offset < buffer.byteLength) {
-        const chunk = buffer.slice(offset, offset + chunkSize);
-        while (dcRef.current.bufferedAmount > 10 * 1024 * 1024) {
-          await new Promise(r => setTimeout(r, 50));
-        }
-        dcRef.current.send(chunk);
-        offset += chunk.byteLength;
+  const sendPhotoToPeer = useCallback(async (blob, index, chunkSize, expectedPeersCount = 1) => {
+    // If forced socket-only mode, send everything via socket
+    if (socketOnlyRef.current) {
+      if (typeof onSocketPhotoReceiveRef.current === 'function') {
+        return onSocketPhotoReceiveRef.current(blob, index);
       }
-      dcRef.current.send(JSON.stringify({ type: 'done', id: fileId }));
-      return true;
+      return false;
     }
 
-    if (typeof onSocketPhotoReceive === 'function') {
-      return onSocketPhotoReceive(blob, index);
+    const buffer = await blob.arrayBuffer();
+    const fileId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+
+    // Count how many peers we can reach via WebRTC
+    let webrtcSentCount = 0;
+
+    // Send to all connected data channels via WebRTC
+    const sendPromises = Array.from(dcsRef.current.entries()).map(async ([peerId, dc]) => {
+      if (dc.readyState !== 'open') return;
+
+      try {
+        dc.send(JSON.stringify({
+          type: 'meta',
+          id: fileId,
+          size: blob.size,
+          mime: blob.type,
+          index
+        }));
+
+        let offset = 0;
+        while (offset < buffer.byteLength) {
+          const chunk = buffer.slice(offset, offset + chunkSize);
+          while (dc.bufferedAmount > 10 * 1024 * 1024) {
+            await new Promise(r => setTimeout(r, 50));
+          }
+          dc.send(chunk);
+          offset += chunk.byteLength;
+        }
+        dc.send(JSON.stringify({ type: 'done', id: fileId }));
+        webrtcSentCount++;
+      } catch (err) {
+        console.warn(`[WebRTC] Failed to send to ${peerId}, will use socket fallback`, err);
+      }
+    });
+
+    await Promise.all(sendPromises);
+
+    // If we couldn't reach all expected peers via WebRTC, also send via socket
+    // so the server can broadcast to anyone we missed
+    if (webrtcSentCount < expectedPeersCount) {
+      if (typeof onSocketPhotoReceiveRef.current === 'function') {
+        await onSocketPhotoReceiveRef.current(blob, index);
+      }
     }
-    return false;
+
+    return true;
   }, [onSocketPhotoReceive]);
 
   const enableSocketFallback = useCallback((reason) => {
     socketOnlyRef.current = true;
-    setStatus(`Fallback (socket-only): ${reason}`);
-    try {
-      if (pcRef.current) pcRef.current.close();
-    } catch {
-      // ignore
-    }
-    pcRef.current = null;
-    dcRef.current = null;
+    setStatus(`Socket fallback: ${reason}`);
+    pcsRef.current.forEach(pc => pc.close());
+    pcsRef.current.clear();
+    dcsRef.current.clear();
 
-    if (typeof onEnableSocketFallback === 'function') {
-      onEnableSocketFallback(reason);
+    if (typeof onEnableSocketFallbackRef.current === 'function') {
+      onEnableSocketFallbackRef.current(reason);
     }
   }, [onEnableSocketFallback, setStatus]);
 
-  const handleOffer = useCallback(async ({ sdp, from }) => {
-    try {
-      const pc = getOrCreatePC(socketRef.current, from);
-      const isPolite = socketRef.current.id > from;
-      const offerCollision = pc.signalingState !== 'stable' || makingOfferRef.current;
-
-      ignoreOfferRef.current = !isPolite && offerCollision;
-      if (ignoreOfferRef.current) return;
-
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      await processCandidatesQueue();
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socketRef.current.emit('webrtc:answer', { to: from, sdp: answer });
-    } catch (err) {
-      console.error('Error handling offer:', err);
-    }
-  }, [getOrCreatePC, socketRef]);
-
-  const handleAnswer = useCallback(async ({ sdp }) => {
-    try {
-      if (pcRef.current && !ignoreOfferRef.current) {
-        if (pcRef.current.signalingState === 'stable') return;
-        await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
-        await processCandidatesQueue();
-      }
-    } catch (err) {
-      console.error('Error handling answer:', err);
-      enableSocketFallback('answer-error');
-    }
-  }, [enableSocketFallback]);
-
-  const candidatesQueueRef = useRef([]);
-  const handleCandidate = useCallback(async ({ candidate }) => {
-    if (pcRef.current) {
+  const processCandidatesQueue = useCallback(async (peerId) => {
+    const pc = pcsRef.current.get(peerId);
+    if (!pc || !pc.remoteDescription) return;
+    
+    const queue = candidatesQueuesRef.current.get(peerId) || [];
+    while (queue.length > 0) {
+      const candidate = queue.shift();
       try {
-        if (!pcRef.current.remoteDescription) {
-          candidatesQueueRef.current.push(candidate);
-          return;
-        }
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
-        console.error('ICE candidate error:', err);
+        console.error(`Error adding queued candidate for ${peerId}:`, err);
       }
     }
   }, []);
 
-  const processCandidatesQueue = useCallback(async () => {
-    if (!pcRef.current || !pcRef.current.remoteDescription) return;
-    while (candidatesQueueRef.current.length > 0) {
-      const candidate = candidatesQueueRef.current.shift();
+  const handleOffer = useCallback(async ({ sdp, from }) => {
+    try {
+      const pc = getOrCreatePC(from);
+      const isPolite = socketRef.current.id > from;
+      const offerCollision = pc.signalingState !== 'stable' || makingOffersRef.current.get(from);
+
+      ignoreOffersRef.current.set(from, !isPolite && offerCollision);
+      if (ignoreOffersRef.current.get(from)) return;
+
+      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      await processCandidatesQueue(from);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socketRef.current.emit('webrtc:answer', { to: from, sdp: answer });
+    } catch (err) {
+      console.error(`Error handling offer from ${from}:`, err);
+    }
+  }, [getOrCreatePC, socketRef, processCandidatesQueue]);
+
+  const handleAnswer = useCallback(async ({ sdp, from }) => {
+    try {
+      const pc = pcsRef.current.get(from);
+      if (pc && !ignoreOffersRef.current.get(from)) {
+        if (pc.signalingState === 'stable') return;
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        await processCandidatesQueue(from);
+      }
+    } catch (err) {
+      console.error(`Error handling answer from ${from}:`, err);
+    }
+  }, [processCandidatesQueue]);
+
+  const handleCandidate = useCallback(async ({ candidate, from }) => {
+    const pc = pcsRef.current.get(from);
+    if (pc) {
       try {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        if (!pc.remoteDescription) {
+          if (!candidatesQueuesRef.current.has(from)) candidatesQueuesRef.current.set(from, []);
+          candidatesQueuesRef.current.get(from).push(candidate);
+          return;
+        }
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
-        console.error('Error adding queued candidate:', err);
+        console.error(`ICE candidate error from ${from}:`, err);
       }
     }
   }, []);
@@ -192,29 +238,40 @@ export default function useWebRTC({
       return;
     }
 
-    const peer = participants.find(p => p.id !== socketRef.current.id);
-    if (!peer) return;
+    const myId = socketRef.current?.id;
+    if (!myId) {
+      console.warn('[WebRTC] Cannot connect peers: socket ID not yet assigned');
+      return;
+    }
 
-    try {
-      const pc = getOrCreatePC(socketRef.current, peer.id);
-      const dc = pc.createDataChannel('ldr-channel');
-      setupDataChannel(dc);
+    const others = participants.filter(p => p.id !== myId);
+    console.log(`[WebRTC] connectPeers: myId=${myId}, total=${participants.length}, others=${others.length}`);
+    
+    for (const peer of others) {
+      if (pcsRef.current.has(peer.id)) continue;
 
-      makingOfferRef.current = true;
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      makingOfferRef.current = false;
+      try {
+        const pc = getOrCreatePC(peer.id);
+        const dc = pc.createDataChannel('ldr-channel');
+        setupDataChannel(peer.id, dc);
 
-      socketRef.current.emit('webrtc:offer', { to: peer.id, sdp: offer });
-    } catch (err) {
-      makingOfferRef.current = false;
-      console.error('Error creating offer:', err);
+        makingOffersRef.current.set(peer.id, true);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        makingOffersRef.current.set(peer.id, false);
+
+        socketRef.current.emit('webrtc:offer', { to: peer.id, sdp: offer });
+        console.log(`[WebRTC] Sent offer to ${peer.id.slice(0, 8)}`);
+      } catch (err) {
+        makingOffersRef.current.set(peer.id, false);
+        console.error(`Error creating offer to ${peer.id}:`, err);
+      }
     }
   }, [enableSocketFallback, getOrCreatePC, setupDataChannel, socketRef]);
 
   return {
-    pcRef,
-    dcRef,
+    pcsRef,
+    dcsRef,
     socketOnlyRef,
     handleOffer,
     handleAnswer,

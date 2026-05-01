@@ -1,4 +1,4 @@
-export const MAX_FREE_PARTICIPANTS = 2 as const;
+export const MAX_FREE_PARTICIPANTS = 4 as const;
 
 export const ROOM_STATES = {
   IDLE: 'IDLE',
@@ -14,7 +14,8 @@ export const EVENTS = {
     READY: 'room:ready',
     ERROR: 'room:error',
     LEAVE: 'room:leave',
-    STATE: 'room:state'
+    STATE: 'room:state',
+    GROUP_SIZE: 'room:group-size'
   },
   SESSION: {
     START: 'session:start',

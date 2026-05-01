@@ -80,8 +80,14 @@ export default function useRoom({
       setStatus('Disconnected: ' + reason);
     });
 
-    socket.on('room:joined', ({ participants: joined }) => {
+    socket.on('room:joined', ({ participants: joined, selfId: serverSelfId }) => {
       setParticipants(joined || []);
+      if (serverSelfId) {
+        setSelfId(serverSelfId);
+        // Sync socket adapter ID with server-assigned ID
+        // so WebRTC peer filtering uses the correct identity
+        socket.id = serverSelfId;
+      }
 
       if (typeof onPartnerPauseRef.current === 'function' && joined?.length < 2 && (stepRef.current === 'countdown' || stepRef.current === 'processing')) {
         onPartnerPauseRef.current();
@@ -107,7 +113,7 @@ export default function useRoom({
     };
   }, [serverUrl]);
 
-  const joinRoom = () => {
+  const joinRoom = (groupSize = 2) => {
     if (!displayName || !displayName.trim()) {
       Swal.fire({
         icon: 'warning',
@@ -119,7 +125,7 @@ export default function useRoom({
     }
     if (!roomCode) return false;
 
-    const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+    const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}&size=${groupSize}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
 
     socketRef.current.emit('room:join', { code: roomCode, displayName });
@@ -139,6 +145,10 @@ export default function useRoom({
   const emitLayout = (layout) => {
     socketRef.current.emit('session:layout', layout);
   };
+  
+  const emitGroupSize = (size) => {
+    socketRef.current.emit('room:group-size', size);
+  };
 
   const emitSessionStart = (layout) => {
     socketRef.current.emit('session:start', { layout });
@@ -154,10 +164,10 @@ export default function useRoom({
     }
   };
 
-  const copyRoomCode = async () => {
+  const copyRoomCode = async (groupSize = 2) => {
     if (!roomCode) return;
     try {
-      const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+      const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}&size=${groupSize}`;
       await navigator.clipboard.writeText(url);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
@@ -253,6 +263,7 @@ export default function useRoom({
     emitSessionStart,
     generateRoomCode,
     copyRoomCode,
-    requestAndSendLocation
+    requestAndSendLocation,
+    emitGroupSize
   };
 }

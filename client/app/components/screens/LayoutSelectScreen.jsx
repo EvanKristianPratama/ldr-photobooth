@@ -3,16 +3,52 @@ import React from 'react';
 export default function LayoutSelectScreen({
   selectedLayout,
   onSelectLayout,
-  onStart
+  onStart,
+  onBack,
+  groupSize = 2
 }) {
-  const layouts = [
+  const allLayouts = [
     { id: 'layout1', name: 'Single', count: 1, slots: [{ w: '120px', h: '90px' }] },
     { id: 'layout2', name: 'Duo Strip', count: 2, slots: [{ w: '120px', h: '64px' }, { w: '120px', h: '64px' }], direction: 'column' },
     { id: 'layout3', name: 'Classic Strip', count: 3, slots: [{ w: '110px', h: '46px' }, { w: '110px', h: '46px' }, { w: '110px', h: '46px' }], direction: 'column', gap: '5px' },
+    { id: 'layout4', name: 'Quad Strip', count: 4, slots: [{ w: '90px', h: '34px' }, { w: '90px', h: '34px' }, { w: '90px', h: '34px' }, { w: '90px', h: '34px' }], direction: 'column', gap: '5px' },
   ];
 
+  const layouts = React.useMemo(() => {
+    if (groupSize === 3) {
+      return [
+        { id: 'layout1', name: 'Single Stack', count: 1, slots: [{ w: '120px', h: '40px' }, { w: '120px', h: '40px' }, { w: '120px', h: '40px' }], direction: 'column', gap: '4px' },
+        { id: 'layout2', name: 'Double Stack', count: 2, slots: Array(6).fill({ w: '120px', h: '25px' }), direction: 'column', gap: '2px' },
+      ];
+    }
+    if (groupSize === 4) {
+      return [
+        { id: 'layout1', name: 'Quad 2x2', count: 1, slots: [{ w: '60px', h: '45px' }, { w: '60px', h: '45px' }, { w: '60px', h: '45px' }, { w: '60px', h: '45px' }], direction: 'row', gap: '4px' },
+      ];
+    }
+    // Default duo/solo
+    return allLayouts;
+  }, [groupSize, allLayouts]);
+
   return (
-    <section className="page active" id="page-layout" style={{ alignItems: 'center', textAlign: 'center' }}>
+    <section className="page active" id="page-layout" style={{ alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+      {onBack && (
+        <button 
+          onClick={onBack}
+          className="btn-secondary"
+          style={{ 
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            zIndex: 100,
+            padding: '8px 16px',
+            fontSize: '16px',
+            fontFamily: "'Gaegu', cursive"
+          }}
+        >
+          ← Back
+        </button>
+      )}
       <div className="page-title-row" style={{ justifyContent: 'center', marginBottom: '48px' }}>
         <div className="page-title">Pick a layout ✦</div>
       </div>

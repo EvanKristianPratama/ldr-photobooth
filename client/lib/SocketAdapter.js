@@ -49,6 +49,14 @@ class SocketAdapter {
     }
 
     /**
+     * Update client ID to match server-assigned ID.
+     * This is critical for WebRTC peer filtering to work correctly.
+     */
+    set id(newId) {
+        this._id = newId;
+    }
+
+    /**
      * Check if connected
      */
     get connected() {
@@ -132,6 +140,8 @@ class SocketAdapter {
 
         this.ws.onerror = (error) => {
             console.error('[Socket] Error:', error);
+            console.log('[Socket] WebSocket readyState:', this.ws?.readyState);
+            console.log('[Socket] WebSocket URL:', this.ws?.url);
             this._emit('connect_error', { message: 'WebSocket error' });
         };
 

@@ -28,9 +28,9 @@ export default function usePhotoTransfer({ socketRef }) {
     }
   }, [blobToBase64, socketRef]);
 
-  const handleSocketReceive = useCallback(async ({ index, mime, base64 }) => {
+  const handleSocketReceive = useCallback(async ({ index, mime, base64, from }) => {
     const blob = await base64ToBlob(base64, mime || 'image/jpeg');
-    return { index: index || 0, blob };
+    return { index: index || 0, blob, from };
   }, [base64ToBlob]);
 
   return {

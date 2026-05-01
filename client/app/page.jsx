@@ -31,6 +31,7 @@ const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
 export default function Page() {
   const [step, setStep] = useState('mode-select');
   const [sessionMode, setSessionMode] = useState(null); // 'solo' or 'duo'
+  const [groupSize, setGroupSize] = useState(2);
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [progress, setProgress] = useState(0);
   const pausedRef = useRef(false);
@@ -118,6 +119,8 @@ export default function Page() {
       setSessionMode('duo');
       setStep('join');
       room.setRoomCode(sharedRoom.toUpperCase());
+      const sharedSize = params.get('size');
+      if (sharedSize) setGroupSize(parseInt(sharedSize, 10));
     } else if (mode === 'solo') {
       setSessionMode('solo');
       if (savedStep && ['layout-select', 'join'].includes(savedStep)) {
@@ -162,25 +165,26 @@ export default function Page() {
   const webRTC = useWebRTC({
     socketRef: room.socketRef,
     setStatus: room.setStatus,
-    onDataChannelMessage: ({ index, blob }) => capture.storeRemoteBlob(index, blob),
+    onDataChannelMessage: ({ from, index, blob }) => capture.storeRemoteBlob(from, index, blob),
     onSocketPhotoReceive: (blob, index) => photoTransfer.sendPhotoViaSocket(blob, index)
   });
 
   const capture = useCapture({
     sendPhotoToPeer: webRTC.sendPhotoToPeer,
-    onProcessingComplete: ({ localBlobs, remoteBlobs }) => {
+    onProcessingComplete: ({ localBlobs, remoteBlobsByPeer }) => {
       setStep('frame-select');
       frame.mergePhotos({
         count: capture.totalShots,
         participants: participantsWithSelf,
         localBlobs,
-        remoteBlobs,
+        remoteBlobsByPeer,
         locationsById
       });
     },
     onProgress: setProgress,
     onFlash: setIsFlash,
-    pauseRef: pausedRef
+    pauseRef: pausedRef,
+    participantsCount: participantsWithSelf.length
   });
 
   const frame = useFrame({ participants: participantsWithSelf });
@@ -256,7 +260,7 @@ export default function Page() {
     setStep('countdown');
     await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
     setStep('processing');
-    await captureRef.current.checkProcessingComplete(sessionMode);
+    await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length);
   };
 
   useEffect(() => {
@@ -270,8 +274,8 @@ export default function Page() {
 
     const handlePhotoReceive = async (payload) => {
       try {
-        const { index, blob } = await photoTransferRef.current.handleSocketReceive(payload);
-        captureRef.current.storeRemoteBlob(index, blob);
+        const { index, blob, from } = await photoTransferRef.current.handleSocketReceive(payload);
+        captureRef.current.storeRemoteBlob(from, index, blob);
       } catch {
         // ignore
       }
@@ -283,6 +287,14 @@ export default function Page() {
     };
 
     const handleSessionStart = (payload) => startBoothSession(payload);
+    
+    const handleGroupSizeSync = (size) => {
+      if (typeof size === 'number') setGroupSize(size);
+    };
+    
+    const handleRoomState = (state) => {
+      if (state?.groupSize) setGroupSize(state.groupSize);
+    };
 
     const handleSessionReset = () => {
       setStep('layout-select');
@@ -302,6 +314,8 @@ export default function Page() {
     socket.on('session:layout', handleSessionLayout);
     socket.on('session:start', handleSessionStart);
     socket.on('session:reset', handleSessionReset);
+    socket.on('room:group-size', handleGroupSizeSync);
+    socket.on('room:state', handleRoomState);
 
     return () => {
       socket.off('webrtc:offer', handleOffer);
@@ -311,8 +325,17 @@ export default function Page() {
       socket.off('session:layout', handleSessionLayout);
       socket.off('session:start', handleSessionStart);
       socket.off('session:reset', handleSessionReset);
+      socket.off('room:group-size', handleGroupSizeSync);
+      socket.off('room:state', handleRoomState);
     };
   }, [room.socket]);
+
+  // Sync WebRTC connections for all participants when entering layout step
+  useEffect(() => {
+    if (step === 'layout-select' && sessionMode !== 'solo' && participantsWithSelf.length > 1) {
+      webRTC.connectPeers(participantsWithSelf, SOCKET_ONLY);
+    }
+  }, [step, sessionMode, participantsWithSelf, SOCKET_ONLY]);
 
   useEffect(() => {
     if (step !== 'frame-select') {
@@ -331,7 +354,7 @@ export default function Page() {
       count: frame.lastMergeCount,
       participants: participantsWithSelf,
       localBlobs: capture.localBlobsRef.current,
-      remoteBlobs: capture.remoteBlobsRef.current,
+      remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
     });
   }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, participantsWithSelf, locationsById]);
@@ -342,12 +365,13 @@ export default function Page() {
     }
   }, [step, frame.mergedImage]);
 
-  const handleModeSelect = (mode) => {
+  const handleModeSelect = (mode, size = 2) => {
     if (mode === 'community') {
       navigateToCommunity();
       return;
     }
     setSessionMode(mode);
+    setGroupSize(size);
     if (mode === 'solo') {
       // Sync URL immediately
       const params = new URLSearchParams(window.location.search);
@@ -356,18 +380,18 @@ export default function Page() {
       const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
       window.history.pushState({ path: newUrl }, '', newUrl);
 
-      const myId = room.selfId || 'solo-user';
-      room.setDisplayName('You');
-      room.setParticipants([{ id: myId, displayName: 'You' }]);
       capture.startCamera();
+      room.setParticipants([{ id: room.selfId || 'solo-user', displayName: 'You', isYou: true }]);
       setStep('layout-select');
     } else {
       setStep('join');
     }
+    // Default group size is 2, but it might have been changed by sub-menu
+    room.emitGroupSize(size);
   };
 
   const handleJoin = () => {
-    const ok = room.joinRoom();
+    const ok = room.joinRoom(groupSize);
     if (ok) {
       capture.startCamera();
       room.requestAndSendLocation();
@@ -423,7 +447,7 @@ export default function Page() {
       count: frame.lastMergeCount,
       participants: participantsWithSelf,
       localBlobs: capture.localBlobsRef.current,
-      remoteBlobs: capture.remoteBlobsRef.current,
+      remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
     });
   };
@@ -506,6 +530,8 @@ export default function Page() {
               copyRoomCode={room.copyRoomCode}
               showToast={room.showToast}
               onJoin={handleJoin}
+              onBack={() => { setStep('mode-select'); setSessionMode(null); }}
+              groupSize={groupSize}
             />
           </>
         )}
@@ -519,6 +545,8 @@ export default function Page() {
             status={room.status}
             videoRef={capture.videoRef}
             onNext={handleGoLayout}
+            onBack={handleGoHome}
+            groupSize={groupSize}
           />
         )}
 
@@ -527,6 +555,15 @@ export default function Page() {
             selectedLayout={selectedLayout}
             onSelectLayout={handleLayoutSelect}
             onStart={handleStartBooth}
+            groupSize={groupSize}
+            onBack={() => {
+              if (sessionMode === 'solo') {
+                setStep('mode-select');
+                setSessionMode(null);
+              } else {
+                setStep('room');
+              }
+            }}
           />
         )}
 
@@ -582,6 +619,7 @@ export default function Page() {
             sessionMode={sessionMode}
             orientation={frame.orientation}
             setOrientation={frame.setOrientation}
+            participants={participantsWithSelf}
           />
         )}
 

@@ -76,10 +76,10 @@ export default function useFrame({ participants }) {
   }, [frameName, frameMode, frameSrc, communityPresets]);
 
   const getDefaultFrameNames = useCallback(() => {
-    const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
+    const sorted = [...participants];
     const userA = (sorted[0]?.displayName || '').trim();
     const userB = (sorted[1]?.displayName || '').trim();
-    return { left: userB || '', right: userA || '' };
+    return { left: userA || '', right: userB || '' };
   }, [participants]);
 
   const getAutoLocationString = useCallback((id, locationsById) => {
@@ -132,7 +132,7 @@ export default function useFrame({ participants }) {
     count,
     participants,
     localBlobs,
-    remoteBlobs,
+    remoteBlobsByPeer, // Map<peerId, blob[]>
     locationsById,
   }) => {
     const key = mergeKey(count);
@@ -154,36 +154,27 @@ export default function useFrame({ participants }) {
       const headerH = FRAME_CANVAS.headerH;
       const footerH = FRAME_CANVAS.footerH;
 
-      const { left: defaultLeft, right: defaultRight } = getDefaultFrameNames();
-      const leftName = (defaultLeft || '').trim();
-      const rightName = (defaultRight || '').trim();
-
-      const sorted = [...participants].sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
+      const sorted = [...participants];
       const participantCount = sorted.length;
+      const isStack = participantCount === 3;
+      const isQuad2x2 = participantCount === 4;
       
-      // Determine IDs for mapping (mapping to columns)
-      // If 1 person: only 1 col
-      // If 2 people: Col 1 = Left, Col 2 = Right
-      const leftId = participantCount > 1 ? sorted[1]?.id : sorted[0]?.id;
-      const rightId = participantCount > 1 ? sorted[0]?.id : null;
-
-      let leftTextToDraw = locTextLeft;
-      let rightTextToDraw = locTextRight;
-
-      if (!locTextEdited && (!locTextLeft && !locTextRight)) {
-        const autoLeft = getAutoLocationString(leftId, locationsById);
-        const autoRight = getAutoLocationString(rightId, locationsById);
-        leftTextToDraw = autoLeft;
-        rightTextToDraw = autoRight;
-        setLocTextLeft(autoLeft);
-        setLocTextRight(autoRight);
-      }
-
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      const totalW = (cellW * participantCount) + (gap * (participantCount + 1));
-      const totalH = (cellH * count) + (gap * (count + 1)) + headerH + footerH;
+      let totalW, totalH;
+      if (isStack) {
+        totalW = cellW + (2 * gap);
+        const totalRows = count * 3;
+        totalH = (cellH * totalRows) + (gap * (totalRows + 1)) + headerH + footerH;
+      } else if (isQuad2x2) {
+        totalW = (cellW * 2) + (gap * 3);
+        const totalRows = count * 2;
+        totalH = (cellH * totalRows) + (gap * (totalRows + 1)) + headerH + footerH;
+      } else {
+        totalW = (cellW * participantCount) + (gap * (participantCount + 1));
+        totalH = (cellH * count) + (gap * (count + 1)) + headerH + footerH;
+      }
 
       canvas.width = totalW;
       canvas.height = totalH;
@@ -198,10 +189,6 @@ export default function useFrame({ participants }) {
         ctx.fillRect(0, 0, totalW, totalH);
       }
 
-      const myId = participants?.find(p => p.isYou)?.id;
-      const myIndex = sorted.findIndex(p => p.id === myId);
-      const isUserA = myIndex === 0;
-
       const drawHeaderFooter = () => {
         if (!showFrameText) return;
         ctx.save();
@@ -211,50 +198,50 @@ export default function useFrame({ participants }) {
         ctx.shadowOffsetY = 3;
         ctx.textBaseline = 'middle';
 
-        const headerY1 = Math.round(headerH * 0.45);
-        const headerY2 = Math.round(headerH * 0.78);
+        if (isStack || isQuad2x2) {
+          // Joined header for Trio/Quad
+          const names = sorted.map(p => (p.displayName || '').trim()).filter(Boolean).join(' ✦ ');
+          const locs = sorted.map(p => getAutoLocationString(p.id, locationsById)).filter(Boolean);
+          const uniqueLocs = [...new Set(locs)].join(' • ');
 
-        if (participantCount === 1) {
           ctx.textAlign = 'center';
-          ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
-          if (leftName) ctx.fillText(leftName, totalW / 2, headerY1);
-          ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
-          if (leftTextToDraw) ctx.fillText(leftTextToDraw, totalW / 2, headerY2);
+          ctx.font = '800 40px Quicksand, system-ui, sans-serif';
+          ctx.fillText(names, totalW / 2, Math.round(headerH * 0.45));
+          
+          ctx.font = '700 30px Quicksand, system-ui, sans-serif';
+          if (uniqueLocs) ctx.fillText(uniqueLocs, totalW / 2, Math.round(headerH * 0.78));
         } else {
-          ctx.textAlign = 'left';
-          ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
-          if (leftName) ctx.fillText(leftName, gap, headerY1);
-          ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
-          if (leftTextToDraw) ctx.fillText(leftTextToDraw, gap, headerY2);
+          // Side-by-side header for Duo/Solo
+          const headerY1 = Math.round(headerH * 0.45);
+          const headerY2 = Math.round(headerH * 0.78);
 
-          ctx.textAlign = 'right';
-          ctx.font = '800 44px Quicksand, system-ui, -apple-system, sans-serif';
-          if (rightName) ctx.fillText(rightName, totalW - gap, headerY1);
-          ctx.font = '700 34px Quicksand, system-ui, -apple-system, sans-serif';
-          if (rightTextToDraw) ctx.fillText(rightTextToDraw, totalW - gap, headerY2);
+          sorted.forEach((p, idx) => {
+            const name = (p.displayName || '').trim();
+            const loc = getAutoLocationString(p.id, locationsById);
+            const colX = gap + (idx * (cellW + gap)) + (cellW / 2);
+            
+            ctx.textAlign = 'center';
+            ctx.font = '800 40px Quicksand, system-ui, sans-serif';
+            if (name) ctx.fillText(name, colX, headerY1);
+            
+            ctx.font = '700 30px Quicksand, system-ui, sans-serif';
+            if (loc) ctx.fillText(loc, colX, headerY2);
+          });
         }
+
         ctx.restore();
 
         ctx.fillStyle = activeTextColor;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetY = 3;
-        ctx.font = '800 52px Quicksand, system-ui, -apple-system, sans-serif';
+        ctx.font = '800 52px Quicksand, system-ui, sans-serif';
         
-        if (participantCount === 1) {
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(new Date().toLocaleDateString(), totalW / 2, totalH - Math.round(footerH * 0.55));
-          ctx.font = '700 32px Quicksand, system-ui, -apple-system, sans-serif';
-          ctx.fillText('Ldr-Photobooth', totalW / 2, totalH - Math.round(footerH * 0.3));
-        } else {
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(new Date().toLocaleDateString(), gap, totalH - Math.round(footerH * 0.4));
-
-          ctx.textAlign = 'right';
-          ctx.fillText('Ldr-Photobooth', totalW - gap, totalH - Math.round(footerH * 0.4));
-        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(new Date().toLocaleDateString(), totalW / 2, totalH - Math.round(footerH * 0.55));
+        ctx.font = '700 32px Quicksand, system-ui, sans-serif';
+        ctx.fillText('Ldr-Photobooth Group Session', totalW / 2, totalH - Math.round(footerH * 0.3));
       };
 
       if (isCustomFrame && frameSrc) {
@@ -269,54 +256,65 @@ export default function useFrame({ participants }) {
         setFrameError('');
       }
 
-      for (let i = 0; i < count; i++) {
-        const localB = localBlobs[i];
-        const remoteB = remoteBlobs[i];
-        const localImg = await blobToImage(localB);
-        const remoteImg = remoteB ? await blobToImage(remoteB) : localImg;
+      const drawCroppedImage = (img, x, y, w, h) => {
+        const imgRatio = img.width / img.height;
+        const targetRatio = w / h;
+        let sw, sh, sx, sy;
 
-        const rowY = headerH + gap + (i * (cellH + gap));
-
-        ctx.save();
-        if (photoFilter !== 'none') {
-          if (photoFilter === 'bw') ctx.filter = 'grayscale(100%)';
-          else if (photoFilter === 'sepia') ctx.filter = 'sepia(100%)';
-          else if (photoFilter === 'vintage') ctx.filter = 'sepia(50%) contrast(120%) brightness(90%)';
-          else if (photoFilter === 'warm') ctx.filter = 'sepia(30%) saturate(140%)';
-          else if (photoFilter === 'cold') ctx.filter = 'saturate(80%) hue-rotate(180deg) brightness(110%)';
-        }
-
-        const drawCroppedImage = (img, x, y, w, h) => {
-          const imgRatio = img.width / img.height;
-          const targetRatio = w / h;
-          let sw, sh, sx, sy;
-
-          if (imgRatio > targetRatio) {
-            sh = img.height;
-            sw = sh * targetRatio;
-            sx = (img.width - sw) / 2;
-            sy = 0;
-          } else {
-            sw = img.width;
-            sh = sw / targetRatio;
-            sx = 0;
-            sy = (img.height - sh) / 2;
-          }
-          ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-        };
-
-        if (participantCount === 1) {
-          drawCroppedImage(localImg, gap, rowY, cellW, cellH);
+        if (imgRatio > targetRatio) {
+          sh = img.height;
+          sw = sh * targetRatio;
+          sx = (img.width - sw) / 2;
+          sy = 0;
         } else {
-          if (isUserA) {
-            drawCroppedImage(remoteImg, gap, rowY, cellW, cellH);
-            drawCroppedImage(localImg, gap * 2 + cellW, rowY, cellW, cellH);
+          sw = img.width;
+          sh = sw / targetRatio;
+          sx = 0;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+      };
+
+      for (let i = 0; i < count; i++) {
+        for (let j = 0; j < participantCount; j++) {
+          const participant = sorted[j];
+          
+          let colX, rowY;
+          if (isStack) {
+            colX = gap;
+            rowY = headerH + gap + ((i * 3 + j) * (cellH + gap));
+          } else if (isQuad2x2) {
+            const colIdx = j % 2;
+            const rowIdx = Math.floor(j / 2);
+            colX = gap + (colIdx * (cellW + gap));
+            rowY = headerH + gap + ((i * 2 + rowIdx) * (cellH + gap));
           } else {
-            drawCroppedImage(localImg, gap, rowY, cellW, cellH);
-            drawCroppedImage(remoteImg, gap * 2 + cellW, rowY, cellW, cellH);
+            colX = gap + (j * (cellW + gap));
+            rowY = headerH + gap + (i * (cellH + gap));
+          }
+          
+          let imgBlob = null;
+          if (participant.id === participants.find(p => p.isYou)?.id) {
+            imgBlob = localBlobs[i];
+          } else {
+            const peerBlobs = remoteBlobsByPeer.get(participant.id);
+            imgBlob = peerBlobs ? peerBlobs[i] : null;
+          }
+
+          if (imgBlob) {
+            const img = await blobToImage(imgBlob);
+            ctx.save();
+            if (photoFilter !== 'none') {
+              if (photoFilter === 'bw') ctx.filter = 'grayscale(100%)';
+              else if (photoFilter === 'sepia') ctx.filter = 'sepia(100%)';
+              else if (photoFilter === 'vintage') ctx.filter = 'sepia(50%) contrast(120%) brightness(90%)';
+              else if (photoFilter === 'warm') ctx.filter = 'sepia(30%) saturate(140%)';
+              else if (photoFilter === 'cold') ctx.filter = 'saturate(80%) hue-rotate(180deg) brightness(110%)';
+            }
+            drawCroppedImage(img, colX, rowY, cellW, cellH);
+            ctx.restore();
           }
         }
-        ctx.restore();
       }
 
       drawHeaderFooter();
@@ -346,14 +344,11 @@ export default function useFrame({ participants }) {
     frameSrc,
     showFrameText,
     frameTextColor,
-    locTextLeft,
-    locTextRight,
-    locTextEdited,
     photoFilter,
-    getDefaultFrameNames,
     getAutoLocationString,
     mergeKey,
-    stickers
+    stickers,
+    orientation
   ]);
 
   const addSticker = useCallback((text) => {

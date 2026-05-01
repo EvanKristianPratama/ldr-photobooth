@@ -8,10 +8,29 @@ export default function JoinRoomScreen({
   generateRoomCode,
   copyRoomCode,
   showToast,
-  onJoin
+  onJoin,
+  onBack,
+  groupSize
 }) {
   return (
     <section className="page active" id="page-join">
+      {onBack && (
+        <button 
+          onClick={onBack}
+          className="btn-secondary"
+          style={{ 
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            zIndex: 100,
+            padding: '8px 16px',
+            fontSize: '16px',
+            fontFamily: "'Gaegu', cursive"
+          }}
+        >
+          ← Back
+        </button>
+      )}
       <div className="join-left">
         <div className="deco-circle" style={{ width: '200px', height: '200px', top: '-60px', left: '-60px' }}></div>
         <div className="deco-circle" style={{ width: '120px', height: '120px', bottom: '40px', right: '-30px' }}></div>
@@ -74,7 +93,7 @@ export default function JoinRoomScreen({
           <div 
             className="code-display" 
             style={{ marginTop: '20px', fontSize: '18px' }}
-            onClick={copyRoomCode}
+            onClick={() => copyRoomCode(groupSize)}
           >
             <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Link Copied!</div>
             Invite Link: {roomCode}

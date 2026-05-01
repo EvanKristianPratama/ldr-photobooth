@@ -38,7 +38,8 @@ export default function FrameSelectScreen({
   clearStickers,
   sessionMode,
   orientation,
-  setOrientation
+  setOrientation,
+  participants = []
 }) {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
 
@@ -57,7 +58,13 @@ export default function FrameSelectScreen({
         <div 
           className={`photo-strip ${sessionMode === 'solo' ? 'photo-strip--solo' : ''} ${orientation === 'landscape' ? 'photo-strip--landscape' : ''}`} 
           id="preview-strip" 
-          style={{ background: frameColor }}
+          style={{ 
+            background: frameColor, 
+            width: sessionMode === 'solo' ? '220px' : '320px',
+            maxHeight: '70vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }} 
         >
           {isMerging ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '10px' }}>
@@ -70,6 +77,8 @@ export default function FrameSelectScreen({
               alt="Strip Preview" 
               style={{ 
                 width: '100%', 
+                maxHeight: '100%',
+                objectFit: 'contain',
                 borderRadius: '4px', 
                 border: '2px solid var(--ink)',
                 filter: photoFilter === 'bw' ? 'grayscale(100%)' :
@@ -191,39 +200,58 @@ export default function FrameSelectScreen({
           </div>
         </div>
 
-        <div className="ctrl-section">
-          <div className="ctrl-label">LOCATION TEXT</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <label className="field-label">Left</label>
-                <input 
-                  className="form-input" 
-                  style={{ fontSize: '14px', padding: '8px' }} 
-                  value={locTextLeft}
-                  onChange={e => { setLocTextLeft(e.target.value); setLocTextEdited(true); onReapply(); }}
-                />
+        {participants.length <= 2 && (
+          <div className="ctrl-section">
+            <div className="ctrl-label">LOCATION TEXT</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Left</label>
+                  <input 
+                    className="form-input" 
+                    style={{ fontSize: '14px', padding: '8px' }} 
+                    value={locTextLeft}
+                    onChange={e => { setLocTextLeft(e.target.value); setLocTextEdited(true); onReapply(); }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Right</label>
+                  <input 
+                    className="form-input" 
+                    style={{ fontSize: '14px', padding: '8px' }} 
+                    value={locTextRight}
+                    onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
+                  />
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <label className="field-label">Right</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8 }}>
                 <input 
-                  className="form-input" 
-                  style={{ fontSize: '14px', padding: '8px' }} 
-                  value={locTextRight}
-                  onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
+                  type="checkbox" 
+                  checked={showFrameText} 
+                  onChange={e => { setShowFrameText(e.target.checked); onReapply(); }} 
                 />
-              </div>
+                Show location on strip
+              </label>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8 }}>
+          </div>
+        )}
+
+        {participants.length > 2 && (
+          <div className="ctrl-section">
+            <div className="ctrl-label">LOCATION & NAMES</div>
+            <p className="form-hint" style={{ fontSize: '14px', opacity: 0.8 }}>
+              Auto-displayed for all {participants.length} members ✨
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8, marginTop: '8px' }}>
               <input 
                 type="checkbox" 
                 checked={showFrameText} 
                 onChange={e => { setShowFrameText(e.target.checked); onReapply(); }} 
               />
-              Show location on strip
+              Show details on strip
             </label>
           </div>
-        </div>
+        )}
 
         <div className="ctrl-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

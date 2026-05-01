@@ -105,6 +105,9 @@ export class RoomDurableObject {
         case EVENTS.LOCATION.UPDATE:
           this.handleLocation(sessionId, payload);
           break;
+        case EVENTS.ROOM.GROUP_SIZE:
+          this.handleGroupSize(payload);
+          break;
         default:
           console.log('Unknown event type:', type);
       }
@@ -127,10 +130,17 @@ export class RoomDurableObject {
 
     session.displayName = displayName;
 
-    this.broadcastParticipants();
+    this.send(sessionId, EVENTS.ROOM.JOINED, { 
+      participants: this.getParticipants(),
+      selfId: sessionId 
+    });
+    this.broadcastExcept(sessionId, EVENTS.ROOM.JOINED, { 
+      participants: this.getParticipants() 
+    });
     this.broadcastRoomState();
 
-    if (this.roomService.getParticipantCount() >= result.entitlement.maxParticipants) {
+    const snapshot = this.roomService.getSnapshot();
+    if (this.roomService.getParticipantCount() >= snapshot.groupSize) {
       this.broadcast(EVENTS.ROOM.READY, { ready: true });
     }
   }
@@ -204,6 +214,12 @@ export class RoomDurableObject {
     if (typeof payload?.lat === 'number') {
       this.broadcast(EVENTS.LOCATION.UPDATE, { from: sessionId, ...payload });
     }
+  }
+
+  private handleGroupSize(size: number): void {
+    this.roomService.setGroupSize(size);
+    this.broadcast(EVENTS.ROOM.GROUP_SIZE, size);
+    this.broadcastRoomState();
   }
 
   private getParticipants() {

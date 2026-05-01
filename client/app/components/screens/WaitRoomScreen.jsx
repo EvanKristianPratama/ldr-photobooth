@@ -7,14 +7,32 @@ export default function WaitRoomScreen({
   showToast,
   status,
   videoRef,
-  onNext
+  onNext,
+  onBack,
+  groupSize = 2
 }) {
-  const isReady = participants.length >= 2;
+  const isReady = participants.length >= groupSize;
 
   return (
     <section className="page active" id="page-room" style={{ flexDirection: 'column', padding: '40px 48px' }}>
-      <div className="page-title-row" style={{ marginBottom: '40px' }}>
-        <h1 className="page-title" style={{ fontSize: '72px', fontFamily: "'Gaegu', cursive" }}>
+      <div className="page-title-row" style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="btn-secondary"
+            style={{ 
+              padding: '8px 16px', 
+              fontSize: '16px', 
+              fontFamily: "'Gaegu', cursive",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            ← Back
+          </button>
+        )}
+        <h1 className="page-title" style={{ fontSize: '72px', fontFamily: "'Gaegu', cursive", margin: 0 }}>
           Waiting Room ✦
         </h1>
       </div>
@@ -46,7 +64,7 @@ export default function WaitRoomScreen({
           <div className="wr__participants squiggle" style={{ margin: 0, padding: '24px' }}>
             <div className="wr__participants-head" style={{ marginBottom: '16px' }}>
               <span style={{ fontSize: '22px' }}>Crew List</span>
-              <span style={{ fontSize: '18px', opacity: 0.6 }}>{participants.length} / 2</span>
+              <span style={{ fontSize: '18px', opacity: 0.6 }}>{participants.length} / {groupSize}</span>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {participants.map((p, i) => (
@@ -55,7 +73,7 @@ export default function WaitRoomScreen({
                   {p.displayName} {p.isYou ? '(You)' : ''}
                 </div>
               ))}
-              {participants.length < 2 && (
+              {participants.length < groupSize && (
                 <div className="wr__participant" style={{ opacity: 0.4, margin: 0, padding: '8px 16px', fontSize: '18px' }}>
                   <div className="wr__participant-dot" style={{ background: '#ccc' }} />
                   Waiting...
@@ -74,7 +92,7 @@ export default function WaitRoomScreen({
             }}>
               Share Link:
             </span>
-            <div className="code-display squiggle" onClick={copyRoomCode} style={{ cursor: 'pointer', position: 'relative', fontSize: '24px' }}>
+            <div className="code-display squiggle" onClick={() => copyRoomCode(groupSize)} style={{ cursor: 'pointer', position: 'relative', fontSize: '24px' }}>
               <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Copied!</div>
               {roomCode || '—'}
             </div>

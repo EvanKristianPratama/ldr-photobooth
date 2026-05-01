@@ -3705,11 +3705,12 @@ body::before {
 
 /* ── RESULT SCREEN RESPONSIVE ── */
 .result-page-container {
+  display: flex;
   flex-direction: column;
   padding: 0;
   overflow-y: auto !important;
   background: var(--cream);
-  min-height: 100vh;
+  min-height: calc(100vh - 60px); /* Height minus topbar */
 }
 
 .result-layout-wrapper {
@@ -3718,8 +3719,9 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 80px;
-  padding: 40px 60px;
+  padding: 0 60px 40px; /* Removed top padding to shift content up */
   width: 100%;
+  flex: 1; /* Take all available space to center content */
 }
 
 .result-branding {
@@ -3802,6 +3804,31 @@ body::before {
 
   .result-branding .done-big {
     font-size: 48px;
+  }
+
+  .result-main-content {
+    gap: 24px;
+    width: 100%;
+  }
+
+  .result-actions-stack {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Limit preview height on small screens */
+  .fs__preview-box img,
+  .photo-strip img {
+    max-height: 50vh !important;
+    max-width: 90% !important;
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .photo-strip {
+    max-height: 55vh !important;
+    max-width: 85% !important;
+    margin: 0 auto !important;
   }
 
   .result-main-content {

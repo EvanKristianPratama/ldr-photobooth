@@ -38,6 +38,10 @@ export class RoomService {
   leave(sessionId: string): void {
     this.engine.leave(sessionId);
   }
+  
+  setGroupSize(size: number): void {
+    this.engine.setGroupSize(size);
+  }
 
   startSession(layout?: string): boolean {
     return this.engine.startSession(layout);

@@ -114,7 +114,7 @@ export default function ResultScreen({
         <div className="result-main-content">
           <div 
             className="fs__preview-box" 
-            style={{ maxWidth: sessionMode === 'solo' ? '320px' : '480px' }}
+            style={{ maxWidth: sessionMode === 'solo' ? '280px' : '600px' }}
           >
             {isMerging ? (
               <div className="fs__loading">
@@ -127,6 +127,8 @@ export default function ResultScreen({
                 alt="Final Strip" 
                 style={{ 
                   width: '100%', 
+                  maxHeight: '65vh',
+                  objectFit: 'contain',
                   borderRadius: '4px', 
                   border: '3.5px solid var(--ink)', 
                   boxShadow: '10px 10px 0 var(--ink)',

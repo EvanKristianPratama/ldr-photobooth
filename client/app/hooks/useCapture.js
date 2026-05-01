@@ -12,12 +12,13 @@ export default function useCapture({
   onProgress,
   onFlash,
   onShotIndex,
-  pauseRef
+  pauseRef,
+  participantsCount = 1
 }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const localBlobsRef = useRef([]);
-  const remoteBlobsRef = useRef([]);
+  const remoteBlobsRef = useRef(new Map()); // Map<peerId, blob[]>
   const [countdown, setCountdown] = useState(null);
   const [currentShotIndex, setCurrentShotIndex] = useState(0);
   const [totalShots, setTotalShots] = useState(0);
@@ -118,7 +119,7 @@ export default function useCapture({
 
     localBlobsRef.current[index] = blob;
     setLocalBlobs([...localBlobsRef.current]); // Update state to trigger re-render
-    await sendPhotoToPeer(blob, index, chunkSize);
+    await sendPhotoToPeer(blob, index, chunkSize, participantsCount - 1);
   };
 
   const startCaptureSequence = async (shots, chunkSize) => {
@@ -134,15 +135,32 @@ export default function useCapture({
     }
   };
 
-  const checkProcessingComplete = async (sessionMode) => {
+  const checkProcessingComplete = async (sessionMode, participantsCount) => {
     let retries = 0;
     const isSolo = sessionMode === 'solo';
 
     if (!isSolo) {
-      while (remoteBlobsRef.current.filter(Boolean).length < totalShots && retries < PROCESSING_RETRY_LIMIT) {
-        const received = remoteBlobsRef.current.filter(Boolean).length;
-        const percentage = 50 + Math.round((received / totalShots) * 50);
+      // Tunggu sampai semua remote participant mengirim semua fotonya
+      const expectedRemotePeers = participantsCount - 1;
+      
+      const isComplete = () => {
+        if (remoteBlobsRef.current.size < expectedRemotePeers) return false;
+        for (const blobs of remoteBlobsRef.current.values()) {
+          if (blobs.filter(Boolean).length < totalShots) return false;
+        }
+        return true;
+      };
+
+      while (!isComplete() && retries < PROCESSING_RETRY_LIMIT) {
+        let totalReceived = 0;
+        remoteBlobsRef.current.forEach(blobs => {
+          totalReceived += blobs.filter(Boolean).length;
+        });
+        
+        const totalExpected = expectedRemotePeers * totalShots;
+        const percentage = 50 + Math.round((totalReceived / totalExpected) * 50);
         if (typeof onProgress === 'function') onProgress(percentage);
+        
         await new Promise(r => setTimeout(r, PROCESSING_RETRY_DELAY_MS));
         retries++;
       }
@@ -152,18 +170,25 @@ export default function useCapture({
     if (typeof onProcessingComplete === 'function') {
       onProcessingComplete({
         localBlobs: localBlobsRef.current,
-        remoteBlobs: remoteBlobsRef.current
+        remoteBlobsByPeer: remoteBlobsRef.current
       });
     }
   };
 
-  const storeRemoteBlob = (index, blob) => {
-    remoteBlobsRef.current[index || 0] = blob;
+  const storeRemoteBlob = (peerId, index, blob) => {
+    if (!remoteBlobsRef.current.has(peerId)) {
+      remoteBlobsRef.current.set(peerId, []);
+    }
+    const peerBlobs = remoteBlobsRef.current.get(peerId);
+    const idx = (index != null) ? index : 0;
+    // Deduplicate: if we already have this photo (e.g. from WebRTC), skip socket duplicate
+    if (peerBlobs[idx]) return;
+    peerBlobs[idx] = blob;
   };
 
   const resetCapture = () => {
     localBlobsRef.current = [];
-    remoteBlobsRef.current = [];
+    remoteBlobsRef.current = new Map();
     setLocalBlobs([]);
     setCurrentShotIndex(0);
     setTotalShots(0);

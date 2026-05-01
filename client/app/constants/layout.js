@@ -1,7 +1,8 @@
 export const LAYOUTS = {
   layout1: { shots: 1, label: 'Layout 1' },
   layout2: { shots: 2, label: 'Layout 2' },
-  layout3: { shots: 3, label: 'Layout 3' }
+  layout3: { shots: 3, label: 'Layout 3' },
+  layout4: { shots: 4, label: 'Layout 4' }
 };
 
 export const FRAME_CANVAS = {
@@ -14,7 +15,7 @@ export const FRAME_CANVAS = {
 
 export const COUNTDOWN_SECONDS = 6;
 export const SHOT_DELAY_MS = 2000;
-export const PROCESSING_RETRY_LIMIT = 40;
+export const PROCESSING_RETRY_LIMIT = 60;
 export const PROCESSING_RETRY_DELAY_MS = 500;
 export const CHUNK_SIZE = 64 * 1024;
 
