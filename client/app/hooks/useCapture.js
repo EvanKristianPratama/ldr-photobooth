@@ -153,16 +153,28 @@ export default function useCapture({
 
       while (!isComplete() && retries < PROCESSING_RETRY_LIMIT) {
         let totalReceived = 0;
-        remoteBlobsRef.current.forEach(blobs => {
-          totalReceived += blobs.filter(Boolean).length;
+        remoteBlobsRef.current.forEach((blobs, peerId) => {
+          const count = blobs.filter(Boolean).length;
+          totalReceived += count;
+          if (count < totalShots) {
+            console.log(`[Capture] Still waiting for ${totalShots - count} photos from peer ${peerId.slice(0,8)}`);
+          }
         });
+
+        if (remoteBlobsRef.current.size < expectedRemotePeers) {
+          console.log(`[Capture] Still waiting for ${expectedRemotePeers - remoteBlobsRef.current.size} peers to connect`);
+        }
         
         const totalExpected = expectedRemotePeers * totalShots;
-        const percentage = 50 + Math.round((totalReceived / totalExpected) * 50);
+        const percentage = 50 + Math.round((totalReceived / (totalExpected || 1)) * 50);
         if (typeof onProgress === 'function') onProgress(percentage);
         
         await new Promise(r => setTimeout(r, PROCESSING_RETRY_DELAY_MS));
         retries++;
+      }
+      
+      if (retries >= PROCESSING_RETRY_LIMIT) {
+        console.warn('[Capture] Processing timeout reached. Some photos might be missing.');
       }
     }
 

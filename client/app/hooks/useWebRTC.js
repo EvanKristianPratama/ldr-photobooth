@@ -120,6 +120,11 @@ export default function useWebRTC({
       if (dc.readyState !== 'open') return;
 
       try {
+        if (dc.readyState !== 'open') {
+          console.warn(`[WebRTC] Channel to ${peerId} not open (state: ${dc.readyState})`);
+          return;
+        }
+
         dc.send(JSON.stringify({
           type: 'meta',
           id: fileId,
@@ -134,11 +139,13 @@ export default function useWebRTC({
           while (dc.bufferedAmount > 10 * 1024 * 1024) {
             await new Promise(r => setTimeout(r, 50));
           }
+          if (dc.readyState !== 'open') throw new Error('Channel closed during transfer');
           dc.send(chunk);
           offset += chunk.byteLength;
         }
         dc.send(JSON.stringify({ type: 'done', id: fileId }));
         webrtcSentCount++;
+        console.log(`[WebRTC] Sent photo index ${index} to ${peerId.slice(0,8)}`);
       } catch (err) {
         console.warn(`[WebRTC] Failed to send to ${peerId}, will use socket fallback`, err);
       }

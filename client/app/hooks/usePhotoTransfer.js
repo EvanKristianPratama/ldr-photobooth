@@ -13,20 +13,48 @@ export default function usePhotoTransfer({ socketRef }) {
     return await res.blob();
   }, []);
 
+  const compressForSocket = useCallback((blob) => {
+    return new Promise((resolve) => {
+      // If blob is already small enough (< 700KB), don't compress
+      if (blob.size < 700000) return resolve(blob);
+
+      const img = new Image();
+      img.src = URL.createObjectURL(blob);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const canvas = document.createElement('canvas');
+        // Reduce resolution slightly for socket fallback if needed
+        const scale = 0.8; 
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Use lower quality for socket to stay under 1MB base64 limit
+        canvas.toBlob((result) => resolve(result || blob), 'image/jpeg', 0.6);
+      };
+      img.onerror = () => resolve(blob);
+    });
+  }, []);
+
   const sendPhotoViaSocket = useCallback(async (blob, index) => {
     try {
       if (!socketRef.current) return false;
-      const base64 = await blobToBase64(blob);
+      
+      // Ensure the photo is small enough for WebSocket 1MB limit
+      const optimizedBlob = await compressForSocket(blob);
+      const base64 = await blobToBase64(optimizedBlob);
+      
       socketRef.current.emit('photo:send', {
         index,
-        mime: blob.type || 'image/jpeg',
+        mime: 'image/jpeg',
         base64
       });
       return true;
-    } catch {
+    } catch (err) {
+      console.error('[Socket] Send photo failed:', err);
       return false;
     }
-  }, [blobToBase64, socketRef]);
+  }, [blobToBase64, compressForSocket, socketRef]);
 
   const handleSocketReceive = useCallback(async ({ index, mime, base64, from }) => {
     const blob = await base64ToBlob(base64, mime || 'image/jpeg');
