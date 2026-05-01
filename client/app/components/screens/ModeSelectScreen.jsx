@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 
 export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
   const [showGroupOptions, setShowGroupOptions] = useState(false);
 
   const groupOptions = [
     { id: 2, label: 'Duo (2 Orang)', desc: 'Best for couples & besties', icon: '👥' },
-    { id: 3, label: 'Trio (3 Orang)', desc: 'Perfect for the trio squad', icon: '👪' },
-    { id: 4, label: 'Quad (4 Orang)', desc: 'Full crew session', icon: '👨‍👩‍👧‍👦' },
+    { id: 3, label: 'Trio (3 Orang)', desc: 'Perfect for the trio squad', icon: '👪', comingSoon: true },
+    { id: 4, label: 'Quad (4 Orang)', desc: 'Full crew session', icon: '👨‍👩‍👧‍👦', comingSoon: true },
   ];
 
   if (showGroupOptions) {
@@ -43,13 +44,31 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
           {groupOptions.map(opt => (
             <div 
               key={opt.id}
-              className="mode-option-card duo" 
-              onClick={() => onSelectMode('duo', opt.id)}
-              style={{ marginBottom: '16px' }}
+              className={`mode-option-card duo ${opt.comingSoon ? 'coming-soon' : ''}`} 
+              onClick={() => {
+                if (opt.comingSoon) {
+                  Swal.fire({
+                    title: 'Sabar ya! ✨',
+                    text: 'Fitur Trio & Quad masih dalam tahap pengembangan. Stay tuned!',
+                    icon: 'info',
+                    confirmButtonText: 'Oke!',
+                    confirmButtonColor: 'var(--ink)',
+                    customClass: {
+                      popup: 'swal-doodle'
+                    }
+                  });
+                  return;
+                }
+                onSelectMode('duo', opt.id);
+              }}
+              style={{ marginBottom: '16px', opacity: opt.comingSoon ? 0.7 : 1, cursor: opt.comingSoon ? 'not-allowed' : 'pointer' }}
             >
               <div className="mode-icon">{opt.icon}</div>
               <div className="mode-details">
-                <div className="mode-title">{opt.label}</div>
+                <div className="mode-title">
+                  {opt.label}
+                  {opt.comingSoon && <span style={{ fontSize: '12px', marginLeft: '10px', background: 'var(--ink)', color: 'var(--yellow)', padding: '2px 8px', borderRadius: '10px', verticalAlign: 'middle', fontWeight: 'bold' }}>SOON!</span>}
+                </div>
               </div>
             </div>
           ))}
