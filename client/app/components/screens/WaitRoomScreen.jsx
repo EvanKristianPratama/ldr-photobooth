@@ -29,7 +29,7 @@ export default function WaitRoomScreen({
               autoPlay 
               playsInline 
               muted 
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', borderRadius: '8px' }} 
             />
             {/* Teks dipindah ke dalam preview */}
             <div className="cam-info-bar" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 100%)', padding: '15px' }}>

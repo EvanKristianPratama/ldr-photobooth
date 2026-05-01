@@ -74,9 +74,16 @@ export default function useCapture({
     }, 1000);
   });
 
-  const captureFrame = (video) => new Promise((resolve, reject) => {
+  const captureFrame = (video) => new Promise(async (resolve, reject) => {
+    // Tunggu sebentar jika videoWidth belum tersedia (maksimal 3 detik)
+    let attempts = 0;
+    while ((!video.videoWidth || !video.videoHeight) && attempts < 30) {
+      await new Promise(r => setTimeout(r, 100));
+      attempts++;
+    }
+
     if (!video.videoWidth || !video.videoHeight) {
-      reject(new Error('Video not ready'));
+      reject(new Error('Video not ready after waiting'));
       return;
     }
 
@@ -85,7 +92,10 @@ export default function useCapture({
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, -canvas.width, 0, canvas.width, canvas.height);
+    ctx.restore();
 
     canvas.toBlob(blob => {
       if (blob) resolve(blob);
