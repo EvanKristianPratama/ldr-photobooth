@@ -108,10 +108,26 @@ export default function useCapture({
     if (typeof onFlash === 'function') onFlash(true);
     await new Promise(r => setTimeout(r, 100));
 
-    if (!videoRef.current) return;
+    // Wait for video element to be mounted (up to 2s)
+    let waitAttempts = 0;
+    while (!videoRef.current && waitAttempts < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      waitAttempts++;
+    }
+    if (!videoRef.current) {
+      console.error('[Capture] Video element not found after waiting');
+      if (typeof onFlash === 'function') onFlash(false);
+      return;
+    }
+
+    // Re-attach stream if needed and wait for readyState
     if (videoRef.current.readyState < 2 && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
-      await new Promise(r => setTimeout(r, 500));
+      let readyAttempts = 0;
+      while (videoRef.current.readyState < 2 && readyAttempts < 20) {
+        await new Promise(r => setTimeout(r, 100));
+        readyAttempts++;
+      }
     }
 
     const blob = await captureFrame(videoRef.current);

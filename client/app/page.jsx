@@ -258,6 +258,9 @@ export default function Page() {
     }
 
     setStep('countdown');
+    // Wait for React to mount the video element in CaptureScreen
+    await new Promise(r => setTimeout(r, 300));
+    captureRef.current.attachStream();
     await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
     setStep('processing');
     await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length);
