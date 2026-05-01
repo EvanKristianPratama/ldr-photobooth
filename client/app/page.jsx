@@ -156,7 +156,7 @@ export default function Page() {
   const participantsWithSelf = useMemo(() => {
     return room.participants.map(p => ({
       ...p,
-      isYou: p.id === room.selfId
+      isYou: p.isYou || (room.selfId && p.id === room.selfId)
     }));
   }, [room.participants, room.selfId]);
 
