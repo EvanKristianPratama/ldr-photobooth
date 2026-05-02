@@ -39,9 +39,28 @@ export default function FrameSelectScreen({
   sessionMode,
   orientation,
   setOrientation,
-  participants = []
+  participants = [],
+  frameFont,
+  setFrameFont,
+  frameLayout,
+  setFrameLayout,
+  frameDate,
+  setFrameDate
 }) {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
+
+  const layoutOptions = [
+    { id: 'strip', label: 'Strip' },
+    { id: 'grid', label: 'Wide' }
+  ];
+
+  const fonts = [
+    { id: "'Quicksand', sans-serif", label: 'Modern', preview: 'Aa' },
+    { id: "'Gaegu', cursive", label: 'Doodle', preview: 'Aa' },
+    { id: "'Pastel Crayon', cursive", label: 'Crayon', preview: 'Aa' },
+    { id: "'Caveat', cursive", label: 'Script', preview: 'Aa' },
+    { id: "'Playfair Display', serif", label: 'Elegant', preview: 'Aa' }
+  ];
 
   const colors = [
     { bg: '#ffffff', text: '#1a1a2e', date: '#aaa' },
@@ -55,38 +74,23 @@ export default function FrameSelectScreen({
   return (
     <section className="page active" id="page-frame">
       <div className="frame-editor">
-        <div 
-          className={`photo-strip ${sessionMode === 'solo' ? 'photo-strip--solo' : ''} ${orientation === 'landscape' ? 'photo-strip--landscape' : ''}`} 
-          id="preview-strip" 
-          style={{ 
-            background: frameColor, 
-            width: sessionMode === 'solo' ? '220px' : '320px',
-            maxHeight: '70vh',
-            display: 'flex',
-            flexDirection: 'column'
-          }} 
-        >
+        <div className="preview-container">
           {isMerging ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '10px' }}>
-              <div className="room-dot" style={{ width: '20px', height: '20px' }}></div>
-              <span style={{ fontFamily: 'Caveat', fontSize: '20px' }}>Rendering...</span>
+            <div className="rendering-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <div className="room-dot" />
+              <span style={{ fontFamily: 'Gaegu', fontSize: '20px' }}>Rendering...</span>
             </div>
           ) : (
             <img 
               src={mergedImage} 
               alt="Strip Preview" 
+              className="preview-img"
               style={{ 
-                width: '100%', 
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: '4px', 
-                border: '2px solid var(--ink)',
                 filter: photoFilter === 'bw' ? 'grayscale(100%)' :
                         photoFilter === 'sepia' ? 'sepia(100%)' :
                         photoFilter === 'vintage' ? 'sepia(50%) contrast(120%) brightness(90%)' :
                         photoFilter === 'warm' ? 'sepia(30%) saturate(140%)' :
-                        photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none',
-                transition: 'filter 0.2s ease'
+                        photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none'
               }} 
             />
           )}
@@ -96,6 +100,24 @@ export default function FrameSelectScreen({
       <div className="frame-controls">
         <div className="ctrl-title">Edit Frame ✦</div>
 
+        {(sessionMode === 'solo' || sessionMode === 'duo') && (
+          <div className="ctrl-section">
+            <div className="ctrl-label">PRINT STYLE</div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {layoutOptions.map(l => (
+                <button 
+                  key={l.id}
+                  className={`btn-secondary ${frameLayout === l.id ? 'active' : ''}`}
+                  style={{ flex: 1, background: frameLayout === l.id ? 'var(--yellow)' : 'white' }}
+                  onClick={() => { setFrameLayout(l.id); onReapply(); }}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="ctrl-section">
           <div className="ctrl-label">ORIENTATION</div>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -104,21 +126,44 @@ export default function FrameSelectScreen({
               style={{ flex: 1, background: orientation === 'portrait' ? 'var(--yellow)' : 'white' }}
               onClick={() => { setOrientation('portrait'); onReapply(); }}
             >
-              Portrait 📱
+              Portrait
             </button>
             <button 
               className={`btn-secondary ${orientation === 'landscape' ? 'active' : ''}`}
               style={{ flex: 1, background: orientation === 'landscape' ? 'var(--yellow)' : 'white' }}
               onClick={() => { setOrientation('landscape'); onReapply(); }}
             >
-              Landscape 💻
+              Landscape
             </button>
           </div>
         </div>
 
         <div className="ctrl-section">
+          <div className="ctrl-label">TYPOGRAPHY</div>
+          <div className="scroll-row" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
+            {fonts.map(f => (
+              <button 
+                key={f.id}
+                className={`btn-secondary ${frameFont === f.id ? 'active' : ''}`}
+                style={{ 
+                  flexShrink: 0, 
+                  padding: '6px 10px', 
+                  fontSize: '13px', 
+                  fontFamily: f.id,
+                  background: frameFont === f.id ? 'var(--yellow)' : 'white',
+                  borderRadius: '10px'
+                }}
+                onClick={() => { setFrameFont(f.id); onReapply(); }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ctrl-section">
           <div className="ctrl-label">PHOTO FILTER</div>
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px' }}>
+          <div className="scroll-row" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', flexWrap: 'nowrap' }}>
             {[
               { id: 'none', label: 'Normal', color: '#eee' },
               { id: 'bw', label: 'B&W', color: '#666' },
@@ -196,27 +241,35 @@ export default function FrameSelectScreen({
 
         {participants.length <= 2 && (
           <div className="ctrl-section">
-            <div className="ctrl-label">LOCATION TEXT</div>
+            <div className="ctrl-label">
+              {sessionMode === 'solo' ? 'CUSTOM NAME' : 'LOCATIONS'}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="field-label">Left</label>
+                  <label className="field-label">
+                    {sessionMode === 'solo' ? 'Your Name' : 'Left Location'}
+                  </label>
                   <input 
                     className="form-input" 
                     style={{ fontSize: '14px', padding: '8px' }} 
+                    placeholder={sessionMode === 'solo' ? 'Write your name...' : 'City, Country'}
                     value={locTextLeft}
                     onChange={e => { setLocTextLeft(e.target.value); setLocTextEdited(true); onReapply(); }}
                   />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">Right</label>
-                  <input 
-                    className="form-input" 
-                    style={{ fontSize: '14px', padding: '8px' }} 
-                    value={locTextRight}
-                    onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
-                  />
-                </div>
+                {sessionMode !== 'solo' && (
+                  <div style={{ flex: 1 }}>
+                    <label className="field-label">Right Location</label>
+                    <input 
+                      className="form-input" 
+                      style={{ fontSize: '14px', padding: '8px' }} 
+                      placeholder="City, Country"
+                      value={locTextRight}
+                      onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
+                    />
+                  </div>
+                )}
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8 }}>
                 <input 
@@ -224,7 +277,7 @@ export default function FrameSelectScreen({
                   checked={showFrameText} 
                   onChange={e => { setShowFrameText(e.target.checked); onReapply(); }} 
                 />
-                Show location on strip
+                {sessionMode === 'solo' ? 'Show name on strip' : 'Show details on strip'}
               </label>
             </div>
           </div>
@@ -246,6 +299,16 @@ export default function FrameSelectScreen({
             </label>
           </div>
         )}
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">DATE TEXT</div>
+          <input 
+            className="form-input" 
+            style={{ fontSize: '14px', padding: '8px', width: '100%' }} 
+            value={frameDate}
+            onChange={e => { setFrameDate(e.target.value); onReapply(); }}
+          />
+        </div>
 
         <div className="ctrl-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

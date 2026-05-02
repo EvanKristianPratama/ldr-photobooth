@@ -142,26 +142,47 @@ export default function ResultScreen({
             )}
           </div>
 
-          <div className="result-actions-stack">
-            <button className="btn-community-hot" onClick={() => setShowPostModal(true)}>
+          <div className="result-actions-stack" style={{ gap: '15px' }}>
+            <button className="btn-community-hot" onClick={() => setShowPostModal(true)} style={{ fontSize: '18px', padding: '16px' }}>
               🔥 Post to Community 🔥
             </button>
-            <button className="btn-dl" onClick={onDownload}>
-              ↓ Download Strip
-            </button>
-            <button className="btn-share" onClick={handleShare}>
-              📤 Share Photo
-            </button>
-            <button className="btn-secondary" onClick={onEditFrame} style={{ background: 'white', opacity: 0.8, fontSize: '14px' }}>
-              Edit Again ↺
-            </button>
             
-            <div className="result-footer-links">
-              <button className="btn-restart" onClick={onHome}>
-                ← home
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <button className="btn-dl" onClick={onDownload} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
+                ↓ Download Strip
               </button>
-              <div className="divider-v" />
-              <button className="btn-secondary btn-donate-tiny" onClick={onDonate}>
+              <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
+                📤 Share Photo
+              </button>
+              <button className="btn-secondary" onClick={onEditFrame} style={{ width: '100%', background: 'white', fontSize: '16px', padding: '14px', border: '2px solid var(--ink)' }}>
+                Edit Again ↺
+              </button>
+            </div>
+            
+            <div className="result-footer-links" style={{ marginTop: '10px', width: '100%', gap: '15px' }}>
+              <button 
+                className="btn-restart" 
+                onClick={onHome} 
+                style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  fontSize: '18px', 
+                  fontWeight: 'bold',
+                  background: 'white',
+                  border: '2px solid var(--ink)',
+                  borderRadius: '12px',
+                  boxShadow: '4px 4px 0 var(--ink)',
+                  color: 'var(--ink)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                ← Home
+              </button>
+              <button className="btn-secondary" onClick={onDonate} style={{ flex: 1, padding: '12px', fontSize: '18px', background: 'var(--yellow)', border: '2px solid var(--ink)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink)', color: 'var(--ink)', fontWeight: 'bold' }}>
                 Donate ♥
               </button>
             </div>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_FRAME_SRC, FRAME_CANVAS, FRAME_PRESETS } from '../constants/layout';
 
-export default function useFrame({ participants }) {
+export default function useFrame({ participants, locationsById = {} }) {
   const [frameMode, setFrameMode] = useState('default');
   const [framePresetId, setFramePresetId] = useState('default');
   const [frameSrc, setFrameSrc] = useState(DEFAULT_FRAME_SRC);
@@ -20,6 +20,9 @@ export default function useFrame({ participants }) {
   const [sessionSeed, setSessionSeed] = useState(0);
   const [stickers, setStickers] = useState([]);
   const [orientation, setOrientation] = useState('portrait');
+  const [frameFont, setFrameFont] = useState("'Quicksand', sans-serif");
+  const [frameLayout, setFrameLayout] = useState('strip'); // 'strip' or 'grid'
+  const [frameDate, setFrameDate] = useState(new Date().toLocaleDateString());
   const mergeCacheRef = useRef(new Map());
 
   const [communityPresets, setCommunityPresets] = useState([]);
@@ -111,6 +114,23 @@ export default function useFrame({ participants }) {
     img.src = URL.createObjectURL(blob);
   });
 
+  // Auto-initialize edit fields from participants/locations
+  useEffect(() => {
+    if (locTextEdited || !participants?.length) return;
+
+    if (participants.length === 1) {
+      // Solo: Default to Name
+      const name = (participants[0].displayName || '').trim();
+      if (name) setLocTextLeft(name);
+    } else if (participants.length === 2) {
+      // Duo: Default to Locations
+      const loc1 = getAutoLocationString(participants[0].id, locationsById);
+      const loc2 = getAutoLocationString(participants[1].id, locationsById);
+      if (loc1) setLocTextLeft(loc1);
+      if (loc2) setLocTextRight(loc2);
+    }
+  }, [participants, locationsById, locTextEdited, getAutoLocationString]);
+
   const mergeKey = useCallback((count) => {
     return [
       sessionSeed,
@@ -121,13 +141,14 @@ export default function useFrame({ participants }) {
       showFrameText,
       frameColor,
       frameTextColor,
-      locTextLeft,
-      locTextRight,
       photoFilter,
       JSON.stringify(stickers),
-      orientation
+      orientation,
+      frameFont,
+      frameLayout,
+      frameDate
     ].join('|');
-  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation]);
+  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate]);
 
   const mergePhotos = useCallback(async ({
     count,
@@ -160,6 +181,7 @@ export default function useFrame({ participants }) {
       const participantCount = sorted.length;
       const isStack = participantCount === 3;
       const isQuad2x2 = participantCount === 4;
+      const isGrid = frameLayout === 'grid' && count > 1 && (participantCount === 1 || participantCount === 2);
       
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -173,6 +195,11 @@ export default function useFrame({ participants }) {
         totalW = (cellW * 2) + (gap * 3);
         const totalRows = count * 2;
         totalH = (cellH * totalRows) + (gap * (totalRows + 1)) + headerH + footerH;
+      } else if (isGrid) {
+        const cols = participantCount * 2;
+        const rows = Math.ceil(count / 2);
+        totalW = (cellW * cols) + (gap * (cols + 1));
+        totalH = (cellH * rows) + (gap * (rows + 1)) + headerH + footerH;
       } else {
         totalW = (cellW * participantCount) + (gap * (participantCount + 1));
         totalH = (cellH * count) + (gap * (count + 1)) + headerH + footerH;
@@ -207,10 +234,10 @@ export default function useFrame({ participants }) {
           const uniqueLocs = [...new Set(locs)].join(' • ');
 
           ctx.textAlign = 'center';
-          ctx.font = '800 40px Quicksand, system-ui, sans-serif';
+          ctx.font = `800 40px ${frameFont}`;
           ctx.fillText(names, totalW / 2, Math.round(headerH * 0.45));
           
-          ctx.font = '700 30px Quicksand, system-ui, sans-serif';
+          ctx.font = `700 30px ${frameFont}`;
           if (uniqueLocs) ctx.fillText(uniqueLocs, totalW / 2, Math.round(headerH * 0.78));
         } else {
           // Side-by-side header for Duo/Solo
@@ -218,15 +245,31 @@ export default function useFrame({ participants }) {
           const headerY2 = Math.round(headerH * 0.78);
 
           sorted.forEach((p, idx) => {
-            const name = (p.displayName || '').trim();
-            const loc = getAutoLocationString(p.id, locationsById);
-            const colX = gap + (idx * (cellW + gap)) + (cellW / 2);
+            let name = (p.displayName || '').trim();
+            let loc = getAutoLocationString(p.id, locationsById);
+
+            // Solo Mode: locTextLeft overrides name
+            if (participantCount === 1 && locTextLeft) {
+              name = locTextLeft;
+            } 
+            // Duo Mode: locTextLeft/Right overrides respective locations
+            else if (participantCount === 2) {
+              if (idx === 0 && locTextLeft) loc = locTextLeft;
+              if (idx === 1 && locTextRight) loc = locTextRight;
+            }
+
+            let colX;
+            if (isGrid && participantCount === 1) {
+              colX = totalW / 2; // Center of the whole canvas for Solo Wide
+            } else {
+              colX = gap + (idx * (cellW + gap)) + (cellW / 2); // Default behavior
+            }
             
             ctx.textAlign = 'center';
-            ctx.font = '800 40px Quicksand, system-ui, sans-serif';
+            ctx.font = `800 40px ${frameFont}`;
             if (name) ctx.fillText(name, colX, headerY1);
             
-            ctx.font = '700 30px Quicksand, system-ui, sans-serif';
+            ctx.font = `700 30px ${frameFont}`;
             if (loc) ctx.fillText(loc, colX, headerY2);
           });
         }
@@ -237,13 +280,13 @@ export default function useFrame({ participants }) {
         ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetY = 3;
-        ctx.font = '800 52px Quicksand, system-ui, sans-serif';
+        ctx.font = `800 52px ${frameFont}`;
         
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(new Date().toLocaleDateString(), totalW / 2, totalH - Math.round(footerH * 0.55));
-        ctx.font = '700 32px Quicksand, system-ui, sans-serif';
-        ctx.fillText('Ldr-Photobooth Group Session', totalW / 2, totalH - Math.round(footerH * 0.3));
+        ctx.fillText(frameDate, totalW / 2, totalH - Math.round(footerH * 0.55));
+        ctx.font = `700 32px ${frameFont}`;
+        ctx.fillText('LDRPhotobooth', totalW / 2, totalH - Math.round(footerH * 0.3));
       };
 
       if (isCustomFrame && frameSrc) {
@@ -287,24 +330,26 @@ export default function useFrame({ participants }) {
             rowY = headerH + gap + ((i * 3 + j) * (cellH + gap));
           } else if (isQuad2x2) {
             const colIdx = j % 2;
-            const rowIdx = Math.floor(j / 2);
-            colX = gap + (colIdx * (cellW + gap));
-            rowY = headerH + gap + ((i * 2 + rowIdx) * (cellH + gap));
+            const rowIdx = i * 2 + Math.floor(j / 2);
+            colX = gap + colIdx * (cellW + gap);
+            rowY = headerH + gap + rowIdx * (cellH + gap);
+          } else if (isGrid) {
+            const shotCol = i % 2;
+            const shotRow = Math.floor(i / 2);
+            const colIdx = (shotCol * participantCount) + j;
+            const rowIdx = shotRow;
+            colX = gap + colIdx * (cellW + gap);
+            rowY = headerH + gap + rowIdx * (cellH + gap);
           } else {
             colX = gap + (j * (cellW + gap));
             rowY = headerH + gap + (i * (cellH + gap));
           }
           
-          let imgBlob = null;
-          if (participant.isYou) {
-            imgBlob = localBlobs[i];
-          } else {
-            const peerBlobs = remoteBlobsByPeer.get(participant.id);
-            imgBlob = peerBlobs ? peerBlobs[i] : null;
-          }
+          const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
+          const blob = blobs[i];
 
-          if (imgBlob) {
-            const img = await blobToImage(imgBlob);
+          if (blob) {
+            const img = await blobToImage(blob);
             ctx.save();
             if (photoFilter !== 'none') {
               if (photoFilter === 'bw') ctx.filter = 'grayscale(100%)';
@@ -350,7 +395,10 @@ export default function useFrame({ participants }) {
     getAutoLocationString,
     mergeKey,
     stickers,
-    orientation
+    orientation,
+    frameLayout,
+    frameFont,
+    frameDate
   ]);
 
   const addSticker = useCallback((text) => {
@@ -501,6 +549,12 @@ export default function useFrame({ participants }) {
     addRandomSticker,
     clearStickers,
     orientation,
-    setOrientation
+    setOrientation,
+    frameFont,
+    setFrameFont,
+    frameLayout,
+    setFrameLayout,
+    frameDate,
+    setFrameDate
   };
 }

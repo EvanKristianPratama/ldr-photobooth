@@ -185,7 +185,10 @@ export default function Page() {
     participantsCount: participantsWithSelf.length
   });
 
-  const frame = useFrame({ participants: participantsWithSelf });
+  const frame = useFrame({ 
+    participants: participantsWithSelf,
+    locationsById: locationsById
+  });
 
   const selectedLayoutRef = useRef(selectedLayout);
   const captureRef = useRef(capture);
@@ -621,6 +624,12 @@ export default function Page() {
             orientation={frame.orientation}
             setOrientation={frame.setOrientation}
             participants={participantsWithSelf}
+            frameFont={frame.frameFont}
+            setFrameFont={frame.setFrameFont}
+            frameLayout={frame.frameLayout}
+            setFrameLayout={frame.setFrameLayout}
+            frameDate={frame.frameDate}
+            setFrameDate={frame.setFrameDate}
           />
         )}
 
@@ -676,11 +685,25 @@ export default function Page() {
           <div className="frame-modal__backdrop" onClick={() => setDonateOpen(false)} />
           <div className="frame-modal__content">
             <div className="frame-modal__header">
-              <div>
-                <h3 className="frame-modal__title">Donate</h3>
-                <p className="frame-modal__subtitle">Pwiiss untuk bayar server hehhe..</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                <div>
+                  <h3 className="frame-modal__title">Donate</h3>
+                  <p className="frame-modal__subtitle">Pwiiss untuk bayar server hehhe..</p>
+                </div>
+                <button 
+                  onClick={() => setDonateOpen(false)} 
+                  style={{ 
+                    background: 'none', 
+                    border: 'none', 
+                    fontSize: '20px', 
+                    opacity: 0.3, 
+                    cursor: 'pointer',
+                    padding: '5px'
+                  }}
+                >
+                  ×
+                </button>
               </div>
-              <button className="btn-secondary" onClick={() => setDonateOpen(false)}>×</button>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -700,11 +723,10 @@ export default function Page() {
 
             <div className="frame-modal__footer" style={{ gap: '10px' }}>
               {!donateQrMissing && (
-                <a className="btn-primary" href="/donate-qr.png" download style={{ textDecoration: 'none' }}>
+                <a className="btn-primary" href="/donate-qr.png" download style={{ textDecoration: 'none', width: '100%', textAlign: 'center' }}>
                   Download QR
                 </a>
               )}
-              <button className="btn-secondary" onClick={() => setDonateOpen(false)}>Close</button>
             </div>
           </div>
         </div>

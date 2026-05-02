@@ -15,7 +15,7 @@ export const FRAME_CANVAS = {
 
 export const COUNTDOWN_SECONDS = 6;
 export const SHOT_DELAY_MS = 2000;
-export const PROCESSING_RETRY_LIMIT = 60;
+export const PROCESSING_RETRY_LIMIT = 120; // 60 seconds (120 * 500ms)
 export const PROCESSING_RETRY_DELAY_MS = 500;
 export const CHUNK_SIZE = 64 * 1024;
 
