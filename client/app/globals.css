@@ -3891,7 +3891,7 @@ body::before {
   padding: 40px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .comm-modal-title {
@@ -4017,4 +4017,138 @@ body::before {
   50% { content: '..'; }
   75% { content: '...'; }
   100% { content: '....'; }
+}
+
+/* ── COMMUNITY COMMENTS ── */
+.comm-comments-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 200px;
+  max-height: 400px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.comments-title {
+  font-family: 'Gaegu', cursive;
+  font-size: 22px;
+  margin-bottom: 16px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding-right: 8px;
+}
+
+.comment-item {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.comment-author {
+  font-family: 'Gaegu', cursive;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--ink);
+  display: block;
+}
+
+.comment-content {
+  font-size: 14px;
+  color: #444;
+  margin: 4px 0 0 0;
+}
+
+.no-comments {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  text-align: center;
+  opacity: 0.4;
+  margin-top: 30px;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-input-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.comment-input-name-inline {
+  width: 120px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: 'Gaegu', cursive;
+  font-size: 14px;
+  background: #fff;
+}
+
+.comment-input-text {
+  flex: 1;
+  min-width: 150px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: 'Gaegu', cursive;
+  font-size: 14px;
+  background: #fff;
+}
+
+.comment-submit {
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-family: 'Gaegu', cursive;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.comment-submit:hover {
+  transform: translateY(-2px);
+}
+
+.comment-submit:active {
+  transform: scale(0.95);
+}
+
+.comment-submit:disabled {
+  opacity: 0.5;
+}
+
+.comm-like-simple {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.comm-like-simple:hover {
+  transform: scale(1.2);
+}
+
+.comm-like-simple:active {
+  transform: scale(0.9);
 }

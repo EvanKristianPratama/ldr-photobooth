@@ -11,6 +11,10 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [file, setFile] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentAuthor, setCommentAuthor] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
 
   const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 
@@ -46,6 +50,45 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
       if (res.ok) { fetchData(); }
     } catch (err) { console.error('Like failed'); }
   };
+
+  const fetchComments = async (item) => {
+    try {
+      const type = activeTab === 'frames' ? 'frames' : 'posts';
+      const res = await fetch(`${API_BASE}/api/community/${type}/${item.id}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
+      }
+    } catch (err) { console.error('Failed to fetch comments'); }
+  };
+
+  const handlePostComment = async (e) => {
+    e.preventDefault();
+    if (!commentText || !selectedItem) return;
+    setIsPostingComment(true);
+    try {
+      const authorName = commentAuthor.trim() || 'Anonymous';
+      const type = activeTab === 'frames' ? 'frames' : 'posts';
+      const res = await fetch(`${API_BASE}/api/community/${type}/${selectedItem.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: authorName, content: commentText })
+      });
+      if (res.ok) {
+        setCommentText('');
+        fetchComments(selectedItem);
+      }
+    } catch (err) { console.error('Failed to post comment'); }
+    finally { setIsPostingComment(false); }
+  };
+
+  useEffect(() => {
+    if (selectedItem) {
+      fetchComments(selectedItem);
+    } else {
+      setComments([]);
+    }
+  }, [selectedItem]);
 
   const compressImage = (file, maxWidth = 800, quality = 0.6) => {
     return new Promise((resolve) => {
@@ -208,7 +251,7 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
         </div>
       )}
 
-      {selectedItem && (
+       {selectedItem && (
         <div className="comm-modal-overlay" onClick={() => setSelectedItem(null)}>
           <div className="comm-modal-card" onClick={e => e.stopPropagation()}>
              <button className="comm-modal-close" onClick={() => setSelectedItem(null)}>×</button>
@@ -221,12 +264,53 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
                   />
                </div>
                <div className="comm-modal-info">
-                  <h2 className="comm-modal-title">{selectedItem.title || (activeTab === 'photos' ? 'Photo Strip' : 'Frame')}</h2>
-                  <p className="comm-modal-author">by <b>{selectedItem.author}</b></p>
+                  <div className="comm-modal-header-info">
+                    <h2 className="comm-modal-title">{selectedItem.title || (activeTab === 'photos' ? 'Photo Strip' : 'Frame')}</h2>
+                    <p className="comm-modal-author">by <b>{selectedItem.author}</b></p>
+                  </div>
                   
-                  <div style={{ marginTop: 'auto' }}>
-                    <button className="comm-like-big" onClick={(e) => handleLike(e, selectedItem)}>
-                       ❤️ Beri Like
+                  <div className="comm-comments-section">
+                    <h3 className="comments-title">Comments ({comments.length})</h3>
+                    <div className="comments-list">
+                      {comments.length === 0 ? (
+                        <p className="no-comments">No comments yet. Be the first!</p>
+                      ) : (
+                        comments.map(c => (
+                          <div key={c.id} className="comment-item">
+                            <span className="comment-author">{c.author}</span>
+                            <p className="comment-content">{c.content}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    <form className="comment-form" onSubmit={handlePostComment}>
+                      <div className="comment-input-row">
+                        <input 
+                          type="text" 
+                          placeholder="Your Name (Optional)" 
+                          className="comment-input-name-inline"
+                          value={commentAuthor}
+                          onChange={(e) => setCommentAuthor(e.target.value)}
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Add a comment..." 
+                          className="comment-input-text"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          required
+                        />
+                        <button type="submit" className="comment-submit" disabled={isPostingComment}>
+                          {isPostingComment ? '...' : 'Send'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <button className="comm-like-simple" onClick={(e) => handleLike(e, selectedItem)} style={{ fontSize: '40px' }}>
+                       ❤️
                     </button>
                   </div>
                </div>

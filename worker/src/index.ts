@@ -152,6 +152,41 @@ export default {
       }
     }
 
+    // 4. Comment System
+    if (url.pathname.includes('/comments')) {
+      const parts = url.pathname.split('/');
+      const type = parts[3]; // 'frames' or 'posts'
+      const targetId = parts[4];
+
+      if (request.method === 'GET') {
+        try {
+          const { results } = await env.DB.prepare('SELECT * FROM comments WHERE target_id = ? AND target_type = ? ORDER BY created_at DESC')
+            .bind(targetId, type).all();
+          return new Response(JSON.stringify(results), {
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: 'Failed to fetch comments' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+      }
+
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json() as any;
+          const { author, content } = body;
+          if (!author || !content) return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
+          
+          const id = crypto.randomUUID();
+          await env.DB.prepare('INSERT INTO comments (id, target_id, target_type, author, content, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+            .bind(id, targetId, type, author, content, new Date().toISOString()).run();
+            
+          return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: 'Failed to post comment', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+      }
+    }
+
     // 3. Serve images from R2 (Support both /frames/ and /posts/)
     if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/')) {
       const filename = url.pathname.slice(1);
