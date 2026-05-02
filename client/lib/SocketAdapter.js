@@ -139,10 +139,10 @@ class SocketAdapter {
         };
 
         this.ws.onerror = (error) => {
-            console.error('[Socket] Error:', error);
-            console.log('[Socket] WebSocket readyState:', this.ws?.readyState);
-            console.log('[Socket] WebSocket URL:', this.ws?.url);
-            this._emit('connect_error', { message: 'WebSocket error' });
+            const state = this.ws?.readyState;
+            const url = this.ws?.url;
+            console.error(`[Socket] Connection Error to ${url}. ReadyState: ${state}`, error);
+            this._emit('connect_error', { message: 'WebSocket error', url, state });
         };
 
         this.ws.onmessage = (event) => {

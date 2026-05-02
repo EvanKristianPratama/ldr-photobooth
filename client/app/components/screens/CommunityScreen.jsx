@@ -12,7 +12,7 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
   const [author, setAuthor] = useState('');
   const [file, setFile] = useState(null);
 
-  const API_BASE = 'https://ldr-photobooth.if2372047.workers.dev';
+  const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 
   const [sortBy, setSortBy] = useState('hot'); // 'hot', 'new', 'top'
 
@@ -22,9 +22,10 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
       const endpoint = activeTab === 'frames' ? '/api/community/frames' : '/api/community/posts';
       const response = await fetch(`${API_BASE}${endpoint}?sort=${sortBy}`);
       if (response.ok) {
-        const data = await response.json();
-        if (activeTab === 'frames') setCommunityFrames(data);
-        else setCommunityPosts(data);
+        const json = await response.json();
+        const items = json.data || [];
+        if (activeTab === 'frames') setCommunityFrames(items);
+        else setCommunityPosts(items);
       }
     } catch (err) {
       console.error('Failed to fetch data:', err);

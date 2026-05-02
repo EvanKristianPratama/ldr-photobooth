@@ -27,11 +27,12 @@ export default function useFrame({ participants }) {
   useEffect(() => {
     const fetchCommunityFrames = async () => {
       try {
-        const API_BASE = 'https://ldr-photobooth.if2372047.workers.dev';
+        const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
         const response = await fetch(`${API_BASE}/api/community/frames`);
         if (response.ok) {
-          const data = await response.json();
-          const mapped = data.map(f => {
+          const json = await response.json();
+          const frames = json.data || [];
+          const mapped = frames.map(f => {
             let finalUrl = f.url;
             if (!finalUrl.startsWith('http')) {
               // Ensure no double slashes
@@ -50,7 +51,7 @@ export default function useFrame({ participants }) {
           setCommunityPresets(mapped);
         }
       } catch (err) {
-        console.error('Failed to load community presets');
+        console.error('Failed to load community presets:', err);
       }
     };
     fetchCommunityFrames();

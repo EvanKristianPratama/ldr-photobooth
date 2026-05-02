@@ -80,7 +80,7 @@ export default function ResultScreen({
       formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
       formData.append('frame_id', selectedFrameId || '');
 
-      const API_BASE = 'https://ldr-photobooth.if2372047.workers.dev';
+      const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 
       const res = await fetch(`${API_BASE}/api/community/posts`, {
         method: 'POST',
