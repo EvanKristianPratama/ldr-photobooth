@@ -34,7 +34,9 @@ export default function useFrame({ participants, locationsById = {} }) {
         const response = await fetch(`${API_BASE}/api/community/frames`);
         if (response.ok) {
           const json = await response.json();
-          const frames = json.data || [];
+          // Handle both array response and object with data property
+          const frames = Array.isArray(json) ? json : (json.data || []);
+          
           const mapped = frames.map(f => {
             let finalUrl = f.url;
             if (!finalUrl.startsWith('http')) {

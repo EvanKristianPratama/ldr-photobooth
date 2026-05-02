@@ -27,7 +27,9 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
       const response = await fetch(`${API_BASE}${endpoint}?sort=${sortBy}`);
       if (response.ok) {
         const json = await response.json();
-        const items = json.data || [];
+        // Handle both array response and object with data property
+        const items = Array.isArray(json) ? json : (json.data || []);
+        
         if (activeTab === 'frames') setCommunityFrames(items);
         else setCommunityPosts(items);
       }
@@ -277,8 +279,9 @@ export default function CommunityScreen({ onBack, activeTab, setActiveTab, showU
                       ) : (
                         comments.map(c => (
                           <div key={c.id} className="comment-item">
-                            <span className="comment-author">{c.author}</span>
-                            <p className="comment-content">{c.content}</p>
+                            <p className="comment-text-inline">
+                              <span className="comment-author">{c.author}:</span> {c.content}
+                            </p>
                           </div>
                         ))
                       )}
