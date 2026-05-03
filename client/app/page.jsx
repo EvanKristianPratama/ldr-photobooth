@@ -42,6 +42,7 @@ export default function Page() {
   const [showHowTo, setShowHowTo] = useState(false);
   const [activeTab, setActiveTab] = useState('photos');
   const [showUpload, setShowUpload] = useState(false);
+  const [sessionParticipants, setSessionParticipants] = useState([]);
 
   const iconBase = "/doodle icons/SVG/interface";
 
@@ -186,7 +187,7 @@ export default function Page() {
   });
 
   const frame = useFrame({ 
-    participants: participantsWithSelf,
+    participants: sessionParticipants,
     locationsById: locationsById
   });
 
@@ -249,6 +250,7 @@ export default function Page() {
 
     frameRef.current.bumpSessionSeed();
     captureRef.current.resetCapture();
+    setSessionParticipants(participantsWithSelf);
     setProgress(0);
 
     const shots = LAYOUTS[layout || selectedLayoutRef.current]?.shots || 1;
@@ -309,6 +311,7 @@ export default function Page() {
       frameRef.current.resetFrame();
       setLocationsById({});
       setDownloadName('');
+      setSessionParticipants([]);
     };
 
     socket.on('webrtc:offer', handleOffer);
@@ -356,12 +359,12 @@ export default function Page() {
 
     frame.mergePhotos({
       count: frame.lastMergeCount,
-      participants: participantsWithSelf,
+      participants: sessionParticipants,
       localBlobs: capture.localBlobsRef.current,
       remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
     });
-  }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, participantsWithSelf, locationsById]);
+  }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, sessionParticipants, locationsById]);
 
   useEffect(() => {
     if (step === 'result' && frame.mergedImage) {
@@ -433,6 +436,7 @@ export default function Page() {
     frame.resetFrame();
     setLocationsById({});
     setDownloadName('');
+    setSessionParticipants([]);
   };
 
   const handleDownload = () => {
@@ -449,7 +453,7 @@ export default function Page() {
     if (!frame.lastMergeCount) return;
     frame.mergePhotos({
       count: frame.lastMergeCount,
-      participants: participantsWithSelf,
+      participants: sessionParticipants,
       localBlobs: capture.localBlobsRef.current,
       remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
@@ -623,7 +627,7 @@ export default function Page() {
             sessionMode={sessionMode}
             orientation={frame.orientation}
             setOrientation={frame.setOrientation}
-            participants={participantsWithSelf}
+            participants={sessionParticipants}
             frameFont={frame.frameFont}
             setFrameFont={frame.setFrameFont}
             frameLayout={frame.frameLayout}
