@@ -162,6 +162,7 @@ export class RoomDurableObject {
 
   private handleLeave(sessionId: string): void {
     this.handleDisconnect(sessionId);
+    this.broadcast(EVENTS.SESSION.RESET, {});
   }
 
   private handleSessionStart(payload?: { layout?: string }): void {
