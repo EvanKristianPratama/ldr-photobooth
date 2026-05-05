@@ -672,10 +672,11 @@ export default function Page() {
             top: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
-            whiteSpace: 'nowrap',
             letterSpacing: '0.5px'
           }}>
             By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
+            <br />
+            Designed by egapie
           </div>
         </footer>
       )}
