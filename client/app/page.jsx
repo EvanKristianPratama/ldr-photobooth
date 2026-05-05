@@ -676,7 +676,7 @@ export default function Page() {
           }}>
             By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
             <br />
-            Designed by egapie
+            Designed by <a href="https://www.instagram.com/egaaapi/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@egaaapi</a>
           </div>
         </footer>
       )}
