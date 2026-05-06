@@ -649,35 +649,6 @@ export default function Page() {
         )}
       </main>
 
-      {/* BOTTOM NAV / FOOTER */}
-      {step !== 'community' && (
-        <footer className="footer-main" style={{ 
-          flexShrink: 0, 
-          borderTop: '3px solid var(--ink)', 
-          background: 'var(--cream)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'flex-end', 
-          padding: '10px 28px',
-          position: 'relative',
-          minHeight: '60px'
-        }}>
-          <div className="credits" style={{ 
-            fontFamily: "'Gaegu', cursive", 
-            fontSize: '18px', 
-            fontWeight: '600',
-            opacity: 0.6,
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            letterSpacing: '0.5px'
-          }}>
-            By Evan Kristian — <a href="https://instagram.com/evankristiannn" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}>@evankristiannn</a>
-          </div>
-        </footer>
-      )}
 
       {donateOpen && (
         <div className="frame-modal">
