@@ -15,7 +15,6 @@ export default function usePhotoTransfer({ socketRef }) {
 
   const compressForSocket = useCallback((blob) => {
     return new Promise((resolve) => {
-      // If blob is already small enough (< 700KB), don't compress
       if (blob.size < 700000) return resolve(blob);
 
       const img = new Image();
@@ -23,13 +22,11 @@ export default function usePhotoTransfer({ socketRef }) {
       img.onload = () => {
         URL.revokeObjectURL(img.src);
         const canvas = document.createElement('canvas');
-        // Reduce resolution slightly for socket fallback if needed
         const scale = 0.8; 
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Use lower quality for socket to stay under 1MB base64 limit
         canvas.toBlob((result) => resolve(result || blob), 'image/jpeg', 0.6);
       };
       img.onerror = () => resolve(blob);
