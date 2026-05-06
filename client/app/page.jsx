@@ -10,6 +10,7 @@ import WaitRoomScreen from './components/screens/WaitRoomScreen';
 import LayoutSelectScreen from './components/screens/LayoutSelectScreen';
 import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
+import StepIndicator from './components/ui/StepIndicator';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelectScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
@@ -498,12 +499,11 @@ export default function Page() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
+      {/* TOPBAR */}
       {step !== 'community' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
-          <div className="logo" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/doodle icons/SVG/interface/camera.svg" alt="Camera" style={{ width: '32px', height: '32px' }} />
-            <span>LDR Photobooth</span>
-          </div>
+          <div className="logo">LDR Photobooth</div>
+          <StepIndicator steps={STEP_LABELS} currentStep={step} />
         </header>
       )}
 
