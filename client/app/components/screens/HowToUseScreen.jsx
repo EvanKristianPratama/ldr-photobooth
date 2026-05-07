@@ -1,35 +1,38 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function HowToUseScreen({ onClose }) {
+  const { t } = useLanguage();
+
   const steps = [
     {
       icon: '✨',
-      title: 'Pilih Mode',
-      desc: 'Pilih "Solo" kalau sendiri, atau "Duo" buat foto bareng ayang/bestie secara real-time.',
+      title: t('howto.step1.title'),
+      desc: t('howto.step1.desc'),
       color: 'var(--yellow-lt)'
     },
     {
       icon: '🏠',
-      title: 'Buat Ruangan',
-      desc: '(Khusus Duo) Klik "Create Room", copy kodenya, dan kirim ke partner kamu buat join!',
+      title: t('howto.step2.title'),
+      desc: t('howto.step2.desc'),
       color: 'var(--pink-lt)'
     },
     {
       icon: '📐',
-      title: 'Pilih Layout',
-      desc: 'Tentukan jumlah foto dan susunan strip yang kalian inginkan.',
+      title: t('howto.step3.title'),
+      desc: t('howto.step3.desc'),
       color: 'var(--teal-lt)'
     },
     {
       icon: '📸',
-      title: 'Pose Bareng',
-      desc: 'Tunggu countdown dan tunjukkan pose terbaik kalian di depan kamera!',
+      title: t('howto.step4.title'),
+      desc: t('howto.step4.desc'),
       color: 'var(--teal-lt)'
     },
     {
       icon: '🎨',
-      title: 'Hias & Simpan',
-      desc: 'Pilih frame favorit, tambahkan sticker lucu, lalu download hasilnya!',
+      title: t('howto.step5.title'),
+      desc: t('howto.step5.desc'),
       color: 'var(--purple-lt)'
     }
   ];
@@ -39,7 +42,7 @@ export default function HowToUseScreen({ onClose }) {
       <div className="how-to-backdrop" onClick={onClose} />
       <div className="how-to-content squiggle">
         <div className="how-to-header">
-          <h2 className="how-to-title">Cara Pakai ✦</h2>
+          <h2 className="how-to-title">{t('howto.title')}</h2>
           <button className="how-to-close" onClick={onClose}>×</button>
         </div>
 
@@ -57,12 +60,13 @@ export default function HowToUseScreen({ onClose }) {
         </div>
 
         <div className="how-to-footer">
-          <p>Gampang banget kan? Yuk langsung mulai! ✨</p>
+          <p>{t('howto.footer')}</p>
           <button className="btn-primary" onClick={onClose} style={{ width: 'auto', padding: '10px 30px' }}>
-            Oke, Paham!
+            {t('howto.understand')}
           </button>
         </div>
       </div>
     </div>
   );
 }
+

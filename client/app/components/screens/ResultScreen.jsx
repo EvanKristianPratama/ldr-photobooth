@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ResultScreen({
   mergedImage,
@@ -12,6 +13,7 @@ export default function ResultScreen({
   sessionMode,
   selectedFrameId
 }) {
+  const { t } = useLanguage();
   const [showPostModal, setShowPostModal] = useState(false);
   const [postName, setPostName] = useState('Anonymous');
   const [postCaption, setPostCaption] = useState('Our photobooth moment! ✨');
@@ -31,7 +33,7 @@ export default function ResultScreen({
           text: 'Check out our photo strip! ✨',
         });
       } else {
-        alert('Web Share is not supported in this browser. Please download and share manually! ✌️');
+        alert(t('result.webShareError'));
       }
     } catch (err) {
       console.error('Share failed:', err);
@@ -89,10 +91,10 @@ export default function ResultScreen({
 
       if (res.ok) {
         setShowPostModal(false);
-        alert("Published! Check the Community Showcase 🚀");
+        alert(t('community.publishedSuccess'));
       }
     } catch (err) {
-      alert("Failed to post.");
+      alert(t('community.publishFailed'));
     } finally {
       setIsPublishing(false);
     }
@@ -105,8 +107,8 @@ export default function ResultScreen({
         {/* Left/Top: Branding/Title */}
         <div className="result-branding">
           <div className="done-big">
-            READY<br />
-            <span className="outline-pink">TO SHARE!</span>
+            {t('result.ready')}<br />
+            <span className="outline-pink">{t('result.toShare')}</span>
           </div>
         </div>
 
@@ -119,7 +121,7 @@ export default function ResultScreen({
             {isMerging ? (
               <div className="fs__loading">
                 <div className="room-dot" />
-                <p>Developing...</p>
+                <p>{t('result.developing')}</p>
               </div>
             ) : (
               <img 
@@ -144,18 +146,18 @@ export default function ResultScreen({
 
           <div className="result-actions-stack" style={{ gap: '15px' }}>
             <button className="btn-community-hot" onClick={() => setShowPostModal(true)} style={{ fontSize: '18px', padding: '16px' }}>
-              🔥 Post to Community 🔥
+              {t('result.postCommunity')}
             </button>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
               <button className="btn-dl" onClick={onDownload} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
-                ↓ Download Strip
+                {t('result.download')}
               </button>
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
-                📤 Share Photo
+                {t('result.share')}
               </button>
               <button className="btn-secondary" onClick={onEditFrame} style={{ width: '100%', background: 'white', fontSize: '16px', padding: '14px', border: '2px solid var(--ink)' }}>
-                Edit Again ↺
+                {t('result.editAgain')}
               </button>
             </div>
             
@@ -180,10 +182,10 @@ export default function ResultScreen({
                   gap: '8px'
                 }}
               >
-                ← Home
+                {t('common.home')}
               </button>
               <button className="btn-secondary" onClick={onDonate} style={{ flex: 1, padding: '12px', fontSize: '18px', background: 'var(--yellow)', border: '2px solid var(--ink)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink)', color: 'var(--ink)', fontWeight: 'bold' }}>
-                Donate ♥
+                {t('result.donate')}
               </button>
             </div>
           </div>
@@ -195,8 +197,8 @@ export default function ResultScreen({
         <div className="comm-modal-overlay">
           <div className="comm-modal" style={{ maxWidth: '400px' }}>
             <button className="comm-modal-close" onClick={() => setShowPostModal(false)}>×</button>
-            <h2 className="comm-modal-title">Share to <span className="outline">Community</span></h2>
-            <p style={{ fontFamily: 'Gaegu', textAlign: 'center', opacity: 0.7, marginBottom: '15px' }}>Let others see your cute moment! ✨</p>
+            <h2 className="comm-modal-title">{t('community.shareTo')} <span className="outline">{t('community.community')}</span></h2>
+            <p style={{ fontFamily: 'Gaegu', textAlign: 'center', opacity: 0.7, marginBottom: '15px' }}>{t('community.cuteMoment')}</p>
             
             {/* PHOTO PREVIEW */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
@@ -213,24 +215,24 @@ export default function ResultScreen({
             </div>
 
             <div className="comm-form-group">
-              <label>Your Name 👤</label>
+              <label>{t('community.yourName')}</label>
               <input 
                 type="text" 
                 className="comm-form-input" 
                 value={postName}
                 onChange={(e) => setPostName(e.target.value)}
-                placeholder="Ex: Evan & Kristian"
+                placeholder={t('community.yourNamePlaceholder')}
               />
             </div>
 
             <div className="comm-form-group">
-              <label>Short Caption ✍️</label>
+              <label>{t('community.caption')}</label>
               <textarea 
                 className="comm-form-input" 
                 style={{ height: '80px', paddingTop: '10px' }}
                 value={postCaption}
                 onChange={(e) => setPostCaption(e.target.value)}
-                placeholder="Tell something about this photo..."
+                placeholder={t('community.captionPlaceholder')}
               />
             </div>
 
@@ -240,7 +242,7 @@ export default function ResultScreen({
               onClick={handlePostToCommunity}
               disabled={isPublishing}
             >
-              {isPublishing ? 'Publishing...' : 'Publish now 🚀'}
+              {isPublishing ? t('community.publishing') : t('community.publish')}
             </button>
           </div>
         </div>
@@ -248,3 +250,4 @@ export default function ResultScreen({
     </section>
   );
 }
+

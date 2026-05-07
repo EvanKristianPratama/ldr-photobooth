@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function JoinRoomScreen({
   displayName,
@@ -12,12 +13,14 @@ export default function JoinRoomScreen({
   onBack,
   groupSize
 }) {
+  const { t } = useLanguage();
+
   return (
     <section className="page active" id="page-join">
       {onBack && (
         <button 
           onClick={onBack}
-          className="btn-secondary"
+          className="btn-secondary btn-back-absolute"
           style={{ 
             position: 'absolute',
             top: '20px',
@@ -28,14 +31,10 @@ export default function JoinRoomScreen({
             fontFamily: "'Gaegu', cursive"
           }}
         >
-          ← Back
+          {t('common.back')}
         </button>
       )}
       <div className="join-left">
-        <div className="deco-circle" style={{ width: '200px', height: '200px', top: '-60px', left: '-60px' }}></div>
-        <div className="deco-circle" style={{ width: '120px', height: '120px', bottom: '40px', right: '-30px' }}></div>
-        <div className="deco-circle" style={{ width: '60px', height: '60px', top: '40%', left: '20px' }}></div>
-
         <div className="big-doodle">
           LDR
           <span className="outline">Photobooth</span>
@@ -43,30 +42,30 @@ export default function JoinRoomScreen({
       </div>
 
       <div className="join-right">
-        <div className="form-section-title">Hey, who are you? ✌️</div>
+        <div className="form-section-title">{t('join.whoAreYou')}</div>
 
         <div className="form-group">
-          <label className="form-label">Your name</label>
+          <label className="form-label">{t('join.yourName')}</label>
           <input 
             className="form-input" 
             value={displayName} 
             onChange={e => setDisplayName(e.target.value)} 
-            placeholder="e.g. Evan" 
+            placeholder={t('join.namePlaceholder')} 
             autoComplete="off" 
             maxLength="30"
           />
-          <p className="form-hint">It'll show up on your photo strip!</p>
-          <p className={`error-msg ${!displayName ? 'show' : ''}`} id="err-name">Oops! Tell us your name first :)</p>
+          <p className="form-hint">{t('join.nameHint')}</p>
+          <p className={`error-msg ${!displayName ? 'show' : ''}`} id="err-name">{t('join.nameError')}</p>
         </div>
 
         <div className="form-group">
-          <label className="form-label">Room code</label>
+          <label className="form-label">{t('join.roomCode')}</label>
           <div style={{ display: 'flex', gap: '10px' }}>
             <input 
               className="form-input" 
               value={roomCode} 
               onChange={e => setRoomCode(e.target.value.toUpperCase())} 
-              placeholder="e.g. STUDIO42" 
+              placeholder={t('join.roomPlaceholder')} 
               autoComplete="off" 
               maxLength="10" 
               style={{ textTransform: 'uppercase', letterSpacing: '4px' }}
@@ -81,12 +80,12 @@ export default function JoinRoomScreen({
               🎲
             </button>
           </div>
-          <p className="form-hint">4–10 characters — ask the host!</p>
-          <p className={`error-msg ${roomCode && roomCode.length < 4 ? 'show' : ''}`} id="err-code">Hmm, need at least 4 characters!</p>
+          <p className="form-hint">{t('join.roomHint')}</p>
+          <p className={`error-msg ${roomCode && roomCode.length < 4 ? 'show' : ''}`} id="err-code">{t('join.roomError')}</p>
         </div>
 
         <button className="btn-primary" onClick={onJoin}>
-          Let's go! →
+          {t('join.letsGo')}
         </button>
 
         {roomCode && (
@@ -95,11 +94,12 @@ export default function JoinRoomScreen({
             style={{ marginTop: '20px', fontSize: '18px' }}
             onClick={() => copyRoomCode(groupSize)}
           >
-            <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Link Copied!</div>
-            Invite Link: {roomCode}
+            <div className={`copy-toast ${showToast ? 'visible' : ''}`}>{t('join.linkCopied')}</div>
+            {t('join.inviteLink')} {roomCode}
           </div>
         )}
       </div>
     </section>
   );
 }
+

@@ -1,0 +1,521 @@
+export const TRANSLATIONS = {
+  en: {
+    // Steps
+    'step.mode-select': 'Mode',
+    'step.join': 'Join',
+    'step.room': 'Room',
+    'step.layout-select': 'Layout',
+    'step.countdown': 'Capture',
+    'step.processing': 'Processing',
+    'step.frame-select': 'Frame',
+    'step.result': 'Download',
+
+    // Common / Buttons
+    'common.back': '← Back',
+    'common.next': 'Next →',
+    'common.home': '← Home',
+    'common.waiting': 'Waiting...',
+    'common.error': 'Error',
+    'common.success': 'Success!',
+
+    // Mode Selection
+    'mode.howMany': 'How many',
+    'mode.people': 'People? 👥',
+    'mode.selectSize': 'Select Group Size ✦',
+    'mode.pickYour': 'Pick your',
+    'mode.vibe': 'Vibe! ✨',
+    'mode.howToPhoto': 'How would you like to take photos today? ✌️',
+    'mode.solo': 'Solo Mode',
+    'mode.group': 'Group Mode (LDR)',
+    'mode.community': 'Community',
+    'mode.helpHint': 'Click me if you are confused 👉',
+    'mode.soonTitle': 'Patience! ✨',
+    'mode.soonDesc': 'Trio & Quad features are still in development. Stay tuned!',
+    'mode.duo': 'Duo (2 People)',
+    'mode.duoDesc': 'Best for couples & besties',
+    'mode.trio': 'Trio (3 People)',
+    'mode.trioDesc': 'Perfect for the trio squad',
+    'mode.quad': 'Quad (4 People)',
+    'mode.quadDesc': 'Full crew session',
+
+    // Join Room Screen
+    'join.whoAreYou': 'Hey, who are you? ✌️',
+    'join.yourName': 'Your name',
+    'join.namePlaceholder': 'e.g. Evan',
+    'join.nameHint': "It'll show up on your photo strip!",
+    'join.nameError': 'Oops! Tell us your name first :)',
+    'join.roomCode': 'Room code',
+    'join.roomPlaceholder': 'e.g. STUDIO42',
+    'join.roomHint': '4–10 characters — ask the host!',
+    'join.roomError': 'Hmm, need at least 4 characters!',
+    'join.letsGo': "Let's go! →",
+    'join.linkCopied': 'Link Copied!',
+    'join.inviteLink': 'Invite Link:',
+
+    // Waiting Room
+    'room.title': 'Waiting Room ✦',
+    'room.dandan': 'Primp up before we start! ✨',
+    'room.crewList': 'Crew List',
+    'room.shareLink': 'Share Link:',
+    'room.copied': 'Copied!',
+    'room.chooseLayout': 'Choose Layout →',
+    'room.waitingPartner': 'Waiting for partner to join',
+
+    // Layout Select
+    'layout.title': 'Pick a layout ✦',
+    'layout.photos': 'photo',
+    'layout.photosPlural': 'photos',
+    'layout.start': 'Start Capture →',
+    'layout.selectFirst': 'Choose a Layout First ✨',
+
+    // Capture / Processing Screen
+    'capture.developing': 'Developing',
+    'capture.yourFilm': 'Your Film!',
+    'capture.scanning': 'Scanning frames...',
+    'capture.adding': 'Adding grain & contrast...',
+    'capture.syncing': 'Syncing with other participants...',
+    'capture.finalising': 'Finalising print — almost there!',
+
+    // Result Screen
+    'result.ready': 'READY',
+    'result.toShare': 'TO SHARE!',
+    'result.developing': 'Developing...',
+    'result.postCommunity': '🔥 Post to Community 🔥',
+    'result.download': '↓ Download Strip',
+    'result.share': '📤 Share Photo',
+    'result.editAgain': 'Edit Again ↺',
+    'result.donate': 'Donate ♥',
+    'result.webShareError': 'Web Share is not supported in this browser. Please download and share manually! ✌️',
+
+    // Community Modal
+    'community.shareTo': 'Share to',
+    'community.community': 'Community',
+    'community.cuteMoment': 'Let others see your cute moment! ✨',
+    'community.yourName': 'Your Name 👤',
+    'community.yourNamePlaceholder': 'Ex: Evan & Kristian',
+    'community.caption': 'Short Caption ✍️',
+    'community.captionPlaceholder': 'Tell something about this photo...',
+    'community.publish': 'Publish now 🚀',
+    'community.publishing': 'Publishing...',
+    'community.publishedSuccess': 'Published! Check the Community Showcase 🚀',
+    'community.publishFailed': 'Failed to post.',
+
+    // SweetAlert Disconnect
+    'swal.partnerDisconnected': 'Partner Disconnected!',
+    'swal.waitingReconnect': 'Waiting for them to reconnect...',
+    'swal.connected': 'Connected!',
+    'swal.resuming': 'Resuming session...',
+
+    // Donate Modal
+    'donate.title': 'Donate',
+    'donate.subtitle': 'Pwiiss help pay for the server hehhe..',
+    'donate.notAvailable': 'QR is not available yet.',
+    'donate.download': 'Download QR',
+
+    // How to Use
+    'howto.title': 'How to Use ✦',
+    'howto.step1.title': 'Select Mode',
+    'howto.step1.desc': 'Choose "Solo" if alone, or "Duo" to take photos with your partner/bestie in real-time.',
+    'howto.step2.title': 'Create Room',
+    'howto.step2.desc': '(Duo Only) Click "Create Room", copy the code, and send it to your partner to join!',
+    'howto.step3.title': 'Pick Layout',
+    'howto.step3.desc': 'Determine the number of photos and the strip arrangement you want.',
+    'howto.step4.title': 'Strike a Pose',
+    'howto.step4.desc': 'Wait for the countdown and show your best poses in front of the camera!',
+    'howto.step5.title': 'Decorate & Save',
+    'howto.step5.desc': 'Choose your favorite frame, add cute stickers, and download your final strip!',
+    'howto.footer': "Super easy, right? Let's get started! ✨",
+    'howto.understand': 'Okay, Got It!',
+  },
+  id: {
+    // Steps
+    'step.mode-select': 'Mode',
+    'step.join': 'Gabung',
+    'step.room': 'Ruang',
+    'step.layout-select': 'Layout',
+    'step.countdown': 'Capture',
+    'step.processing': 'Memproses',
+    'step.frame-select': 'Bingkai',
+    'step.result': 'Unduh',
+
+    // Common / Buttons
+    'common.back': '← Kembali',
+    'common.next': 'Lanjut →',
+    'common.home': '← Beranda',
+    'common.waiting': 'Menunggu...',
+    'common.error': 'Error',
+    'common.success': 'Berhasil!',
+
+    // Mode Selection
+    'mode.howMany': 'Berapa',
+    'mode.people': 'Orang? 👥',
+    'mode.selectSize': 'Pilih Ukuran Grup ✦',
+    'mode.pickYour': 'Pilih',
+    'mode.vibe': 'Gaya! ✨',
+    'mode.howToPhoto': 'Mau foto gimana hari ini? ✌️',
+    'mode.solo': 'Solo Mode',
+    'mode.group': 'Group Mode (LDR)',
+    'mode.community': 'Komunitas',
+    'mode.helpHint': 'kalau bingung klik aku 👉',
+    'mode.soonTitle': 'Sabar ya! ✨',
+    'mode.soonDesc': 'Fitur Trio & Quad masih dalam tahap pengembangan. Stay tuned!',
+    'mode.duo': 'Duo (2 Orang)',
+    'mode.duoDesc': 'Terbaik untuk pasangan & sahabat',
+    'mode.trio': 'Trio (3 Orang)',
+    'mode.trioDesc': 'Sempurna untuk grup bertiga',
+    'mode.quad': 'Quad (4 Orang)',
+    'mode.quadDesc': 'Sesi kru lengkap',
+
+    // Join Room Screen
+    'join.whoAreYou': 'Hey, siapa namamu? ✌️',
+    'join.yourName': 'Namamu',
+    'join.namePlaceholder': 'misal: Evan',
+    'join.nameHint': 'Nama ini akan muncul di strip foto!',
+    'join.nameError': 'Oops! Beritahu namamu dulu :)',
+    'join.roomCode': 'Kode ruang',
+    'join.roomPlaceholder': 'misal: STUDIO42',
+    'join.roomHint': '4–10 karakter — tanya host-mu!',
+    'join.roomError': 'Hmm, butuh minimal 4 karakter!',
+    'join.letsGo': 'Ayo mulai! →',
+    'join.linkCopied': 'Tautan Disalin!',
+    'join.inviteLink': 'Tautan Undangan:',
+
+    // Waiting Room
+    'room.title': 'Ruang Tunggu ✦',
+    'room.dandan': 'Dandan dulu gih sebelum mulai! ✨',
+    'room.crewList': 'Daftar Kru',
+    'room.shareLink': 'Bagikan Tautan:',
+    'room.copied': 'Disalin!',
+    'room.chooseLayout': 'Mulai Pilih Layout →',
+    'room.waitingPartner': 'Menunggu partner join',
+
+    // Layout Select
+    'layout.title': 'Pilih tata letak ✦',
+    'layout.photos': 'foto',
+    'layout.photosPlural': 'foto',
+    'layout.start': 'Mulai Ambil Foto →',
+    'layout.selectFirst': 'Pilih Layout Dulu ✨',
+
+    // Capture / Processing Screen
+    'capture.developing': 'Mencuci',
+    'capture.yourFilm': 'Film Anda!',
+    'capture.scanning': 'Memindai bingkai...',
+    'capture.adding': 'Menambahkan grain & kontras...',
+    'capture.syncing': 'Sinkronisasi dengan peserta lain...',
+    'capture.finalising': 'Menyelesaikan cetak — hampir selesai!',
+
+    // Result Screen
+    'result.ready': 'SIAP',
+    'result.toShare': 'BAGIKAN!',
+    'result.developing': 'Mencuci...',
+    'result.postCommunity': '🔥 Posting ke Komunitas 🔥',
+    'result.download': '↓ Unduh Strip',
+    'result.share': '📤 Bagikan Foto',
+    'result.editAgain': 'Edit Lagi ↺',
+    'result.donate': 'Donasi ♥',
+    'result.webShareError': 'Web Share tidak didukung di browser ini. Silakan unduh dan bagikan secara manual! ✌️',
+
+    // Community Modal
+    'community.shareTo': 'Bagikan ke',
+    'community.community': 'Komunitas',
+    'community.cuteMoment': 'Biar orang lain melihat momen serumu! ✨',
+    'community.yourName': 'Namamu 👤',
+    'community.yourNamePlaceholder': 'Misal: Evan & Kristian',
+    'community.caption': 'Keterangan Singkat ✍️',
+    'community.captionPlaceholder': 'Ceritakan sesuatu tentang foto ini...',
+    'community.publish': 'Publikasikan sekarang 🚀',
+    'community.publishing': 'Mempublikasikan...',
+    'community.publishedSuccess': 'Berhasil diposting! Silakan cek Showcase Komunitas 🚀',
+    'community.publishFailed': 'Gagal mengirim postingan.',
+
+    // SweetAlert Disconnect
+    'swal.partnerDisconnected': 'Mitra Terputus!',
+    'swal.waitingReconnect': 'Menunggu mereka terhubung kembali...',
+    'swal.connected': 'Terhubung!',
+    'swal.resuming': 'Melanjutkan sesi...',
+
+    // Donate Modal
+    'donate.title': 'Donasi',
+    'donate.subtitle': 'Pwiiss buat bantu bayar server hehhe..',
+    'donate.notAvailable': 'QR belum tersedia.',
+    'donate.download': 'Unduh QR',
+
+    // How to Use
+    'howto.title': 'Cara Pakai ✦',
+    'howto.step1.title': 'Pilih Mode',
+    'howto.step1.desc': 'Pilih "Solo" kalau sendiri, atau "Duo" buat foto bareng ayang/bestie secara real-time.',
+    'howto.step2.title': 'Buat Ruangan',
+    'howto.step2.desc': '(Khusus Duo) Klik "Create Room", copy kodenya, dan kirim ke partner kamu buat join!',
+    'howto.step3.title': 'Pilih Layout',
+    'howto.step3.desc': 'Tentukan jumlah foto dan susunan strip yang kalian inginkan.',
+    'howto.step4.title': 'Pose Bareng',
+    'howto.step4.desc': 'Tunggu countdown dan tunjukkan pose terbaik kalian di depan kamera!',
+    'howto.step5.title': 'Hias & Simpan',
+    'howto.step5.desc': 'Pilih frame favorit, tambahkan sticker lucu, lalu download hasilnya!',
+    'howto.footer': 'Gampang banget kan? Yuk langsung mulai! ✨',
+    'howto.understand': 'Oke, Paham!',
+  },
+  ko: {
+    // Steps
+    'step.mode-select': '모드',
+    'step.join': '참여',
+    'step.room': '대기실',
+    'step.layout-select': '레이아웃',
+    'step.countdown': '촬영',
+    'step.processing': '처리 중',
+    'step.frame-select': '프레임',
+    'step.result': '다운로드',
+
+    // Common / Buttons
+    'common.back': '← 뒤로',
+    'common.next': '다음 →',
+    'common.home': '← 홈으로',
+    'common.waiting': '대기 중...',
+    'common.error': '오류',
+    'common.success': '성공!',
+
+    // Mode Selection
+    'mode.howMany': '몇 명에서',
+    'mode.people': '찍으시나요? 👥',
+    'mode.selectSize': '그룹 인원 선택 ✦',
+    'mode.pickYour': '당신의',
+    'mode.vibe': '취향 선택! ✨',
+    'mode.howToPhoto': '오늘 어떻게 사진을 찍고 싶으신가요? ✌️',
+    'mode.solo': '솔로 모드',
+    'mode.group': '그룹 모드 (LDR)',
+    'mode.community': '커뮤니티',
+    'mode.helpHint': '도움이 필요하면 나를 클릭하세요 👉',
+    'mode.soonTitle': '조금만 기다려주세요! ✨',
+    'mode.soonDesc': '트리오 및 쿼드 기능은 아직 개발 중입니다. 곧 출시됩니다!',
+    'mode.duo': '듀오 (2명)',
+    'mode.duoDesc': '커플 및 친구에게 최고의 선택',
+    'mode.trio': '트리오 (3명)',
+    'mode.trioDesc': '삼총사에게 완벽한 조합',
+    'mode.quad': '쿼드 (4명)',
+    'mode.quadDesc': '전체 크루 세션',
+
+    // Join Room Screen
+    'join.whoAreYou': '이름이 무엇인가요? ✌️',
+    'join.yourName': '이름',
+    'join.namePlaceholder': '예: 에반',
+    'join.nameHint': '사진 스트립에 표시될 이름입니다!',
+    'join.nameError': '웁스! 먼저 이름을 알려주세요 :)',
+    'join.roomCode': '방 코드',
+    'join.roomPlaceholder': '예: STUDIO42',
+    'join.roomHint': '4~10자 — 호스트에게 문의하세요!',
+    'join.roomError': '음, 최소 4자 이상이어야 합니다!',
+    'join.letsGo': '시작합시다! →',
+    'join.linkCopied': '링크가 복사되었습니다!',
+    'join.inviteLink': '초대 링크:',
+
+    // Waiting Room
+    'room.title': '대기실 ✦',
+    'room.dandan': '시작하기 전에 준비하세요! ✨',
+    'room.crewList': '크루 목록',
+    'room.shareLink': '링크 공유:',
+    'room.copied': '복사됨!',
+    'room.chooseLayout': '레이아웃 선택하기 →',
+    'room.waitingPartner': '파트너가 참여하기를 기다리는 중',
+
+    // Layout Select
+    'layout.title': '레이아웃을 고르세요 ✦',
+    'layout.photos': '사진',
+    'layout.photosPlural': '사진',
+    'layout.start': '촬영 시작 →',
+    'layout.selectFirst': '레이아웃을 먼저 선택하세요 ✨',
+
+    // Capture / Processing Screen
+    'capture.developing': '필름 현상',
+    'capture.yourFilm': '중입니다!',
+    'capture.scanning': '프레임 스캔 중...',
+    'capture.adding': '노이즈 및 대비 추가 중...',
+    'capture.syncing': '다른 참가자들과 동기화 중...',
+    'capture.finalising': '인쇄 마무리 중 — 거의 다 왔습니다!',
+
+    // Result Screen
+    'result.ready': '공유할',
+    'result.toShare': '준비 완료!',
+    'result.developing': '현상 중...',
+    'result.postCommunity': '🔥 커뮤니티에 공유하기 🔥',
+    'result.download': '↓ 스트립 다운로드',
+    'result.share': '📤 사진 공유하기',
+    'result.editAgain': '다시 편집하기 ↺',
+    'result.donate': '기부하기 ♥',
+    'result.webShareError': '이 브라우저에서는 웹 공유가 지원되지 않습니다. 직접 다운로드하여 공유해주세요! ✌️',
+
+    // Community Modal
+    'community.shareTo': '공유 대상',
+    'community.community': '커뮤니티',
+    'community.cuteMoment': '여러분의 귀여운 순간을 자랑하세요! ✨',
+    'community.yourName': '작성자 이름 👤',
+    'community.yourNamePlaceholder': '예: 에반 & 크리스티안',
+    'community.caption': '짧은 캡션 ✍️',
+    'community.captionPlaceholder': '이 사진에 대해 들려주세요...',
+    'community.publish': '지금 게시하기 🚀',
+    'community.publishing': '게시 중...',
+    'community.publishedSuccess': '게시 완료! 커뮤니티 쇼케이스에서 확인하세요 🚀',
+    'community.publishFailed': '게시 실패.',
+
+    // SweetAlert Disconnect
+    'swal.partnerDisconnected': '파트너 연결이 끊겼습니다!',
+    'swal.waitingReconnect': '다시 연결될 때까지 대기 중...',
+    'swal.connected': '연결되었습니다!',
+    'swal.resuming': '세션을 재개합니다...',
+
+    // Donate Modal
+    'donate.title': '후원하기',
+    'donate.subtitle': '서버 비용 운영에 큰 힘이 됩니다 ㅎㅎ..',
+    'donate.notAvailable': 'QR 코드를 사용할 수 없습니다.',
+    'donate.download': 'QR 코드 받기',
+
+    // How to Use
+    'howto.title': '이용 방법 ✦',
+    'howto.step1.title': '모드 선택',
+    'howto.step1.desc': '혼자라면 "솔로"를, 연인/절친과 실시간으로 함께 찍으려면 "듀오"를 선택하세요.',
+    'howto.step2.title': '대기방 생성',
+    'howto.step2.desc': '(듀오 모드 전용) "방 만들기"를 클릭하고 코드를 복사해서 친구에게 보낸 후 입장하세요!',
+    'howto.step3.title': '레이아웃 선택',
+    'howto.step3.desc': '원하는 사진 수와 스트립 구도를 정하세요.',
+    'howto.step4.title': '포즈 취하기',
+    'howto.step4.desc': '카운트다운을 기다리며 카메라 앞에서 최고의 포즈를 보여주세요!',
+    'howto.step5.title': '꾸미기 & 저장',
+    'howto.step5.desc': '좋아하는 프레임을 고르고, 귀여운 스티커를 더한 뒤 결과를 다운로드하세요!',
+    'howto.footer': '정말 쉽죠? 지금 바로 시작해볼까요? ✨',
+    'howto.understand': '네, 확인했어요!',
+  },
+  ja: {
+    // Steps
+    'step.mode-select': 'モード',
+    'step.join': '参加',
+    'step.room': '待機室',
+    'step.layout-select': 'レイアウト',
+    'step.countdown': '撮影',
+    'step.processing': '処理中',
+    'step.frame-select': 'フレーム',
+    'step.result': 'ダウンロード',
+
+    // Common / Buttons
+    'common.back': '← 戻る',
+    'common.next': '次へ →',
+    'common.home': '← ホームへ',
+    'common.waiting': '待機中...',
+    'common.error': 'エラー',
+    'common.success': '成功！',
+
+    // Mode Selection
+    'mode.howMany': '何人で',
+    'mode.people': '撮りますか？ 👥',
+    'mode.selectSize': 'グループ人数選択 ✦',
+    'mode.pickYour': 'あなたにぴったりの',
+    'mode.vibe': 'バイブスを選択！ ✨',
+    'mode.howToPhoto': '今日はどのように撮影しますか？ ✌️',
+    'mode.solo': 'ソロモード',
+    'mode.group': 'グループモード (LDR)',
+    'mode.community': 'コミュニティ',
+    'mode.helpHint': '困ったときはここをクリック 👉',
+    'mode.soonTitle': 'お楽しみに！ ✨',
+    'mode.soonDesc': 'トリオ＆クアッド機能は現在開発中です。続報をお待ちください！',
+    'mode.duo': 'デュオ（2人）',
+    'mode.duoDesc': 'カップルや親友に最適',
+    'mode.trio': 'トリオ（3人）',
+    'mode.trioDesc': '仲良し3人組にぴったり',
+    'mode.quad': 'クアッド（4人）',
+    'mode.quadDesc': 'フルメンバーセッション',
+
+    // Join Room Screen
+    'join.whoAreYou': 'お名前を教えてください ✌️',
+    'join.yourName': '名前',
+    'join.namePlaceholder': '例: エヴァン',
+    'join.nameHint': 'このお名前がフォトストリップに表示されます！',
+    'join.nameError': 'おっと！まずはお名前を入力してください :)',
+    'join.roomCode': 'ルームコード',
+    'join.roomPlaceholder': '例: STUDIO42',
+    'join.roomHint': '4〜10文字 — ホストに聞いてください！',
+    'join.roomError': 'うーん、最低4文字必要です！',
+    'join.letsGo': '始めましょう！ →',
+    'join.linkCopied': 'リンクをコピーしました！',
+    'join.inviteLink': '招待リンク:',
+
+    // Waiting Room
+    'room.title': '待機室 ✦',
+    'room.dandan': '撮影前におめかししましょう！ ✨',
+    'room.crewList': 'メンバー一覧',
+    'room.shareLink': '共有リンク:',
+    'room.copied': 'コピーされました！',
+    'room.chooseLayout': 'レイアウトを選ぶ →',
+    'room.waitingPartner': 'パートナーの参加を待っています',
+
+    // Layout Select
+    'layout.title': 'レイアウトを選んでください ✦',
+    'layout.photos': '枚',
+    'layout.photosPlural': '枚',
+    'layout.start': '撮影スタート →',
+    'layout.selectFirst': '最初にレイアウトを選んでね ✨',
+
+    // Capture / Processing Screen
+    'capture.developing': '写真を現像',
+    'capture.yourFilm': 'しています！',
+    'capture.scanning': 'フレームをスキャン中...',
+    'capture.adding': 'ノイズとコントラストを追加中...',
+    'capture.syncing': '他の参加者と同期中...',
+    'capture.finalising': '印刷を仕上げています — あと少しです！',
+
+    // Result Screen
+    'result.ready': 'シェアする',
+    'result.toShare': '準備ができました！',
+    'result.developing': '現像中...',
+    'result.postCommunity': '🔥 コミュニティに投稿する 🔥',
+    'result.download': '↓ ストリップを保存',
+    'result.share': '📤 写真をシェアする',
+    'result.editAgain': 'もう一度編集する ↺',
+    'result.donate': '寄付する ♥',
+    'result.webShareError': 'このブラウザはウェブ共有をサポートしていません。保存してから手動で共有してください！ ✌️',
+
+    // Community Modal
+    'community.shareTo': 'シェア先',
+    'community.community': 'コミュニティ',
+    'community.cuteMoment': 'あなたの可愛い瞬間をみんなにシェアしよう！ ✨',
+    'community.yourName': 'お名前 👤',
+    'community.yourNamePlaceholder': '例: エヴァン＆クリスティアン',
+    'community.caption': 'キャプション ✍️',
+    'community.captionPlaceholder': 'この写真について一言教えてください...',
+    'community.publish': '今すぐ投稿する 🚀',
+    'community.publishing': '投稿しています...',
+    'community.publishedSuccess': '投稿されました！コミュニティショーケースをチェックしてね 🚀',
+    'community.publishFailed': '投稿に失敗しました。',
+
+    // SweetAlert Disconnect
+    'swal.partnerDisconnected': 'パートナーが切断されました！',
+    'swal.waitingReconnect': '再接続を待っています...',
+    'swal.connected': '接続されました！',
+    'swal.resuming': 'セッションを再開します...',
+
+    // Donate Modal
+    'donate.title': '寄付',
+    'donate.subtitle': 'サーバー運営費用へのご協力をお願いします（ぺこり）',
+    'donate.notAvailable': 'QRコードは現在準備中です。',
+    'donate.download': 'QRコードを保存',
+
+    // How to Use
+    'howto.title': '使い方 ✦',
+    'howto.step1.title': 'モード選択',
+    'howto.step1.desc': '一人の場合は「ソロ」、恋人や友達とリアルタイムで撮る場合は「デュオ」を選択します。',
+    'howto.step2.title': 'ルーム作成',
+    'howto.step2.desc': '（デュオ限定）「ルーム作成」をクリックしてコードをコピーし、相手に送って参加してもましょう！',
+    'howto.step3.title': 'レイアウト選択',
+    'howto.step3.desc': '撮影する写真の枚数とストリップの配置を決めます。',
+    'howto.step4.title': 'ポーズをとる',
+    'howto.step4.desc': 'カウントダウンを待って、カメラの前で最高のポーズを決めましょう！',
+    'howto.step5.title': 'デコ＆保存',
+    'howto.step5.desc': 'お気に入りのフレームを選び、可愛いステッカーを貼って、完成した写真を保存します！',
+    'howto.footer': 'とても簡単ですね！早速始めてみましょう！ ✨',
+    'howto.understand': 'はい、わかりました！',
+  }
+};
+
+export const LANGUAGES = [
+  { code: 'id', label: 'Bahasa Indonesia', flag: '🇮🇩' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵' }
+];

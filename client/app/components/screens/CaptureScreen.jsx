@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function CaptureScreen({
   videoRef,
@@ -9,6 +10,8 @@ export default function CaptureScreen({
   isProcessing,
   localBlobs = [] // Mengambil data foto yang sudah diambil
 }) {
+  const { t } = useLanguage();
+
   // Membuat URL untuk preview foto agar bisa ditampilkan
   const photoPreviews = useMemo(() => {
     return Array.from({ length: totalShots }).map((_, i) => {
@@ -21,8 +24,8 @@ export default function CaptureScreen({
     return (
       <section className="page active" id="page-processing">
         <div className="proc-title">
-          Developing<br />
-          <span className="outline">Your Film!</span>
+          {t('capture.developing')}<br />
+          <span className="outline">{t('capture.yourFilm')}</span>
         </div>
 
         <div style={{ width: '480px', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
@@ -33,10 +36,10 @@ export default function CaptureScreen({
         </div>
 
         <div className="processing-steps">
-          <div className={`p-step ${progress > 10 ? 'done' : ''}`} id="ps1"><div className="p-dot"></div><span>Scanning frames...</span></div>
-          <div className={`p-step ${progress > 40 ? 'done' : ''}`} id="ps2"><div className="p-dot"></div><span>Adding grain &amp; contrast...</span></div>
-          <div className={`p-step ${progress > 70 ? 'done' : ''}`} id="ps3"><div className="p-dot"></div><span>Syncing with other participants...</span></div>
-          <div className={`p-step ${progress === 100 ? 'done' : ''}`} id="ps4"><div className="p-dot"></div><span>Finalising print — almost there!</span></div>
+          <div className={`p-step ${progress > 10 ? 'done' : ''}`} id="ps1"><div className="p-dot"></div><span>{t('capture.scanning')}</span></div>
+          <div className={`p-step ${progress > 40 ? 'done' : ''}`} id="ps2"><div className="p-dot"></div><span>{t('capture.adding')}</span></div>
+          <div className={`p-step ${progress > 70 ? 'done' : ''}`} id="ps3"><div className="p-dot"></div><span>{t('capture.syncing')}</span></div>
+          <div className={`p-step ${progress === 100 ? 'done' : ''}`} id="ps4"><div className="p-dot"></div><span>{t('capture.finalising')}</span></div>
         </div>
       </section>
     );
@@ -61,6 +64,7 @@ export default function CaptureScreen({
               transform: 'scaleX(-1)',
               borderRadius: '10px',
               display: 'block',
+              
             }}
           />
 
@@ -115,3 +119,4 @@ export default function CaptureScreen({
     </section>
   );
 }
+

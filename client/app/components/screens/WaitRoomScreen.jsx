@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function WaitRoomScreen({
   participants,
@@ -11,6 +12,7 @@ export default function WaitRoomScreen({
   onBack,
   groupSize = 2
 }) {
+  const { t } = useLanguage();
   const isReady = participants.length >= groupSize;
 
   return (
@@ -29,11 +31,11 @@ export default function WaitRoomScreen({
               gap: '6px'
             }}
           >
-            ← Back
+            {t('common.back')}
           </button>
         )}
         <h1 className="page-title" style={{ fontSize: '72px', fontFamily: "'Gaegu', cursive", margin: 0 }}>
-          Waiting Room ✦
+          {t('room.title')}
         </h1>
       </div>
 
@@ -52,7 +54,7 @@ export default function WaitRoomScreen({
             {/* Teks dipindah ke dalam preview */}
             <div className="cam-info-bar" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 100%)', padding: '15px' }}>
               <span className="cam-info-left" style={{ color: 'white', fontSize: '18px' }}>
-                Dandan dulu gih sebelum mulai! ✨
+                {t('room.dandan')}
               </span>
             </div>
           </div>
@@ -63,20 +65,20 @@ export default function WaitRoomScreen({
           
           <div className="wr__participants squiggle" style={{ margin: 0, padding: '24px' }}>
             <div className="wr__participants-head" style={{ marginBottom: '16px' }}>
-              <span style={{ fontSize: '22px' }}>Crew List</span>
+              <span style={{ fontSize: '22px' }}>{t('room.crewList')}</span>
               <span style={{ fontSize: '18px', opacity: 0.6 }}>{participants.length} / {groupSize}</span>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {participants.map((p, i) => (
                 <div key={i} className="wr__participant" style={{ margin: 0, padding: '8px 16px', fontSize: '18px' }}>
                   <div className="wr__participant-dot" />
-                  {p.displayName} {p.isYou ? '(You)' : ''}
+                  {p.displayName} {p.isYou ? `(${t('common.you') || 'You'})` : ''}
                 </div>
               ))}
               {participants.length < groupSize && (
                 <div className="wr__participant" style={{ opacity: 0.4, margin: 0, padding: '8px 16px', fontSize: '18px' }}>
                   <div className="wr__participant-dot" style={{ background: '#ccc' }} />
-                  Waiting...
+                  {t('common.waiting')}
                 </div>
               )}
             </div>
@@ -90,10 +92,10 @@ export default function WaitRoomScreen({
               marginBottom: '8px', 
               display: 'block' 
             }}>
-              Share Link:
+              {t('room.shareLink')}
             </span>
             <div className="code-display squiggle" onClick={() => copyRoomCode(groupSize)} style={{ cursor: 'pointer', position: 'relative', fontSize: '24px' }}>
-              <div className={`copy-toast ${showToast ? 'visible' : ''}`}>Copied!</div>
+              <div className={`copy-toast ${showToast ? 'visible' : ''}`}>{t('room.copied')}</div>
               {roomCode || '—'}
             </div>
           </div>
@@ -101,7 +103,7 @@ export default function WaitRoomScreen({
           <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
             {isReady ? (
               <button className="btn-primary" onClick={onNext} style={{ width: '100%', padding: '18px' }}>
-                Mulai Pilih Layout →
+                {t('room.chooseLayout')}
               </button>
             ) : (
               <div style={{ 
@@ -112,7 +114,7 @@ export default function WaitRoomScreen({
                 opacity: 0.7 
               }}>
               <div className="waiting-status">
-                <span className="rotating-icon">⌛</span> Menunggu partner join<span className="dots-anim"></span>
+                <span className="rotating-icon">⌛</span> {t('room.waitingPartner')}<span className="dots-anim"></span>
               </div>
               </div>
             )}
@@ -123,3 +125,4 @@ export default function WaitRoomScreen({
     </section>
   );
 }
+

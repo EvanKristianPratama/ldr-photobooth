@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function StepIndicator({ steps, currentStep }) {
+  const { t } = useLanguage();
   const currentIndex = steps.findIndex(step => step.id === currentStep);
 
   return (
@@ -21,7 +23,7 @@ export default function StepIndicator({ steps, currentStep }) {
               <span style={{ fontSize: '11px', opacity: 0.6, fontFamily: "'Caveat', cursive" }}>
                 0{index + 1}
               </span>
-              <span>{step.label}</span>
+              <span>{t(`step.${step.id}`) || step.label}</span>
             </div>
           </div>
         </React.Fragment>
@@ -29,3 +31,4 @@ export default function StepIndicator({ steps, currentStep }) {
     </nav>
   );
 }
+

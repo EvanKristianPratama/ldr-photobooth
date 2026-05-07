@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LayoutSelectScreen({
   selectedLayout,
@@ -7,6 +8,8 @@ export default function LayoutSelectScreen({
   onBack,
   groupSize = 2
 }) {
+  const { t } = useLanguage();
+
   const allLayouts = [
     { id: 'layout1', name: 'Single', count: 1, slots: [{ w: '120px', h: '90px' }] },
     { id: 'layout2', name: 'Duo Strip', count: 2, slots: [{ w: '120px', h: '64px' }, { w: '120px', h: '64px' }], direction: 'column' },
@@ -35,7 +38,7 @@ export default function LayoutSelectScreen({
       {onBack && (
         <button 
           onClick={onBack}
-          className="btn-secondary"
+          className="btn-secondary btn-back-absolute"
           style={{ 
             position: 'absolute',
             top: '20px',
@@ -46,11 +49,11 @@ export default function LayoutSelectScreen({
             fontFamily: "'Gaegu', cursive"
           }}
         >
-          ← Back
+          {t('common.back')}
         </button>
       )}
       <div className="page-title-row" style={{ justifyContent: 'center', marginBottom: '48px' }}>
-        <div className="page-title">Pick a layout ✦</div>
+        <div className="page-title">{t('layout.title')}</div>
       </div>
 
       <div className="layout-grid" style={{ justifyContent: 'center', gap: '24px' }}>
@@ -68,22 +71,23 @@ export default function LayoutSelectScreen({
             </div>
             <div className="layout-info">
               <span className="layout-name">{layout.name}</span>
-              <span className="layout-count">{layout.count} photo{layout.count > 1 ? 's' : ''}</span>
+              <span className="layout-count">{layout.count} {layout.count > 1 ? t('layout.photosPlural') : t('layout.photos')}</span>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: '60px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div className="layout-start-container" style={{ marginTop: '60px', width: '100%', display: 'flex', justifyContent: 'center' }}>
         <button 
-          className="btn-primary" 
+          className="btn-primary layout-start-btn" 
           disabled={!selectedLayout}
           onClick={onStart}
           style={{ width: 'auto', minWidth: '300px', padding: '20px 40px', fontSize: '24px' }}
         >
-          {selectedLayout ? 'Start Capture →' : 'Pilih Layout Dulu ✨'}
+          {selectedLayout ? t('layout.start') : t('layout.selectFirst')}
         </button>
       </div>
     </section>
   );
 }
+

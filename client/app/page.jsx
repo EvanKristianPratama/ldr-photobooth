@@ -11,6 +11,7 @@ import LayoutSelectScreen from './components/screens/LayoutSelectScreen';
 import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import StepIndicator from './components/ui/StepIndicator';
+import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelectScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
@@ -28,6 +29,10 @@ const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
 
 export default function Page() {
   const [step, setStep] = useState('mode-select');
+  const stepRef = useRef('mode-select');
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
   const [sessionMode, setSessionMode] = useState(null); // 'solo' or 'duo'
   const [groupSize, setGroupSize] = useState(2);
   const [selectedLayout, setSelectedLayout] = useState(null);
@@ -264,7 +269,7 @@ export default function Page() {
     captureRef.current.attachStream();
     await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
     setStep('processing');
-    await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length);
+    await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length, shots);
   };
 
   useEffect(() => {
@@ -301,6 +306,10 @@ export default function Page() {
     };
 
     const handleSessionReset = () => {
+      if (stepRef.current === 'frame-select' || stepRef.current === 'result') {
+        console.log('[Room] Partner left, but keeping session active for editing/downloading');
+        return;
+      }
       setStep('layout-select');
       setSelectedLayout(null);
       setProgress(0);
@@ -461,6 +470,24 @@ export default function Page() {
     setDonateOpen(true);
   };
 
+  const stepsToDisplay = sessionMode === 'solo' 
+    ? [
+        { id: 'layout-select', label: 'Layout', icon: '🎨' },
+        { id: 'countdown', label: 'Capture', icon: '📸' },
+        { id: 'processing', label: 'Processing', icon: '⏳' },
+        { id: 'frame-select', label: 'Frame', icon: '🖼' },
+        { id: 'result', label: 'Download', icon: '💾' }
+      ]
+    : [
+        { id: 'join', label: 'Join', icon: '👋' },
+        { id: 'room', label: 'Room', icon: '🏠' },
+        { id: 'layout-select', label: 'Layout', icon: '🎨' },
+        { id: 'countdown', label: 'Capture', icon: '📸' },
+        { id: 'processing', label: 'Processing', icon: '⏳' },
+        { id: 'frame-select', label: 'Frame', icon: '🖼' },
+        { id: 'result', label: 'Download', icon: '💾' }
+      ];
+
   return (
     <div className={step === 'community' ? 'comm-pin-root' : ''} style={{ position: 'relative', zIndex: 1, height: '100vh', display: 'flex', flexDirection: 'row' }}>
       {isFlash && <div className="flash-effect" />}
@@ -503,7 +530,10 @@ export default function Page() {
       {step !== 'community' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
           <div className="logo">LDR Photobooth</div>
-          <StepIndicator steps={STEP_LABELS} currentStep={step} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
+            <LanguagePicker />
+          </div>
         </header>
       )}
 
@@ -702,6 +732,51 @@ export default function Page() {
         </div>
       )}
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
+      
+      {/* GLOBAL WATERMARK */}
+      {step !== 'community' && (
+        <div 
+          className="credits" 
+          style={{ 
+            position: 'fixed', 
+            bottom: '12px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            zIndex: 9999, 
+            pointerEvents: 'none', 
+            opacity: 0.9, 
+            fontSize: '13px',
+            fontFamily: "'Gaegu', cursive",
+            color: 'var(--ink)',
+            background: 'rgba(255, 255, 255, 0.45)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            border: 'none',
+            boxShadow: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            margin: 0
+          }}
+        >
+          by{' '}
+          <a 
+            href="https://www.instagram.com/evankristiannn/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ 
+              color: 'var(--pink)', 
+              fontWeight: '700', 
+              textDecoration: 'underline', 
+              pointerEvents: 'auto' 
+            }}
+          >
+            evan kristian
+          </a>
+        </div>
+      )}
       </div>
     </div>
   );

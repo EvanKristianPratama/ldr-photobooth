@@ -1,30 +1,32 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
+  const { t } = useLanguage();
   const [showGroupOptions, setShowGroupOptions] = useState(false);
 
   const groupOptions = [
-    { id: 2, label: 'Duo (2 Orang)', desc: 'Best for couples & besties', icon: '👥' },
-    { id: 3, label: 'Trio (3 Orang)', desc: 'Perfect for the trio squad', icon: '👪', comingSoon: true },
-    { id: 4, label: 'Quad (4 Orang)', desc: 'Full crew session', icon: '👨‍👩‍👧‍👦', comingSoon: true },
+    { id: 2, label: t('mode.duo'), desc: t('mode.duoDesc'), icon: '👥' },
+    { id: 3, label: t('mode.trio'), desc: t('mode.trioDesc'), icon: '👪', comingSoon: true },
+    { id: 4, label: t('mode.quad'), desc: t('mode.quadDesc'), icon: '👨‍👩‍👧‍👦', comingSoon: true },
   ];
 
   if (showGroupOptions) {
     return (
       <section className="page active" id="page-mode-select">
-        <button className="btn-help" onClick={onShowHelp} title="Cara Pakai">?</button>
+        <button className="btn-help" onClick={onShowHelp} title={t('common.help') || 'Help'}>?</button>
         <div className="mode-left vibe-bg">
           <div className="big-doodle">
-            How many
-            <span className="outline">People? 👥</span>
+            {t('mode.howMany')}
+            <span className="outline">{t('mode.people')}</span>
           </div>
         </div>
 
         <div className="mode-right">
           <button 
             onClick={() => setShowGroupOptions(false)}
-            className="btn-secondary"
+            className="btn-secondary btn-back-absolute"
             style={{ 
               position: 'absolute',
               top: '20px',
@@ -35,9 +37,9 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
               fontFamily: "'Gaegu', cursive"
             }}
           >
-            ← Back
+            {t('common.back')}
           </button>
-          <div className="form-section-title">Select Group Size ✦</div>
+          <div className="form-section-title">{t('mode.selectSize')}</div>
 
           {groupOptions.map(opt => (
             <div 
@@ -46,8 +48,8 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
               onClick={() => {
                 if (opt.comingSoon) {
                   Swal.fire({
-                    title: 'Sabar ya! ✨',
-                    text: 'Fitur Trio & Quad masih dalam tahap pengembangan. Stay tuned!',
+                    title: t('mode.soonTitle'),
+                    text: t('mode.soonDesc'),
                     icon: 'info',
                     confirmButtonText: 'Oke!',
                     confirmButtonColor: 'var(--ink)',
@@ -90,19 +92,19 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
           whiteSpace: 'nowrap',
           animation: 'float-x 2s ease-in-out infinite'
         }}>
-          kalau bingung klik aku 👉
+          {t('mode.helpHint')}
         </span>
       </div>
-      <button className="btn-help" onClick={onShowHelp} title="Cara Pakai">?</button>
+      <button className="btn-help" onClick={onShowHelp} title={t('common.help') || 'Help'}>?</button>
       <div className="mode-left vibe-bg">
         <div className="big-doodle">
-          Pick your
-          <span className="outline">Vibe! ✨</span>
+          {t('mode.pickYour')}
+          <span className="outline">{t('mode.vibe')}</span>
         </div>
       </div>
 
       <div className="mode-right">
-        <div className="form-section-title">Mau foto gimana hari ini? ✌️</div>
+        <div className="form-section-title">{t('mode.howToPhoto')}</div>
 
         <div 
           className="mode-option-card solo" 
@@ -110,7 +112,7 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
         >
           <div className="mode-icon">👤</div>
           <div className="mode-details">
-            <div className="mode-title">Solo Mode</div>
+            <div className="mode-title">{t('mode.solo')}</div>
           </div>
         </div>
 
@@ -120,7 +122,7 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
         >
           <div className="mode-icon">👥</div>
           <div className="mode-details">
-            <div className="mode-title">Group Mode (LDR)</div>
+            <div className="mode-title">{t('mode.group')}</div>
           </div>
         </div>
 
@@ -130,10 +132,11 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }) {
         >
           <div className="mode-icon" style={{ background: '#eee' }}>✨</div>
           <div className="mode-details">
-            <div className="mode-title">Community</div>
+            <div className="mode-title">{t('mode.community')}</div>
           </div>
         </div>
       </div>
     </section>
   );
 }
+

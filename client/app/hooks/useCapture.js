@@ -151,7 +151,7 @@ export default function useCapture({
     }
   };
 
-  const checkProcessingComplete = async (sessionMode, participantsCount) => {
+  const checkProcessingComplete = async (sessionMode, participantsCount, expectedShots = totalShots) => {
     let retries = 0;
     const isSolo = sessionMode === 'solo';
 
@@ -162,7 +162,7 @@ export default function useCapture({
       const isComplete = () => {
         if (remoteBlobsRef.current.size < expectedRemotePeers) return false;
         for (const blobs of remoteBlobsRef.current.values()) {
-          if (blobs.filter(Boolean).length < totalShots) return false;
+          if (blobs.filter(Boolean).length < expectedShots) return false;
         }
         return true;
       };
@@ -172,8 +172,8 @@ export default function useCapture({
         remoteBlobsRef.current.forEach((blobs, peerId) => {
           const count = blobs.filter(Boolean).length;
           totalReceived += count;
-          if (count < totalShots) {
-            console.log(`[Capture] Still waiting for ${totalShots - count} photos from peer ${peerId.slice(0,8)}`);
+          if (count < expectedShots) {
+            console.log(`[Capture] Still waiting for ${expectedShots - count} photos from peer ${peerId.slice(0,8)}`);
           }
         });
 

@@ -108,12 +108,12 @@ body::before {
 .step-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 2.5px solid var(--ink);
+  gap: 4px;
+  padding: 2px 8px;
+  border: 2px solid var(--ink);
   border-radius: 20px 18px 22px 18px / 18px 22px 18px 20px;
   font-family: 'Gaegu', cursive;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink);
   background: white;
@@ -1920,7 +1920,10 @@ body::before {
   }
 
   .topbar {
-    display: none !important;
+    display: flex !important;
+    padding: 0 16px !important;
+    height: 52px !important;
+    border-bottom-width: 2.5px !important;
   }
 
   .logo {
@@ -1968,12 +1971,16 @@ body::before {
     border-right: none !important;
     border-bottom: 3px solid var(--ink) !important;
     min-height: 200px !important;
-    /* Smaller min-height */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 56px !important;
   }
 
   .join-left .big-doodle {
     font-size: 40px !important;
-    /* Smaller title */
+    margin: 0 !important;
   }
 
   .form-section-title {
@@ -1997,6 +2004,7 @@ body::before {
   }
 
   #page-layout .page-title-row {
+    margin-top: 36px !important;
     margin-bottom: 24px !important;
     justify-content: center !important;
   }
@@ -2005,12 +2013,18 @@ body::before {
     font-size: 34px !important;
   }
 
+  .btn-back-absolute {
+    top: 14px !important;
+    left: 14px !important;
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+  }
+
   #page-layout .layout-grid {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 12px !important;
     width: 100% !important;
     max-width: 280px !important;
-    /* Shrink the grid width on mobile */
     margin: 0 auto !important;
   }
 
@@ -2024,17 +2038,14 @@ body::before {
   }
 
   .layout-preview {
-    width: 80px !important;
-    /* Narrower but taller */
-    height: 130px !important;
-    /* Much taller to fit vertical stack */
+    width: 70px !important;
+    height: 95px !important;
     flex-shrink: 0 !important;
     border-bottom: none !important;
     border-right: 3px solid var(--ink) !important;
-    padding: 8px 4px !important;
+    padding: 6px 4px !important;
     display: flex !important;
     flex-direction: column !important;
-    /* Stack slots vertically */
     align-items: center !important;
     justify-content: center !important;
     background: #f8f6ee !important;
@@ -2042,9 +2053,8 @@ body::before {
   }
 
   .preview-slot {
-    width: 45px !important;
-    /* Wider slots for vertical stack */
-    height: 30px !important;
+    width: 42px !important;
+    height: 20px !important;
     transform: none !important;
     border-width: 2px !important;
   }
@@ -2057,13 +2067,23 @@ body::before {
 
   .layout-info {
     flex: 1 !important;
-    padding: 12px 16px !important;
+    padding: 10px 14px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     justify-content: center !important;
-    gap: 6px !important;
-    height: 130px !important;
+    gap: 4px !important;
+    height: 95px !important;
+  }
+
+  .layout-start-container {
+    margin-top: 24px !important;
+  }
+
+  .layout-start-btn {
+    min-width: 240px !important;
+    padding: 12px 24px !important;
+    font-size: 18px !important;
   }
 
   .layout-name {
@@ -2556,6 +2576,10 @@ body::before {
     padding-bottom: 60px !important;
   }
 
+  .help-hint-container {
+    display: none !important;
+  }
+
   .mode-left,
   .mode-right {
     width: 100% !important;
@@ -2563,8 +2587,9 @@ body::before {
   }
 
   .mode-left {
-    height: 220px !important;
-    padding: 40px 20px !important;
+    min-height: 235px !important;
+    height: auto !important;
+    padding: 44px 20px !important;
     border-right: none !important;
     border-bottom: 3px solid var(--ink) !important;
   }
@@ -2574,7 +2599,7 @@ body::before {
   }
 
   .mode-right {
-    padding: 32px 24px !important;
+    padding: 56px 24px 32px 24px !important;
     gap: 16px !important;
   }
 
