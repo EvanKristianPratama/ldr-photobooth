@@ -259,8 +259,8 @@ class RoomState extends ChangeNotifier {
     // Special: room:join triggers connection
     if (event == 'room:join') {
       final code = (data as Map<String, dynamic>?)?['code'] as String? ?? _roomCode;
-      _connect(code);
       _pendingEmits.add({'event': event, 'data': data});
+      _connect(code);
       return;
     }
 
