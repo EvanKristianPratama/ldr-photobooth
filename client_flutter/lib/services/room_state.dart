@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// RoomParticipant model
 class RoomParticipant {
@@ -25,13 +26,14 @@ class RoomParticipant {
   }
 }
 
-/// Native WebSocket adapter — mirrors client/lib/SocketAdapter.js exactly.
+/// Platform-independent WebSocket channel adapter — mirrors client/lib/SocketAdapter.js exactly.
 /// Connects to: wss://<server>/ws?room=ROOMCODE
 /// Message format: { "type": "event:name", "payload": { ... } }
 class RoomState extends ChangeNotifier {
   final String serverUrl;
 
-  WebSocket? _ws;
+  WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
   bool _connected = false;
   bool _isConnecting = false;
   bool _isManualClose = false;
@@ -105,13 +107,13 @@ class RoomState extends ChangeNotifier {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // NATIVE WEBSOCKET CONNECTION
+  // CROSS-PLATFORM WEBSOCKET CONNECTION
   // ─────────────────────────────────────────────────────────────────
 
   /// Connects to wss://<server>/ws?room=<roomCode>
   /// Called when the user emits 'room:join'
   void _connect(String roomCode) {
-    if (_ws != null && _ws!.readyState == WebSocket.open) return;
+    if (_channel != null) return;
     if (_isConnecting) return;
 
     _pendingRoomCode = roomCode;
@@ -121,8 +123,9 @@ class RoomState extends ChangeNotifier {
     final wsUrl = _buildWsUrl(roomCode);
     debugPrint('[Socket] Connecting to: $wsUrl');
 
-    WebSocket.connect(wsUrl).then((ws) {
-      _ws = ws;
+    try {
+      final channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _channel = channel;
       _isConnecting = false;
       _reconnectAttempts = 0;
       _connected = true;
@@ -137,11 +140,15 @@ class RoomState extends ChangeNotifier {
       _pendingEmits.clear();
 
       // Listen for incoming messages
-      ws.listen(
-        _handleRawMessage,
+      _subscription = channel.stream.listen(
+        (raw) {
+          _handleRawMessage(raw);
+        },
         onDone: () {
           debugPrint('[Socket] Disconnected');
           _connected = false;
+          _channel = null;
+          _subscription = null;
           _status = 'Disconnected';
           notifyListeners();
           if (!_isManualClose) _scheduleReconnect();
@@ -149,19 +156,20 @@ class RoomState extends ChangeNotifier {
         onError: (e) {
           debugPrint('[Socket] Error: $e');
           _connected = false;
+          _channel = null;
+          _subscription = null;
           _status = 'Connection Error';
           notifyListeners();
           if (!_isManualClose) _scheduleReconnect();
         },
-        cancelOnError: true,
       );
-    }).catchError((e) {
+    } catch (e) {
       debugPrint('[Socket] Connect failed: $e');
       _isConnecting = false;
       _status = 'Connection Failed';
       notifyListeners();
       _scheduleReconnect();
-    });
+    }
   }
 
   String _buildWsUrl(String roomCode) {
@@ -252,7 +260,7 @@ class RoomState extends ChangeNotifier {
       return;
     }
 
-    if (_ws == null || _ws!.readyState != WebSocket.open) {
+    if (_channel == null) {
       _pendingEmits.add({'event': event, 'data': data});
       return;
     }
@@ -261,9 +269,7 @@ class RoomState extends ChangeNotifier {
   }
 
   void _sendRaw(String event, dynamic data) {
-    if (_ws?.readyState == WebSocket.open) {
-      _ws!.add(jsonEncode({'type': event, 'payload': data}));
-    }
+    _channel?.sink.add(jsonEncode({'type': event, 'payload': data}));
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -328,7 +334,8 @@ class RoomState extends ChangeNotifier {
   @override
   void dispose() {
     _isManualClose = true;
-    _ws?.close();
+    _subscription?.cancel();
+    _channel?.sink.close();
     super.dispose();
   }
 }

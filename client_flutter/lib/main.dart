@@ -83,89 +83,88 @@ class ModeSelectScreen extends StatelessWidget {
           bottom: BorderSide(color: ink, width: 3),
         ),
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Text(
-                  'FUTU ✦ PHOTO',
-                  style: TextStyle(
-                    fontFamily: 'Gaegu',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 26,
-                    color: ink,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                AnimatedBuilder(
-                  animation: roomState,
-                  builder: (context, _) {
-                    final bool isConnected = roomState.status.toLowerCase().contains('connected');
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isConnected ? teal : pink,
-                        border: Border.all(color: ink, width: 1.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isConnected ? 'LIVE' : 'CONNECTING...',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: ink,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
+            const Text(
+              'FUTU ✦ PHOTO',
+              style: TextStyle(
+                fontFamily: 'Gaegu',
+                fontWeight: FontWeight.bold,
+                fontSize: 26,
+                color: ink,
+              ),
             ),
-            // Language Dropdown Selector
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: ink, width: 2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: locale,
-                  icon: const Icon(Icons.language, size: 18, color: ink),
-                  style: const TextStyle(
-                    fontFamily: 'Gaegu',
-                    fontWeight: FontWeight.bold,
-                    color: ink,
-                    fontSize: 14,
+            const SizedBox(width: 10),
+            AnimatedBuilder(
+              animation: roomState,
+              builder: (context, _) {
+                final bool isConnected = roomState.status.toLowerCase().contains('connected');
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isConnected ? teal : pink,
+                    border: Border.all(color: ink, width: 1.5),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  onChanged: (val) {
-                    if (val != null) onChangeLocale(val);
-                  },
-                  items: const [
-                    DropdownMenuItem(value: 'en', child: Text('EN ')),
-                    DropdownMenuItem(value: 'id', child: Text('ID ')),
-                    DropdownMenuItem(value: 'ko', child: Text('KO ')),
-                    DropdownMenuItem(value: 'ja', child: Text('JA ')),
-                  ],
-                ),
-              ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isConnected ? 'LIVE' : 'CONNECTING...',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: ink, width: 2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: locale,
+                icon: const Icon(Icons.language, size: 18, color: ink),
+                style: const TextStyle(
+                  fontFamily: 'Gaegu',
+                  fontWeight: FontWeight.bold,
+                  color: ink,
+                  fontSize: 14,
+                ),
+                onChanged: (val) {
+                  if (val != null) onChangeLocale(val);
+                },
+                items: const [
+                  DropdownMenuItem(value: 'en', child: Text('EN ')),
+                  DropdownMenuItem(value: 'id', child: Text('ID ')),
+                  DropdownMenuItem(value: 'ko', child: Text('KO ')),
+                  DropdownMenuItem(value: 'ja', child: Text('JA ')),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
