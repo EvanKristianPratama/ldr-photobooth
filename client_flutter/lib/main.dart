@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'constants/translations.dart';
 
 import 'services/room_state.dart';
+import 'screens/layout_select_screen.dart';
 import 'screens/join_screen.dart';
 import 'screens/capture_screen.dart';
 
@@ -194,13 +195,13 @@ class ModeSelectScreen extends StatelessWidget {
                 icon: Icons.person_rounded,
                 iconBg: const Color(0xFFE3F2FD),
                 onTap: () {
-                  roomState.startSoloSession();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CaptureScreen(
+                      builder: (context) => LayoutSelectScreen(
                         roomState: roomState,
                         locale: locale,
+                        isSolo: true,
                       ),
                     ),
                   );

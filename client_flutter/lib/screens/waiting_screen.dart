@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../constants/translations.dart';
 import '../services/room_state.dart';
 import 'capture_screen.dart';
+import 'layout_select_screen.dart';
 
 class WaitingScreen extends StatefulWidget {
   final RoomState roomState;
@@ -180,7 +181,16 @@ class _WaitingScreenState extends State<WaitingScreen> {
               if (widget.roomState.participants.length >= 2)
                 InkWell(
                   onTap: () {
-                    widget.roomState.emitSessionStart('layout4');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LayoutSelectScreen(
+                          roomState: widget.roomState,
+                          locale: widget.locale,
+                          isSolo: false,
+                        ),
+                      ),
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
