@@ -127,7 +127,7 @@ class _WaitingScreenState extends State<WaitingScreen> {
                               widget.roomState.roomCode,
                               style: const TextStyle(
                                 fontSize: 32,
-                                fontWeight: FontWeight.black,
+                                fontWeight: FontWeight.w900,
                                 letterSpacing: 2,
                                 color: ink,
                               ),

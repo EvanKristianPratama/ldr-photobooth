@@ -210,7 +210,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
               style: TextStyle(
                 fontFamily: 'Gaegu',
                 fontSize: 180,
-                fontWeight: FontWeight.black,
+                fontWeight: FontWeight.w900,
                 color: Colors.white.withOpacity(0.15),
               ),
             ),
