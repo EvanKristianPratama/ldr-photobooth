@@ -23,7 +23,7 @@ class _LdrPhotoboothAppState extends State<LdrPhotoboothApp> {
   @override
   void initState() {
     super.initState();
-    _roomState = RoomState(serverUrl: 'https://ldr-photobooth-server.evan.workers.dev'); // Connects to existing worker backend!
+    _roomState = RoomState(serverUrl: 'https://ldr-photobooth.if2372047.workers.dev'); // Connects to the correct production Cloudflare Worker backend!
   }
 
   void _changeLocale(String newLocale) {
