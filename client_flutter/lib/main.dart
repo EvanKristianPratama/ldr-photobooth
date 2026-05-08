@@ -85,14 +85,54 @@ class ModeSelectScreen extends StatelessWidget {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'FUTU ✦ PHOTO',
-              style: TextStyle(
-                fontFamily: 'Gaegu',
-                fontWeight: FontWeight.bold,
-                fontSize: 26,
-                color: ink,
-              ),
+            Row(
+              children: [
+                Text(
+                  'FUTU ✦ PHOTO',
+                  style: TextStyle(
+                    fontFamily: 'Gaegu',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 26,
+                    color: ink,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                AnimatedBuilder(
+                  animation: roomState,
+                  builder: (context, _) {
+                    final bool isConnected = roomState.status.toLowerCase().contains('connected');
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isConnected ? teal : pink,
+                        border: Border.all(color: ink, width: 1.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isConnected ? 'LIVE' : 'CONNECTING...',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: ink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
             // Language Dropdown Selector
             Container(
