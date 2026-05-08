@@ -20,6 +20,8 @@ class WaitingScreen extends StatefulWidget {
 }
 
 class _WaitingScreenState extends State<WaitingScreen> {
+  bool _hasNavigatedToCapture = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +37,9 @@ class _WaitingScreenState extends State<WaitingScreen> {
   void _onRoomStateChanged() {
     if (!mounted) return;
     if (widget.roomState.step == 'countdown') {
+      if (_hasNavigatedToCapture) return;
+      _hasNavigatedToCapture = true;
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.pushReplacement(
