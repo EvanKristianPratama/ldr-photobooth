@@ -113,6 +113,16 @@ class RoomState extends ChangeNotifier {
     });
   }
 
+  void startSoloSession() {
+    _displayName = 'YOU';
+    _selfId = 'you';
+    _participants = [
+      RoomParticipant(id: 'you', displayName: 'YOU', isYou: true),
+    ];
+    _step = 'countdown';
+    notifyListeners();
+  }
+
   void generateRoomCode() {
     const uuid = Uuid();
     _roomCode = uuid.v4().split('-')[0].toUpperCase();

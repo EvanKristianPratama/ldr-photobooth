@@ -3,6 +3,7 @@ import 'constants/translations.dart';
 
 import 'services/room_state.dart';
 import 'screens/join_screen.dart';
+import 'screens/capture_screen.dart';
 
 void main() {
   runApp(const LdrPhotoboothApp());
@@ -203,10 +204,11 @@ class ModeSelectScreen extends StatelessWidget {
                       buttonBg: yellow,
                       buttonBorder: ink,
                       onTap: () {
+                        roomState.startSoloSession();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => JoinScreen(
+                            builder: (context) => CaptureScreen(
                               roomState: roomState,
                               locale: locale,
                             ),
