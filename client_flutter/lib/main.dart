@@ -86,7 +86,7 @@ class ModeSelectScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'FUTU ✦ PHOTO',
+              'LDR PHOTOBOOTH',
               style: TextStyle(
                 fontFamily: 'Gaegu',
                 fontWeight: FontWeight.bold,
@@ -166,208 +166,159 @@ class ModeSelectScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Background subtle neobrutalist decorations
-          Positioned(
-            left: -40,
-            top: 60,
-            child: Opacity(
-              opacity: 0.08,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: const BoxDecoration(
-                  color: pink,
-                  shape: BoxShape.circle,
+      backgroundColor: const Color(0xFFFFFDF5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 36),
+              // Beautiful Clean Title Text from Screenshot
+              const Text(
+                'How would you like to take\nphotos today? ✌️',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Gaegu',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: ink,
+                  height: 1.25,
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            right: -20,
-            bottom: 40,
-            child: Opacity(
-              opacity: 0.08,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: teal,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-          
-          // Main Body Scrollable Layout
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Subtitle / Intro
-                    Text(
-                      t('hero.subtitle'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Gaegu',
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: pink,
-                        letterSpacing: 1,
+              const SizedBox(height: 40),
+
+              // Button 1: Solo Mode
+              _buildHomeButton(
+                title: 'Solo Mode',
+                icon: Icons.person_rounded,
+                iconBg: const Color(0xFFE3F2FD),
+                onTap: () {
+                  roomState.startSoloSession();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CaptureScreen(
+                        roomState: roomState,
+                        locale: locale,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      t('hero.desc'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        height: 1.4,
-                        color: ink,
-                        fontWeight: FontWeight.w600,
+                  );
+                },
+              ),
+
+              // Button 2: Group Mode (LDR)
+              _buildHomeButton(
+                title: 'Group Mode (LDR)',
+                icon: Icons.people_alt_rounded,
+                iconBg: const Color(0xFFE8F5E9),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => JoinScreen(
+                        roomState: roomState,
+                        locale: locale,
                       ),
                     ),
-                    const SizedBox(height: 40),
+                  );
+                },
+              ),
 
-                    // SOLO MODE CARD
-                    _buildNeobrutalistCard(
-                      title: t('solo.title'),
-                      desc: t('solo.desc'),
-                      buttonText: t('solo.button'),
-                      cardBg: Colors.white,
-                      buttonBg: yellow,
-                      buttonBorder: ink,
-                      onTap: () {
-                        roomState.startSoloSession();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CaptureScreen(
-                              roomState: roomState,
-                              locale: locale,
-                            ),
-                          ),
-                        );
-                      },
+              // Button 3: Community
+              _buildHomeButton(
+                title: 'Community',
+                icon: Icons.auto_awesome_rounded,
+                iconBg: const Color(0xFFFFFDE7),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      backgroundColor: ink,
+                      content: Text(
+                        'Community Mode is coming soon! ✨',
+                        style: TextStyle(fontFamily: 'Gaegu', fontWeight: FontWeight.bold, color: yellow),
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                  );
+                },
+              ),
 
-                    // DUO MODE CARD
-                    _buildNeobrutalistCard(
-                      title: t('duo.title'),
-                      desc: t('duo.desc'),
-                      buttonText: t('duo.create') + " ✦",
-                      cardBg: Colors.white,
-                      buttonBg: pink,
-                      buttonBorder: ink,
-                      textColor: Colors.white,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => JoinScreen(
-                              roomState: roomState,
-                              locale: locale,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+              const Spacer(),
+
+              // Beautiful "by evan kristian" signature at bottom
+              const Text(
+                'by evan kristian',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Gaegu',
+                  fontSize: 15,
+                  color: Color(0xFFFFB7B2),
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
                 ),
               ),
-            ),
+              const SizedBox(height: 10),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildNeobrutalistCard({
+  Widget _buildHomeButton({
     required String title,
-    required String desc,
-    required String buttonText,
-    required Color cardBg,
-    required Color buttonBg,
-    required Color buttonBorder,
-    Color textColor = const Color(0xFF1A1A2E),
+    required IconData icon,
+    required Color iconBg,
     required VoidCallback onTap,
   }) {
     const Color ink = Color(0xFF1A1A2E);
 
     return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        border: Border.all(color: ink, width: 3),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: ink,
-            offset: Offset(5, 5),
-            blurRadius: 0,
-          )
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Gaegu',
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: ink,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            desc,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF555566),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Action Shutter Button
-          InkWell(
-            onTap: onTap,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: buttonBg,
-                border: Border.all(color: buttonBorder, width: 2.5),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: const [
-                  BoxShadow(
-                    color: ink,
-                    offset: Offset(3, 3),
-                    blurRadius: 0,
-                  )
-                ],
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      height: 90,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: ink, width: 3),
+            boxShadow: const [
+              BoxShadow(
+                color: ink,
+                offset: Offset(4, 4),
+                blurRadius: 0,
               ),
-              child: Text(
-                buttonText,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Gaegu',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor == Colors.white ? Colors.white : ink,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: ink, width: 2.5),
+                ),
+                child: Icon(icon, color: ink, size: 26),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Gaegu',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: ink,
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
