@@ -39,8 +39,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   void initState() {
     super.initState();
-    // Clear any previous remote photos
-    widget.roomState.clearRemotePhotos();
+    // Clear any previous remote photos safely after current build frame ends
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.roomState.clearRemotePhotos();
+      }
+    });
 
     // Parse max shots dynamically from the room's chosen session layout
     final layout = widget.roomState.sessionLayout;
@@ -74,10 +78,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
         await _cameraController!.initialize();
         if (mounted) {
-          setState(() {
-            _isCameraInitialized = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _isCameraInitialized = true;
+              });
+              _startCountdownSequence();
+            }
           });
-          _startCountdownSequence();
         }
       }
     } catch (e) {
