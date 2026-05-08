@@ -34,6 +34,7 @@ class RoomState extends ChangeNotifier {
 
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
+  Timer? _heartbeatTimer;
   bool _connected = false;
   bool _isConnecting = false;
   bool _isManualClose = false;
@@ -140,6 +141,7 @@ class RoomState extends ChangeNotifier {
       _connected = true;
       _selfId = const Uuid().v4();
       _status = 'Connected';
+      _startHeartbeat();
       notifyListeners();
 
       // Flush pending emits
@@ -155,6 +157,7 @@ class RoomState extends ChangeNotifier {
         },
         onDone: () {
           debugPrint('[Socket] Disconnected');
+          _stopHeartbeat();
           _connected = false;
           _channel = null;
           _subscription = null;
@@ -164,6 +167,7 @@ class RoomState extends ChangeNotifier {
         },
         onError: (e) {
           debugPrint('[Socket] Error: $e');
+          _stopHeartbeat();
           _connected = false;
           _channel = null;
           _subscription = null;
@@ -334,6 +338,20 @@ class RoomState extends ChangeNotifier {
   void setSessionLayout(String layout) {
     _sessionLayout = layout;
     notifyListeners();
+  }
+
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (_connected && _channel != null) {
+        _sendRaw('ping', {});
+      }
+    });
+  }
+
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
   }
 
   // ─────────────────────────────────────────────────────────────────

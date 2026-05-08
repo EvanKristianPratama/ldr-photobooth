@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image/image.dart' as img;
 import '../constants/translations.dart';
 import '../services/room_state.dart';
 import 'editor_screen.dart';
@@ -109,6 +110,25 @@ class _CaptureScreenState extends State<CaptureScreen> {
     });
   }
 
+  Uint8List _compressPhoto(Uint8List originalBytes) {
+    try {
+      final decoded = img.decodeImage(originalBytes);
+      if (decoded == null) return originalBytes;
+
+      // Downscale to 800px width (keeping aspect ratio) for super-fast mobile transfer
+      img.Image resized = decoded;
+      if (decoded.width > 800) {
+        resized = img.copyResize(decoded, width: 800);
+      }
+
+      // Encode to JPEG with 70% quality (extremely small, lightweight, and super high quality!)
+      return Uint8List.fromList(img.encodeJpg(resized, quality: 70));
+    } catch (e) {
+      debugPrint('[Compress] Error compressing photo: $e');
+      return originalBytes;
+    }
+  }
+
   Future<void> _triggerShutterCapture() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized) return;
 
@@ -122,10 +142,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final Uint8List bytes = await rawFile.readAsBytes();
       _capturedPhotos.add(bytes);
 
-      // In Duo/Group (LDR) mode, broadcast captured photo to other peers
+      // In Duo/Group (LDR) mode, broadcast captured photo to other peers with lightning compression
       if (!widget.isSolo) {
         try {
-          final base64Photo = base64Encode(bytes);
+          final compressedBytes = _compressPhoto(bytes);
+          final base64Photo = base64Encode(compressedBytes);
           widget.roomState.emit('photo:send', {
             'index': _currentShot - 1,
             'mime': 'image/jpeg',
