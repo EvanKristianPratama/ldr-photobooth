@@ -112,7 +112,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _showFlash = false;
       });
 
-      if (_currentShot < 4) {
+      int maxShots = 4;
+      final layout = widget.roomState.sessionLayout;
+      if (layout == 'layout1') {
+        maxShots = 1;
+      } else if (layout == 'layout2') {
+        maxShots = 2;
+      } else if (layout == 'layout3') {
+        maxShots = 3;
+      }
+
+      if (_currentShot < maxShots) {
         setState(() {
           _currentShot++;
         });

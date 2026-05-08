@@ -169,97 +169,99 @@ class ModeSelectScreen extends StatelessWidget {
       ),
       backgroundColor: const Color(0xFFFFFDF5),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 36),
-              // Beautiful Clean Title Text from Screenshot
-              const Text(
-                'How would you like to take\nphotos today? ✌️',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Gaegu',
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  color: ink,
-                  height: 1.25,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 36),
+                // Beautiful Clean Title Text from Screenshot
+                const Text(
+                  'How would you like to take\nphotos today? ✌️',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Gaegu',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: ink,
+                    height: 1.25,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-
-              // Button 1: Solo Mode
-              _buildHomeButton(
-                title: 'Solo Mode',
-                icon: Icons.person_rounded,
-                iconBg: const Color(0xFFE3F2FD),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LayoutSelectScreen(
-                        roomState: roomState,
-                        locale: locale,
-                        isSolo: true,
+                const SizedBox(height: 40),
+  
+                // Button 1: Solo Mode
+                _buildHomeButton(
+                  title: 'Solo Mode',
+                  icon: Icons.person_rounded,
+                  iconBg: const Color(0xFFE3F2FD),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LayoutSelectScreen(
+                          roomState: roomState,
+                          locale: locale,
+                          isSolo: true,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-
-              // Button 2: Group Mode (LDR)
-              _buildHomeButton(
-                title: 'Group Mode (LDR)',
-                icon: Icons.people_alt_rounded,
-                iconBg: const Color(0xFFE8F5E9),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => JoinScreen(
-                        roomState: roomState,
-                        locale: locale,
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              // Button 3: Community
-              _buildHomeButton(
-                title: 'Community',
-                icon: Icons.auto_awesome_rounded,
-                iconBg: const Color(0xFFFFFDE7),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: ink,
-                      content: Text(
-                        'Community Mode is coming soon! ✨',
-                        style: TextStyle(fontFamily: 'Gaegu', fontWeight: FontWeight.bold, color: yellow),
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const Spacer(),
-
-              // Beautiful "by evan kristian" signature at bottom
-              const Text(
-                'by evan kristian',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Gaegu',
-                  fontSize: 15,
-                  color: Color(0xFFFFB7B2),
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline,
+                    );
+                  },
                 ),
-              ),
-              const SizedBox(height: 10),
-            ],
+  
+                // Button 2: Group Mode (LDR)
+                _buildHomeButton(
+                  title: 'Group Mode (LDR)',
+                  icon: Icons.people_alt_rounded,
+                  iconBg: const Color(0xFFE8F5E9),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JoinScreen(
+                          roomState: roomState,
+                          locale: locale,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+  
+                // Button 3: Community
+                _buildHomeButton(
+                  title: 'Community',
+                  icon: Icons.auto_awesome_rounded,
+                  iconBg: const Color(0xFFFFFDE7),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: ink,
+                        content: Text(
+                          'Community Mode is coming soon! ✨',
+                          style: TextStyle(fontFamily: 'Gaegu', fontWeight: FontWeight.bold, color: yellow),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+  
+                const SizedBox(height: 50),
+  
+                // Beautiful "by evan kristian" signature at bottom
+                const Text(
+                  'by evan kristian',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Gaegu',
+                    fontSize: 15,
+                    color: Color(0xFFFFB7B2),
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         ),
       ),

@@ -48,6 +48,7 @@ class RoomState extends ChangeNotifier {
   String _displayName = '';
   bool _showToast = false;
   String _step = 'join';
+  String _sessionLayout = 'layout4';
 
   // Pending emits queue (before connection opens)
   final List<Map<String, dynamic>> _pendingEmits = [];
@@ -64,6 +65,7 @@ class RoomState extends ChangeNotifier {
   String get displayName => _displayName;
   bool get showToast => _showToast;
   String get step => _step;
+  String get sessionLayout => _sessionLayout;
 
   RoomState({required this.serverUrl});
 
@@ -226,6 +228,8 @@ class RoomState extends ChangeNotifier {
         notifyListeners();
         break;
       case 'session:start':
+        final data = payload as Map<String, dynamic>? ?? {};
+        _sessionLayout = data['layout'] as String? ?? 'layout4';
         _step = 'countdown';
         notifyListeners();
         break;
@@ -303,6 +307,11 @@ class RoomState extends ChangeNotifier {
 
   void emitSessionStart(String layout) {
     emit('session:start', {'layout': layout});
+  }
+
+  void setSessionLayout(String layout) {
+    _sessionLayout = layout;
+    notifyListeners();
   }
 
   // ─────────────────────────────────────────────────────────────────

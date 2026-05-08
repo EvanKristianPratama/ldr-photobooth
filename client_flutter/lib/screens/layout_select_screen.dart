@@ -195,6 +195,7 @@ class _LayoutSelectScreenState extends State<LayoutSelectScreen> {
               InkWell(
                 onTap: () {
                   if (widget.isSolo) {
+                    widget.roomState.setSessionLayout(_selectedLayout);
                     widget.roomState.startSoloSession();
                     Navigator.pushReplacement(
                       context,
