@@ -29,12 +29,28 @@ const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
 
 export default function Page() {
   const [step, setStep] = useState('mode-select');
-  const stepRef = useRef('mode-select');
+  const stepRef = useRef(step);
   useEffect(() => {
     stepRef.current = step;
+    if (typeof window !== 'undefined') {
+      if (['frame-select', 'result', 'layout-select', 'room', 'join'].includes(step)) {
+        sessionStorage.setItem('ldr_step', step);
+      } else if (step === 'mode-select') {
+        sessionStorage.removeItem('ldr_step');
+      }
+    }
   }, [step]);
-  const [sessionMode, setSessionMode] = useState(null); // 'solo' or 'duo'
+  const [sessionMode, setSessionMode] = useState(null);
+  // Persist sessionMode whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (sessionMode) sessionStorage.setItem('ldr_session_mode', sessionMode);
+      else sessionStorage.removeItem('ldr_session_mode');
+    }
+  }, [sessionMode]);
+
   const [groupSize, setGroupSize] = useState(2);
+  const [capturedParticipants, setCapturedParticipants] = useState([]);
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [progress, setProgress] = useState(0);
   const pausedRef = useRef(false);
@@ -115,33 +131,65 @@ export default function Page() {
     const savedStep = params.get('step');
     const sharedRoom = params.get('room');
 
+    // Check sessionStorage for persisted step (set in step useEffect above)
+    const sessionStep = typeof window !== 'undefined' ? sessionStorage.getItem('ldr_step') : null;
+    const sessionModeStored = typeof window !== 'undefined' ? sessionStorage.getItem('ldr_session_mode') : null;
+
     if (view === 'community') {
       setStep('community');
     } else if (sharedRoom) {
       // Auto-join from shared link
       setSessionMode('duo');
-      setStep('join');
       room.setRoomCode(sharedRoom.toUpperCase());
       const sharedSize = params.get('size');
       if (sharedSize) setGroupSize(parseInt(sharedSize, 10));
+
+      const stepToRestore = savedStep || sessionStep;
+      if (stepToRestore && ['frame-select', 'result'].includes(stepToRestore)) {
+        setStep(stepToRestore);
+      } else {
+        setStep('join');
+      }
+    } else if (sessionStep && ['frame-select', 'result'].includes(sessionStep)) {
+      // Restore persisted step (refresh guard) — set sessionMode from storage or URL
+      const modeToUse = mode || sessionModeStored || 'solo';
+      setSessionMode(modeToUse);
+      setStep(sessionStep);
     } else if (mode === 'solo') {
       setSessionMode('solo');
-      if (savedStep && ['layout-select', 'join'].includes(savedStep)) {
+      if (savedStep && ['layout-select', 'join', 'frame-select', 'result'].includes(savedStep)) {
         setStep(savedStep);
       }
     }
   }, []);
 
-  // Sync state to URL for Solo Mode
+  // Sync state to URL for both Solo and Duo Mode (to make refresh/reset fully robust)
   useEffect(() => {
-    if (sessionMode === 'solo' && !['countdown', 'processing'].includes(step)) {
+    if (!['countdown', 'processing'].includes(step)) {
       const params = new URLSearchParams(window.location.search);
-      params.set('mode', 'solo');
-      params.set('step', step);
+      if (sessionMode === 'solo') {
+        params.set('mode', 'solo');
+        params.delete('room');
+        params.delete('size');
+      } else if (sessionMode === 'duo') {
+        if (room.roomCode) {
+          params.set('room', room.roomCode);
+          params.set('size', groupSize);
+        }
+        params.delete('mode');
+      }
+      
+      // Sync the step as a URL query param
+      if (['frame-select', 'result', 'layout-select', 'room', 'join'].includes(step)) {
+        params.set('step', step);
+      } else {
+        params.delete('step');
+      }
+
       const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
       window.history.replaceState({ path: newUrl }, '', newUrl);
     }
-  }, [step, sessionMode]);
+  }, [step, sessionMode, room.roomCode, groupSize]);
 
   const navigateToCommunity = () => {
     const newUrl = `${window.location.origin}${window.location.pathname}?view=community`;
@@ -175,6 +223,7 @@ export default function Page() {
   const capture = useCapture({
     sendPhotoToPeer: webRTC.sendPhotoToPeer,
     onProcessingComplete: ({ localBlobs, remoteBlobsByPeer }) => {
+      setCapturedParticipants(participantsWithSelf);
       setStep('frame-select');
       frame.mergePhotos({
         count: capture.totalShots,
@@ -191,7 +240,7 @@ export default function Page() {
   });
 
   const frame = useFrame({ 
-    participants: participantsWithSelf,
+    participants: capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf,
     locationsById: locationsById
   });
 
@@ -210,7 +259,13 @@ export default function Page() {
     frame.frameTextColor,
     frame.locTextLeft,
     frame.locTextRight,
-    frame.photoFilter
+    frame.photoFilter,
+    frame.frameFont,
+    frame.frameLayout,
+    frame.frameDate,
+    frame.orientation,
+    frame.frameNoise,
+    frame.frameGlare
   ].join('|'), [
     frame.frameMode,
     frame.framePresetId,
@@ -220,10 +275,17 @@ export default function Page() {
     frame.frameTextColor,
     frame.locTextLeft,
     frame.locTextRight,
-    frame.photoFilter
+    frame.photoFilter,
+    frame.frameFont,
+    frame.frameLayout,
+    frame.frameDate,
+    frame.orientation,
+    frame.frameNoise,
+    frame.frameGlare
   ]);
 
-  const debouncedMergeDeps = useDebouncedValue(mergeDeps, 200);
+  // Text input uses a longer debounce (600ms) to avoid re-rendering on every keystroke
+  const debouncedMergeDeps = useDebouncedValue(mergeDeps, 400);
 
   useEffect(() => {
     selectedLayoutRef.current = selectedLayout;
@@ -363,14 +425,16 @@ export default function Page() {
       return;
     }
 
+    const mergeParticipants = capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf;
+
     frame.mergePhotos({
       count: frame.lastMergeCount,
-      participants: participantsWithSelf,
+      participants: mergeParticipants,
       localBlobs: capture.localBlobsRef.current,
       remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
     });
-  }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, participantsWithSelf, locationsById]);
+  }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, capturedParticipants, participantsWithSelf, locationsById]);
 
   useEffect(() => {
     if (step === 'result' && frame.mergedImage) {
@@ -442,6 +506,9 @@ export default function Page() {
     frame.resetFrame();
     setLocationsById({});
     setDownloadName('');
+    setCapturedParticipants([]);
+    sessionStorage.removeItem('ldr_step');
+    sessionStorage.removeItem('ldr_session_mode');
   };
 
   const handleDownload = () => {
@@ -456,9 +523,10 @@ export default function Page() {
 
   const handleReapply = () => {
     if (!frame.lastMergeCount) return;
+    const mergeParticipants = capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf;
     frame.mergePhotos({
       count: frame.lastMergeCount,
-      participants: participantsWithSelf,
+      participants: mergeParticipants,
       localBlobs: capture.localBlobsRef.current,
       remoteBlobsByPeer: capture.remoteBlobsRef.current,
       locationsById
@@ -645,7 +713,7 @@ export default function Page() {
             setLocTextEdited={frame.setLocTextEdited}
             photoFilter={frame.photoFilter}
             setPhotoFilter={frame.setPhotoFilter}
-            userData={room}
+            userData={{ ...room, locationsById }}
             stickers={frame.stickers}
             addSticker={frame.addSticker}
             addRandomSticker={frame.addRandomSticker}
@@ -653,17 +721,36 @@ export default function Page() {
             sessionMode={sessionMode}
             orientation={frame.orientation}
             setOrientation={frame.setOrientation}
-            participants={participantsWithSelf}
+            participants={capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf}
             frameFont={frame.frameFont}
             setFrameFont={frame.setFrameFont}
             frameLayout={frame.frameLayout}
             setFrameLayout={frame.setFrameLayout}
             frameDate={frame.frameDate}
             setFrameDate={frame.setFrameDate}
+            frameNoise={frame.frameNoise}
+            setFrameNoise={frame.setFrameNoise}
+            frameGlare={frame.frameGlare}
+            setFrameGlare={frame.setFrameGlare}
           />
         )}
 
+        {/* Fallback: refreshed on frame-select/result but blobs are gone */}
+        {(step === 'frame-select' || step === 'result') && !frame.mergedImage && !frame.isMerging && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '16px', fontFamily: "'Gaegu', cursive", padding: '32px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px' }}>📷</div>
+            <div style={{ fontSize: '24px', fontWeight: '700' }}>Session Expired</div>
+            <p style={{ fontSize: '18px', opacity: 0.7, maxWidth: '300px' }}>
+              Page was refreshed and photo data was lost. Please retake your photos!
+            </p>
+            <button className="btn-primary" style={{ padding: '14px 32px', fontSize: '18px' }} onClick={handleGoHome}>
+              Start Over →
+            </button>
+          </div>
+        )}
+
         {step === 'result' && frame.mergedImage && (
+
           <ResultScreen
             mergedImage={frame.mergedImage}
             isMerging={frame.isMerging}

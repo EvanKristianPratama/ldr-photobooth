@@ -133,12 +133,7 @@ export default function ResultScreen({
                   objectFit: 'contain',
                   borderRadius: '4px', 
                   border: '3.5px solid var(--ink)', 
-                  boxShadow: '10px 10px 0 var(--ink)',
-                  filter: photoFilter === 'bw' ? 'grayscale(100%)' :
-                          photoFilter === 'sepia' ? 'sepia(100%)' :
-                          photoFilter === 'vintage' ? 'sepia(50%) contrast(120%) brightness(90%)' :
-                          photoFilter === 'warm' ? 'sepia(30%) saturate(140%)' :
-                          photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none'
+                  boxShadow: '10px 10px 0 var(--ink)'
                 }} 
               />
             )}

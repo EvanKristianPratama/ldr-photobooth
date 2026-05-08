@@ -1,4 +1,85 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
+
+/**
+ * LocationInput – smart text input with auto-detected location suggestions.
+ * Shows chip buttons (city / country) derived from participant's geolocation.
+ * Typing updates the value and the preview re-renders via debounce in page.jsx.
+ */
+function LocationInput({ label, placeholder, value, onChange, participant, userData }) {
+  const [focused, setFocused] = useState(false);
+
+  // Build suggestion chips from the location stored in userData (locationsById from room)
+  const locationsById = userData?.locationsById || {};
+  const locData = participant?.id ? locationsById[participant.id] : null;
+  const chips = [];
+  if (locData) {
+    const city = (locData.city || '').trim();
+    const country = (locData.country || '').trim();
+    if (city && country && `${city}, ${country}` !== value) {
+      chips.push({ label: `📍 ${city}, ${country}`, value: `${city}, ${country}` });
+    }
+    if (country && country !== value) {
+      chips.push({ label: `🌏 ${country}`, value: country });
+    }
+    if (city && city !== value) {
+      chips.push({ label: `🏙 ${city}`, value: city });
+    }
+  }
+
+  return (
+    <div style={{ flex: 1, position: 'relative' }}>
+      <label className="field-label">{label}</label>
+      <input
+        className="form-input"
+        style={{ fontSize: '14px', padding: '8px', width: '100%', boxSizing: 'border-box' }}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 120)}
+      />
+      {focused && chips.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          background: '#fff',
+          border: '2px solid var(--ink)',
+          borderRadius: '10px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          padding: '6px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          marginTop: '2px'
+        }}>
+          {chips.map((chip, i) => (
+            <button
+              key={i}
+              onMouseDown={e => { e.preventDefault(); onChange(chip.value); setFocused(false); }}
+              style={{
+                background: 'var(--yellow, #ffd93d)',
+                border: '1.5px solid var(--ink)',
+                borderRadius: '8px',
+                padding: '5px 10px',
+                fontFamily: "'Gaegu', cursive",
+                fontSize: '14px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s'
+              }}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function FrameSelectScreen({
   mergedImage,
@@ -45,8 +126,13 @@ export default function FrameSelectScreen({
   frameLayout,
   setFrameLayout,
   frameDate,
-  setFrameDate
+  setFrameDate,
+  frameNoise,
+  setFrameNoise,
+  frameGlare,
+  setFrameGlare
 }) {
+  const { t } = useLanguage();
   const [showPresetsModal, setShowPresetsModal] = useState(false);
 
   const layoutOptions = [
@@ -58,6 +144,11 @@ export default function FrameSelectScreen({
     { id: "'Quicksand', sans-serif", label: 'Modern', preview: 'Aa' },
     { id: "'Gaegu', cursive", label: 'Doodle', preview: 'Aa' },
     { id: "'Pastel Crayon', cursive", label: 'Crayon', preview: 'Aa' },
+    { id: "'Calculator', monospace", label: 'Calculator', preview: 'Aa' },
+    { id: "'VT323', monospace", label: 'LCD Retro', preview: 'Aa' },
+    { id: "'Silkscreen', monospace", label: 'Pixel', preview: 'Aa' },
+    { id: "'Special Elite', cursive", label: 'Typewriter', preview: 'Aa' },
+    { id: "'Pacifico', cursive", label: 'Retro Neon', preview: 'Aa' },
     { id: "'Caveat', cursive", label: 'Script', preview: 'Aa' },
     { id: "'Playfair Display', serif", label: 'Elegant', preview: 'Aa' }
   ];
@@ -85,24 +176,17 @@ export default function FrameSelectScreen({
               src={mergedImage} 
               alt="Strip Preview" 
               className="preview-img"
-              style={{ 
-                filter: photoFilter === 'bw' ? 'grayscale(100%)' :
-                        photoFilter === 'sepia' ? 'sepia(100%)' :
-                        photoFilter === 'vintage' ? 'sepia(50%) contrast(120%) brightness(90%)' :
-                        photoFilter === 'warm' ? 'sepia(30%) saturate(140%)' :
-                        photoFilter === 'cold' ? 'saturate(80%) hue-rotate(180deg) brightness(110%)' : 'none'
-              }} 
             />
           )}
         </div>
       </div>
 
       <div className="frame-controls">
-        <div className="ctrl-title">Edit Frame ✦</div>
+        <div className="ctrl-title">{t('frame.editFrame')}</div>
 
         {(sessionMode === 'solo' || sessionMode === 'duo') && (
           <div className="ctrl-section">
-            <div className="ctrl-label">PRINT STYLE</div>
+            <div className="ctrl-label">{t('frame.printStyle')}</div>
             <div style={{ display: 'flex', gap: '10px' }}>
               {layoutOptions.map(l => (
                 <button 
@@ -119,7 +203,7 @@ export default function FrameSelectScreen({
         )}
 
         <div className="ctrl-section">
-          <div className="ctrl-label">ORIENTATION</div>
+          <div className="ctrl-label">{t('frame.orientations')}</div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button 
               className={`btn-secondary ${orientation === 'portrait' ? 'active' : ''}`}
@@ -139,8 +223,8 @@ export default function FrameSelectScreen({
         </div>
 
         <div className="ctrl-section">
-          <div className="ctrl-label">TYPOGRAPHY</div>
-          <div className="scroll-row" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
+          <div className="ctrl-label">{t('frame.typography')}</div>
+          <div className="scroll-row" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
             {fonts.map(f => (
               <button 
                 key={f.id}
@@ -148,10 +232,12 @@ export default function FrameSelectScreen({
                 style={{ 
                   flexShrink: 0, 
                   padding: '6px 10px', 
-                  fontSize: '13px', 
+                  fontSize: '12px', 
                   fontFamily: f.id,
                   background: frameFont === f.id ? 'var(--yellow)' : 'white',
-                  borderRadius: '10px'
+                  borderRadius: '8px',
+                  border: '1.5px solid var(--ink)',
+                  minHeight: '28px'
                 }}
                 onClick={() => { setFrameFont(f.id); onReapply(); }}
               >
@@ -162,7 +248,7 @@ export default function FrameSelectScreen({
         </div>
 
         <div className="ctrl-section">
-          <div className="ctrl-label">PHOTO FILTER</div>
+          <div className="ctrl-label">{t('frame.photoFilter')}</div>
           <div className="scroll-row" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', flexWrap: 'nowrap' }}>
             {[
               { id: 'none', label: 'Normal', color: '#eee' },
@@ -206,14 +292,74 @@ export default function FrameSelectScreen({
         </div>
 
         <div className="ctrl-section">
-          <div className="ctrl-label">FRAME PRESETS</div>
+          <div className="ctrl-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{t('frame.grain')}</span>
+            <span style={{ fontSize: '14px', fontFamily: "'Gaegu', cursive", background: 'var(--ink)', color: 'white', padding: '2px 8px', borderRadius: '8px' }}>{frameNoise}%</span>
+          </div>
+          <div style={{ padding: '4px 0' }}>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={frameNoise} 
+              onChange={e => { setFrameNoise(parseInt(e.target.value)); onReapply(); }} 
+              style={{ 
+                width: '100%', 
+                accentColor: 'var(--yellow)', 
+                cursor: 'pointer',
+                height: '8px',
+                borderRadius: '4px',
+                background: '#ddd'
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">{t('frame.glare')}</div>
+          <div className="scroll-row" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
+            {[
+              { id: 'none', label: 'None' },
+              { id: 'warm', label: 'Warm' },
+              { id: 'retro', label: 'Retro' },
+              { id: 'aurora', label: 'Aurora' },
+              { id: 'fire', label: 'Fire' },
+              { id: 'nebula', label: 'Nebula' },
+              { id: 'sunset', label: 'Sunset' },
+              { id: 'vintage', label: 'Vintage Wash' },
+              { id: 'rainbow', label: 'Rainbow' },
+              { id: 'cyberpunk', label: 'Cyberpunk' }
+            ].map(g => (
+              <button
+                key={g.id}
+                className={`btn-secondary ${frameGlare === g.id ? 'active' : ''}`}
+                style={{
+                  flexShrink: 0,
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  fontFamily: "'Gaegu', cursive",
+                  background: frameGlare === g.id ? 'var(--yellow)' : 'white',
+                  borderRadius: '8px',
+                  border: '1.5px solid var(--ink)',
+                  minHeight: '28px'
+                }}
+                onClick={() => { setFrameGlare(g.id); onReapply(); }}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">{t('frame.presets')}</div>
           <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setShowPresetsModal(true)}>
-            Browse Presets ({framePresets?.length || 0})
+            {t('frame.browsePresets')} ({framePresets?.length || 0})
           </button>
         </div>
 
         <div className="ctrl-section">
-          <div className="ctrl-label">FRAME COLOR</div>
+          <div className="ctrl-label">{t('frame.color')}</div>
           <div className="swatch-row">
             {colors.map((c, i) => (
               <div 
@@ -239,36 +385,63 @@ export default function FrameSelectScreen({
           </div>
         </div>
 
+        <div className="ctrl-section">
+          <div className="ctrl-label">{t('frame.fontColor')}</div>
+          <div className="swatch-row">
+            {[
+              '#ffffff',
+              '#1a1a2e',
+              '#ffd93d',
+              '#ff6b9d',
+              '#06d6a0',
+              '#c77dff'
+            ].map((colorHex) => (
+              <div 
+                key={colorHex}
+                className={`swatch ${frameTextColor === colorHex ? 'sel' : ''}`} 
+                style={{ background: colorHex }} 
+                onClick={() => {
+                  setFrameTextColor(colorHex);
+                  onReapply();
+                }}
+              />
+            ))}
+            <input 
+              type="color" 
+              className="color-input" 
+              value={frameTextColor} 
+              onChange={e => {
+                setFrameTextColor(e.target.value);
+                onReapply();
+              }}
+            />
+          </div>
+        </div>
+
         {participants.length <= 2 && (
           <div className="ctrl-section">
             <div className="ctrl-label">
-              {sessionMode === 'solo' ? 'CUSTOM NAME' : 'LOCATIONS'}
+              {sessionMode === 'solo' ? t('frame.customName') : t('frame.locations')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">
-                    {sessionMode === 'solo' ? 'Your Name' : 'Left Location'}
-                  </label>
-                  <input 
-                    className="form-input" 
-                    style={{ fontSize: '14px', padding: '8px' }} 
-                    placeholder={sessionMode === 'solo' ? 'Write your name...' : 'City, Country'}
-                    value={locTextLeft}
-                    onChange={e => { setLocTextLeft(e.target.value); setLocTextEdited(true); onReapply(); }}
-                  />
-                </div>
+                <LocationInput
+                  label={sessionMode === 'solo' ? t('join.yourName') : 'Left'}
+                  placeholder={sessionMode === 'solo' ? t('join.namePlaceholder') : 'City, Country'}
+                  value={locTextLeft}
+                  onChange={val => { setLocTextLeft(val); setLocTextEdited(true); }}
+                  participant={participants[0]}
+                  userData={userData}
+                />
                 {sessionMode !== 'solo' && (
-                  <div style={{ flex: 1 }}>
-                    <label className="field-label">Right Location</label>
-                    <input 
-                      className="form-input" 
-                      style={{ fontSize: '14px', padding: '8px' }} 
-                      placeholder="City, Country"
-                      value={locTextRight}
-                      onChange={e => { setLocTextRight(e.target.value); setLocTextEdited(true); onReapply(); }}
-                    />
-                  </div>
+                  <LocationInput
+                    label="Right"
+                    placeholder="City, Country"
+                    value={locTextRight}
+                    onChange={val => { setLocTextRight(val); setLocTextEdited(true); }}
+                    participant={participants[1]}
+                    userData={userData}
+                  />
                 )}
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer', opacity: 0.8 }}>
@@ -285,7 +458,7 @@ export default function FrameSelectScreen({
 
         {participants.length > 2 && (
           <div className="ctrl-section">
-            <div className="ctrl-label">LOCATION & NAMES</div>
+            <div className="ctrl-label">{t('frame.locations')}</div>
             <p className="form-hint" style={{ fontSize: '14px', opacity: 0.8 }}>
               Auto-displayed for all {participants.length} members ✨
             </p>
@@ -294,14 +467,14 @@ export default function FrameSelectScreen({
                 type="checkbox" 
                 checked={showFrameText} 
                 onChange={e => { setShowFrameText(e.target.checked); onReapply(); }} 
-              />
+                />
               Show details on strip
             </label>
           </div>
         )}
 
         <div className="ctrl-section">
-          <div className="ctrl-label">DATE TEXT</div>
+          <div className="ctrl-label">DATE</div>
           <input 
             className="form-input" 
             style={{ fontSize: '14px', padding: '8px', width: '100%' }} 
@@ -312,13 +485,13 @@ export default function FrameSelectScreen({
 
         <div className="ctrl-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <div className="ctrl-label" style={{ marginBottom: 0 }}>STICKERS</div>
+            <div className="ctrl-label" style={{ marginBottom: 0 }}>{t('frame.stickers')}</div>
             {stickers.length > 0 && (
               <button 
                 onClick={() => { clearStickers(); onReapply(); }} 
                 style={{ background: 'none', border: 'none', color: '#ff6b9d', fontFamily: "'Pastel Crayon', cursive", fontSize: '16px', cursor: 'pointer' }}
               >
-                Clear All
+                {t('frame.clearAll')}
               </button>
             )}
           </div>
@@ -382,7 +555,7 @@ export default function FrameSelectScreen({
             onClick={onContinue} 
             style={{ width: '100%', padding: '16px', fontSize: '20px' }}
           >
-            Finish & Download →
+            {t('common.next')}
           </button>
         </div>
       </div>
@@ -393,8 +566,8 @@ export default function FrameSelectScreen({
           <div className="frame-modal__content">
             <div className="frame-modal__header">
               <div>
-                <h3 className="frame-modal__title">Frame Presets</h3>
-                <p className="frame-modal__subtitle">Choose a designer frame</p>
+                <h3 className="frame-modal__title">{t('frame.presets')}</h3>
+                <p className="frame-modal__subtitle">{t('frame.browsePresets')}</p>
               </div>
               <button className="btn-secondary" onClick={() => setShowPresetsModal(false)}>×</button>
             </div>

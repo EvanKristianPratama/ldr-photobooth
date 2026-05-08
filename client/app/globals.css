@@ -1,8 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;700;900&family=VT323&family=Silkscreen&family=Special+Elite&family=Pacifico&display=swap');
 
 @font-face {
   font-family: 'Pastel Crayon';
   src: url('/pastel crayon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Calculator';
+  src: url('/Calculator.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

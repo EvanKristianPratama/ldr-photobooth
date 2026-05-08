@@ -23,6 +23,8 @@ export default function useFrame({ participants, locationsById = {} }) {
   const [frameFont, setFrameFont] = useState("'Quicksand', sans-serif");
   const [frameLayout, setFrameLayout] = useState('strip'); // 'strip' or 'grid'
   const [frameDate, setFrameDate] = useState(new Date().toLocaleDateString());
+  const [frameNoise, setFrameNoise] = useState(0); // 0 to 100
+  const [frameGlare, setFrameGlare] = useState('none'); // 'none', 'warm', 'retro'
   const mergeCacheRef = useRef(new Map());
 
   const [communityPresets, setCommunityPresets] = useState([]);
@@ -143,14 +145,18 @@ export default function useFrame({ participants, locationsById = {} }) {
       showFrameText,
       frameColor,
       frameTextColor,
+      locTextLeft,
+      locTextRight,
       photoFilter,
       JSON.stringify(stickers),
       orientation,
       frameFont,
       frameLayout,
-      frameDate
+      frameDate,
+      frameNoise,
+      frameGlare
     ].join('|');
-  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate]);
+  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare]);
 
   const mergePhotos = useCallback(async ({
     count,
@@ -380,6 +386,140 @@ export default function useFrame({ participants, locationsById = {} }) {
         ctx.restore();
       });
 
+      // ── ANALOG FILM GRAIN EFFECT ──
+      if (frameNoise > 0) {
+        ctx.save();
+        // Generate a fast tiled grain pattern
+        const noiseCanvas = document.createElement('canvas');
+        noiseCanvas.width = 128;
+        noiseCanvas.height = 128;
+        const noiseCtx = noiseCanvas.getContext('2d');
+        const noiseData = noiseCtx.createImageData(128, 128);
+        
+        // Map 0-100 scale to max 45 opacity for gorgeous, customizable grain density
+        const opacity = Math.round((frameNoise / 100) * 45);
+
+        for (let i = 0; i < noiseData.data.length; i += 4) {
+          const val = Math.floor(Math.random() * 255);
+          noiseData.data[i] = val;
+          noiseData.data[i+1] = val;
+          noiseData.data[i+2] = val;
+          noiseData.data[i+3] = opacity;
+        }
+        noiseCtx.putImageData(noiseData, 0, 0);
+        
+        const grainPattern = ctx.createPattern(noiseCanvas, 'repeat');
+        ctx.fillStyle = grainPattern;
+        ctx.fillRect(0, 0, totalW, totalH);
+        ctx.restore();
+      }
+
+      // ── RETRO CAMERA GLARE / LIGHT LEAK EFFECT ──
+      if (frameGlare !== 'none') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        
+        if (frameGlare === 'warm') {
+          // Soft Warm Orange/Golden leak from Top Left corner
+          const grad = ctx.createRadialGradient(
+            0, 0, 0,
+            0, 0, totalH * 0.75
+          );
+          grad.addColorStop(0, 'rgba(255, 90, 40, 0.38)');  // Sunset orange
+          grad.addColorStop(0.3, 'rgba(255, 170, 50, 0.22)'); // Warm yellow
+          grad.addColorStop(0.6, 'rgba(255, 120, 180, 0.08)'); // Subtle magenta glow
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'retro') {
+          // Retro Pinkish/Neon Purple leakage from Left Edge
+          const grad = ctx.createLinearGradient(0, 0, totalW * 0.9, 0);
+          grad.addColorStop(0, 'rgba(255, 0, 128, 0.28)'); // Intense vintage pink
+          grad.addColorStop(0.2, 'rgba(150, 0, 255, 0.15)'); // Retro purple
+          grad.addColorStop(0.5, 'rgba(0, 200, 255, 0.04)'); // Teal touch
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'aurora') {
+          // Beautiful Green-Teal glow from Bottom Right corner
+          const grad = ctx.createRadialGradient(
+            totalW, totalH, 0,
+            totalW, totalH, totalH * 0.7
+          );
+          grad.addColorStop(0, 'rgba(0, 240, 160, 0.35)'); // Beautiful neon green-teal
+          grad.addColorStop(0.4, 'rgba(0, 150, 255, 0.2)');  // Soft sky blue
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'fire') {
+          // Dynamic Fire Red wash from Top Right corner
+          const grad = ctx.createRadialGradient(
+            totalW, 0, 0,
+            totalW, 0, totalH * 0.75
+          );
+          grad.addColorStop(0, 'rgba(255, 40, 0, 0.42)'); // Dynamic fire red
+          grad.addColorStop(0.4, 'rgba(255, 130, 0, 0.25)'); // Orange burst
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'nebula') {
+          // Mystic Magenta-Violet glow from Bottom Left corner
+          const grad = ctx.createRadialGradient(
+            0, totalH, 0,
+            0, totalH, totalH * 0.75
+          );
+          grad.addColorStop(0, 'rgba(180, 0, 255, 0.35)'); // Mystical purple
+          grad.addColorStop(0.3, 'rgba(255, 0, 180, 0.22)'); // Pink neon
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'sunset') {
+          // Beautiful Sunset Pink/Orange horizon leak from Bottom Edge
+          const grad = ctx.createLinearGradient(0, totalH, 0, totalH * 0.45);
+          grad.addColorStop(0, 'rgba(255, 60, 100, 0.35)'); // Fuchsia pink
+          grad.addColorStop(0.5, 'rgba(255, 140, 0, 0.2)');  // Warm orange
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'vintage') {
+          // Antique golden wash centered across the strip
+          const grad = ctx.createRadialGradient(
+            totalW * 0.5, totalH * 0.5, 0,
+            totalW * 0.5, totalH * 0.5, totalH * 0.8
+          );
+          grad.addColorStop(0, 'rgba(255, 230, 150, 0.28)'); // Antique golden
+          grad.addColorStop(0.5, 'rgba(255, 180, 100, 0.12)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'rainbow') {
+          // Diagonal Rainbow prism leakage
+          const grad = ctx.createLinearGradient(0, 0, totalW, totalH);
+          grad.addColorStop(0, 'rgba(255, 50, 50, 0.22)');    // Red
+          grad.addColorStop(0.2, 'rgba(255, 150, 0, 0.15)');  // Orange
+          grad.addColorStop(0.4, 'rgba(255, 255, 0, 0.1)');   // Yellow
+          grad.addColorStop(0.6, 'rgba(0, 255, 100, 0.08)');  // Green
+          grad.addColorStop(0.8, 'rgba(0, 150, 255, 0.12)');  // Blue
+          grad.addColorStop(1, 'rgba(150, 50, 255, 0.18)');   // Violet
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, totalW, totalH);
+        } else if (frameGlare === 'cyberpunk') {
+          // Cyberpunk Cyan and Magenta dual leaks from opposite corners
+          const grad1 = ctx.createRadialGradient(totalW, 0, 0, totalW, 0, totalH * 0.6);
+          grad1.addColorStop(0, 'rgba(0, 255, 255, 0.35)');
+          grad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad1;
+          ctx.fillRect(0, 0, totalW, totalH);
+
+          const grad2 = ctx.createRadialGradient(0, totalH, 0, 0, totalH, totalH * 0.6);
+          grad2.addColorStop(0, 'rgba(255, 0, 255, 0.35)');
+          grad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad2;
+          ctx.fillRect(0, 0, totalW, totalH);
+        }
+        ctx.restore();
+      }
+
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       mergeCacheRef.current.set(key, dataUrl);
       setMergedImage(dataUrl);
@@ -393,6 +533,8 @@ export default function useFrame({ participants, locationsById = {} }) {
     frameSrc,
     showFrameText,
     frameTextColor,
+    locTextLeft,
+    locTextRight,
     photoFilter,
     getAutoLocationString,
     mergeKey,
@@ -400,7 +542,9 @@ export default function useFrame({ participants, locationsById = {} }) {
     orientation,
     frameLayout,
     frameFont,
-    frameDate
+    frameDate,
+    frameNoise,
+    frameGlare
   ]);
 
   const addSticker = useCallback((text) => {
@@ -557,6 +701,10 @@ export default function useFrame({ participants, locationsById = {} }) {
     frameLayout,
     setFrameLayout,
     frameDate,
-    setFrameDate
+    setFrameDate,
+    frameNoise,
+    setFrameNoise,
+    frameGlare,
+    setFrameGlare
   };
 }
