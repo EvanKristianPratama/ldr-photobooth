@@ -328,6 +328,59 @@ export default function useFrame({ participants, locationsById = {} }) {
         ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
       };
 
+      const applyPixelFilter = (ctx, x, y, w, h, filter) => {
+        if (filter === 'none') return;
+        try {
+          const imgData = ctx.getImageData(x, y, w, h);
+          const data = imgData.data;
+          const len = data.length;
+
+          if (filter === 'bw') {
+            for (let i = 0; i < len; i += 4) {
+              const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+              data[i] = gray;
+              data[i + 1] = gray;
+              data[i + 2] = gray;
+            }
+          } else if (filter === 'sepia') {
+            for (let i = 0; i < len; i += 4) {
+              const r = data[i], g = data[i + 1], b = data[i + 2];
+              data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+              data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+              data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+            }
+          } else if (filter === 'vintage') {
+            for (let i = 0; i < len; i += 4) {
+              const r = data[i], g = data[i + 1], b = data[i + 2];
+              const nr = (r * 0.393) + (g * 0.769) + (b * 0.189);
+              const ng = (r * 0.349) + (g * 0.686) + (b * 0.168);
+              const nb = (r * 0.272) + (g * 0.534) + (b * 0.131);
+              const finalR = r * 0.5 + nr * 0.5;
+              const finalG = g * 0.5 + ng * 0.5;
+              const finalB = b * 0.5 + nb * 0.5;
+              data[i] = Math.min(255, Math.max(0, ((finalR - 128) * 1.25) + 128 - 10));
+              data[i + 1] = Math.min(255, Math.max(0, ((finalG - 128) * 1.25) + 128 - 10));
+              data[i + 2] = Math.min(255, Math.max(0, ((finalB - 128) * 1.25) + 128 - 10));
+            }
+          } else if (filter === 'warm') {
+            for (let i = 0; i < len; i += 4) {
+              data[i] = Math.min(255, data[i] * 1.15);
+              data[i + 1] = Math.min(255, data[i + 1] * 1.06);
+              data[i + 2] = Math.min(255, data[i + 2] * 0.85);
+            }
+          } else if (filter === 'cold') {
+            for (let i = 0; i < len; i += 4) {
+              data[i] = Math.min(255, data[i] * 0.85);
+              data[i + 1] = Math.min(255, data[i + 1] * 1.02);
+              data[i + 2] = Math.min(255, data[i + 2] * 1.18);
+            }
+          }
+          ctx.putImageData(imgData, x, y);
+        } catch (err) {
+          console.error("Safari manual filter error:", err);
+        }
+      };
+
       for (let i = 0; i < count; i++) {
         for (let j = 0; j < participantCount; j++) {
           const participant = sorted[j];
@@ -358,16 +411,10 @@ export default function useFrame({ participants, locationsById = {} }) {
 
           if (blob) {
             const img = await blobToImage(blob);
-            ctx.save();
-            if (photoFilter !== 'none') {
-              if (photoFilter === 'bw') ctx.filter = 'grayscale(100%)';
-              else if (photoFilter === 'sepia') ctx.filter = 'sepia(100%)';
-              else if (photoFilter === 'vintage') ctx.filter = 'sepia(50%) contrast(120%) brightness(90%)';
-              else if (photoFilter === 'warm') ctx.filter = 'sepia(30%) saturate(140%)';
-              else if (photoFilter === 'cold') ctx.filter = 'saturate(80%) hue-rotate(180deg) brightness(110%)';
-            }
             drawCroppedImage(img, colX, rowY, cellW, cellH);
-            ctx.restore();
+            if (photoFilter !== 'none') {
+              applyPixelFilter(ctx, colX, rowY, cellW, cellH, photoFilter);
+            }
           }
         }
       }
