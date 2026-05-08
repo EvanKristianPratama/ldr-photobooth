@@ -25,6 +25,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   bool _isCameraInitialized = false;
 
   int _currentShot = 1;
+  int _maxShots = 4;
   int _countdown = 6;
   Timer? _timer;
   bool _showFlash = false;
@@ -34,6 +35,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   void initState() {
     super.initState();
+    // Parse max shots dynamically from the room's chosen session layout
+    final layout = widget.roomState.sessionLayout;
+    if (layout == 'layout1') {
+      _maxShots = 1;
+    } else if (layout == 'layout2') {
+      _maxShots = 2;
+    } else if (layout == 'layout3') {
+      _maxShots = 3;
+    } else {
+      _maxShots = 4;
+    }
     _initLocalCamera();
   }
 
@@ -112,17 +124,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         _showFlash = false;
       });
 
-      int maxShots = 4;
-      final layout = widget.roomState.sessionLayout;
-      if (layout == 'layout1') {
-        maxShots = 1;
-      } else if (layout == 'layout2') {
-        maxShots = 2;
-      } else if (layout == 'layout3') {
-        maxShots = 3;
-      }
-
-      if (_currentShot < maxShots) {
+      if (_currentShot < _maxShots) {
         setState(() {
           _currentShot++;
         });
@@ -159,23 +161,29 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     const Color ink = Color(0xFF1A1A2E);
     const Color yellow = Color(0xFFFFD93D);
-    const Color pink = Color(0xFFFF6B9D);
+    const Color teal = Color(0xFF06D6A0);
 
     return Scaffold(
       backgroundColor: ink,
       body: Stack(
         children: [
-          // 1. Camera Stream Viewport
-          Center(
-            child: _isCameraInitialized && _cameraController != null
-                ? AspectRatio(
-                    aspectRatio: _cameraController!.value.aspectRatio,
-                    child: CameraPreview(_cameraController!),
-                  )
-                : const Center(
-                    child: CircularProgressIndicator(color: yellow),
+          // 1. Full-screen Immersive Camera Preview (Just like a real camera app!)
+          _isCameraInitialized && _cameraController != null
+              ? Positioned.fill(
+                  child: ClipRRect(
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _cameraController!.value.previewSize?.height ?? 1080,
+                        height: _cameraController!.value.previewSize?.width ?? 1920,
+                        child: CameraPreview(_cameraController!),
+                      ),
+                    ),
                   ),
-          ),
+                )
+              : const Center(
+                  child: CircularProgressIndicator(color: yellow),
+                ),
 
           // 2. Translucent Screen Flash Overlay
           if (_showFlash)
@@ -185,96 +193,135 @@ class _CaptureScreenState extends State<CaptureScreen> {
               ),
             ),
 
-          // 3. Shutter Alert Banner Top
+          // 3. Floating Alert Banner Top (Elegant pill shape, translucent)
           Positioned(
-            top: 60,
-            left: 24,
-            right: 24,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              decoration: BoxDecoration(
-                color: pink,
-                border: Border.all(color: ink, width: 3),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(color: ink, offset: Offset(3, 3), blurRadius: 0)
-                ],
-              ),
-              child: Text(
-                _alertText,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Gaegu',
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            top: 50,
+            left: 20,
+            right: 20,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+                ),
+                child: Text(
+                  _alertText.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Gaegu',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
             ),
           ),
 
-          // 4. Countdown Timer Overlay Centered
+          // 4. Centered Large Countdown with Drop Shadow
           Center(
             child: Text(
               '$_countdown',
               style: TextStyle(
                 fontFamily: 'Gaegu',
-                fontSize: 180,
+                fontSize: 160,
                 fontWeight: FontWeight.w900,
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.6),
+                    offset: const Offset(4, 4),
+                    blurRadius: 12,
+                  ),
+                ],
               ),
             ),
           ),
 
-          // 5. Progress Indicators Bottom Row
+          // 5. Immersive Phone Camera Bottom Controls & Status HUD
           Positioned(
-            bottom: 60,
-            left: 24,
-            right: 24,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // Translucent Shot Indicator Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: yellow,
-                    border: Border.all(color: ink, width: 2.5),
+                    color: Colors.black.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
                   ),
                   child: Text(
-                    'SHOT $_currentShot / 4',
+                    'SHOT $_currentShot / $_maxShots',
                     style: const TextStyle(
                       fontFamily: 'Gaegu',
-                      fontSize: 18,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: ink,
+                      color: yellow,
                     ),
                   ),
                 ),
-                // Bullet Dots progress list
+                const SizedBox(height: 24),
+                
+                // Camera Shutter Button & Progress Row
                 Row(
-                  children: List.generate(4, (index) {
-                    final isDone = index < _currentShot - 1;
-                    final isCurrent = index == _currentShot - 1;
-                    return Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: isDone
-                            ? const Color(0xFF06D6A0)
-                            : isCurrent
-                                ? yellow
-                                : Colors.white.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: ink, width: 2),
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Dynamic bullet progress indicators on the left side
+                    SizedBox(
+                      width: 80,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: List.generate(_maxShots, (index) {
+                          final isDone = index < _currentShot - 1;
+                          final isCurrent = index == _currentShot - 1;
+                          return Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: isDone
+                                  ? teal
+                                  : isCurrent
+                                      ? yellow
+                                      : Colors.white.withOpacity(0.4),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black.withOpacity(0.3), width: 1),
+                            ),
+                          );
+                        }),
                       ),
-                    );
-                  }),
+                    ),
+                    
+                    // Native Circular Shutter Button in the center
+                    Container(
+                      width: 76,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    
+                    // Balanced placeholder on the right side
+                    const SizedBox(width: 80),
+                  ],
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
