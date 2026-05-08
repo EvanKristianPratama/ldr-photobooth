@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'room_state.dart';
 
 class FrameMerger {
   static const int cellW = 500;
@@ -12,7 +13,9 @@ class FrameMerger {
 
   static Future<Uint8List?> mergePhotos({
     required int count,
-    required List<Uint8List> photoList, // Decoded photo bytes
+    required List<RoomParticipant> participants,
+    required List<Uint8List> localPhotos,
+    required Map<String, Map<int, Uint8List>> remotePhotos,
     required String frameColor,       // e.g. "#FFD93D"
     required String frameTextColor,   // e.g. "#FFFFFF"
     required String photoFilter,      // "none", "bw", "sepia", "vintage", "warm", "cold"
@@ -29,7 +32,15 @@ class FrameMerger {
       final int cw = isPortrait ? cellW : cellH;
       final int ch = isPortrait ? cellH : cellW;
 
-      final int totalW = (cw * 1) + (gap * 2);
+      final sortedParticipants = List<RoomParticipant>.from(participants);
+      if (sortedParticipants.isEmpty) {
+        sortedParticipants.add(RoomParticipant(id: 'self', displayName: 'ME', isYou: true));
+      } else {
+        sortedParticipants.sort((a, b) => a.id.compareTo(b.id));
+      }
+      final int participantCount = sortedParticipants.length;
+
+      final int totalW = (cw * participantCount) + (gap * (participantCount + 1));
       final int totalH = (ch * count) + (gap * (count + 1)) + headerH + footerH;
 
       // Create primary background canvas filled with specified frame color
@@ -39,21 +50,30 @@ class FrameMerger {
 
       // Draw each photo tile onto the main canvas
       for (int i = 0; i < count; i++) {
-        if (i >= photoList.length) break;
-        
-        img.Image? originalTile = img.decodeImage(photoList[i]);
-        if (originalTile == null) continue;
+        for (int j = 0; j < participantCount; j++) {
+          final p = sortedParticipants[j];
+          Uint8List? photoBytes;
+          if (p.isYou) {
+            if (i < localPhotos.length) photoBytes = localPhotos[i];
+          } else {
+            photoBytes = remotePhotos[p.id]?[i];
+          }
+          if (photoBytes == null) continue;
 
-        // Crop & Resize photo tile to fit specified target cell ratio and size
-        final img.Image croppedTile = _cropAndResize(originalTile, cw, ch);
+          img.Image? originalTile = img.decodeImage(photoBytes);
+          if (originalTile == null) continue;
 
-        // Apply our custom high-performance pixel-level filters
-        _applyPixelFilter(croppedTile, photoFilter);
+          // Crop & Resize photo tile to fit specified target cell ratio and size
+          final img.Image croppedTile = _cropAndResize(originalTile, cw, ch);
 
-        // Draw tile onto the main canvas
-        final int targetX = gap;
-        final int targetY = headerH + gap + (i * (ch + gap));
-        img.compositeImage(canvas, croppedTile, dstX: targetX, dstY: targetY);
+          // Apply our custom high-performance pixel-level filters
+          _applyPixelFilter(croppedTile, photoFilter);
+
+          // Draw tile onto the main canvas
+          final int targetX = gap + j * (cw + gap);
+          final int targetY = headerH + gap + (i * (ch + gap));
+          img.compositeImage(canvas, croppedTile, dstX: targetX, dstY: targetY);
+        }
       }
 
       // Apply Analog Film Grain Effect
@@ -67,9 +87,6 @@ class FrameMerger {
       }
 
       // Render custom texts (Locations, names, dates) onto header & footer
-      // Note: In pure Dart 'image' package, we draw basic characters or use built-in fonts.
-      // For highly customizable font drawing, we output canvas and let Flutter render it,
-      // or we use img.drawString with standard retro fonts. Let's draw with standard string:
       final Color textHexColor = _parseHexColor(frameTextColor);
       final imgColor = img.ColorRgb8(textHexColor.red, textHexColor.green, textHexColor.blue);
       

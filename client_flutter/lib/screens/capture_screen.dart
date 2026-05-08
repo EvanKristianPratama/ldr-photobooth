@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -9,11 +10,13 @@ import 'editor_screen.dart';
 class CaptureScreen extends StatefulWidget {
   final RoomState roomState;
   final String locale;
+  final bool isSolo;
 
   const CaptureScreen({
     super.key,
     required this.roomState,
     required this.locale,
+    this.isSolo = true,
   });
 
   @override
@@ -35,6 +38,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   void initState() {
     super.initState();
+    // Clear any previous remote photos
+    widget.roomState.clearRemotePhotos();
+
     // Parse max shots dynamically from the room's chosen session layout
     final layout = widget.roomState.sessionLayout;
     if (layout == 'layout1') {
@@ -116,6 +122,20 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final Uint8List bytes = await rawFile.readAsBytes();
       _capturedPhotos.add(bytes);
 
+      // In Duo/Group (LDR) mode, broadcast captured photo to other peers
+      if (!widget.isSolo) {
+        try {
+          final base64Photo = base64Encode(bytes);
+          widget.roomState.emit('photo:send', {
+            'index': _currentShot - 1,
+            'mime': 'image/jpeg',
+            'base64': base64Photo,
+          });
+        } catch (e) {
+          debugPrint('[Socket] Error emitting captured photo: $e');
+        }
+      }
+
       // Hide flash screen after 150ms
       await Future.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
@@ -130,8 +150,33 @@ class _CaptureScreenState extends State<CaptureScreen> {
         });
         _startCountdownSequence();
       } else {
-        // Complete! Move to Frame Select Screen
         _timer?.cancel();
+
+        // In Duo/Group (LDR) mode, wait for other participant's photos to be synced
+        if (!widget.isSolo) {
+          setState(() {
+            _alertText = 'SYNCING PHOTOS WITH PEERS...';
+          });
+
+          final remotePeersCount = widget.roomState.participants.length - 1;
+          bool isSyncComplete() {
+            if (widget.roomState.remotePhotos.length < remotePeersCount) return false;
+            for (final peerPhotos in widget.roomState.remotePhotos.values) {
+              if (peerPhotos.length < _maxShots) return false;
+            }
+            return true;
+          }
+
+          int attempts = 0;
+          while (!isSyncComplete() && attempts < 150) { // Max 15 seconds wait
+            await Future.delayed(const Duration(milliseconds: 100));
+            attempts++;
+          }
+        }
+
+        if (!mounted) return;
+
+        // Complete! Move to Editor Screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

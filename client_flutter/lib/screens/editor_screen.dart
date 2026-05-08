@@ -51,7 +51,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
     final bytes = await FrameMerger.mergePhotos(
       count: widget.capturedPhotos.length,
-      photoList: widget.capturedPhotos,
+      participants: widget.roomState.participants,
+      localPhotos: widget.capturedPhotos,
+      remotePhotos: widget.roomState.remotePhotos,
       frameColor: _frameColor,
       frameTextColor: _frameTextColor,
       photoFilter: _photoFilter,

@@ -40,6 +40,7 @@ class _WaitingScreenState extends State<WaitingScreen> {
           builder: (context) => CaptureScreen(
             roomState: widget.roomState,
             locale: widget.locale,
+            isSolo: false,
           ),
         ),
       );

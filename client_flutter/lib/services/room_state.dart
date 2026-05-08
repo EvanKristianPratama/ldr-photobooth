@@ -49,6 +49,7 @@ class RoomState extends ChangeNotifier {
   bool _showToast = false;
   String _step = 'join';
   String _sessionLayout = 'layout4';
+  final Map<String, Map<int, Uint8List>> _remotePhotos = {};
 
   // Pending emits queue (before connection opens)
   final List<Map<String, dynamic>> _pendingEmits = [];
@@ -66,6 +67,12 @@ class RoomState extends ChangeNotifier {
   bool get showToast => _showToast;
   String get step => _step;
   String get sessionLayout => _sessionLayout;
+  Map<String, Map<int, Uint8List>> get remotePhotos => _remotePhotos;
+
+  void clearRemotePhotos() {
+    _remotePhotos.clear();
+    notifyListeners();
+  }
 
   RoomState({required this.serverUrl});
 
@@ -237,6 +244,21 @@ class RoomState extends ChangeNotifier {
         _status = 'Room Error';
         _step = 'join';
         notifyListeners();
+        break;
+      case 'photo:receive':
+        final data = payload as Map<String, dynamic>? ?? {};
+        final from = data['from'] as String? ?? '';
+        final index = data['index'] as int? ?? 0;
+        final base64Str = data['base64'] as String? ?? '';
+        if (from.isNotEmpty && base64Str.isNotEmpty) {
+          try {
+            final bytes = base64Decode(base64Str);
+            _remotePhotos.putIfAbsent(from, () => {})[index] = bytes;
+            notifyListeners();
+          } catch (e) {
+            debugPrint('[Socket] Error decoding photo from $from: $e');
+          }
+        }
         break;
     }
 
