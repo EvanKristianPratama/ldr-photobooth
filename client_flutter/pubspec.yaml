@@ -14,9 +14,8 @@ dependencies:
   camera: ^0.10.5
   flutter_webrtc: ^0.10.2
   
-  # Real-time WebSocket
+  # Real-time WebSocket (native Dart WebSocket, matches SocketAdapter.js)
   web_socket_channel: ^2.4.1
-  socket_io_client: ^2.0.3+1
   
   # Image Processing & Canvas (useFrame.js equivalent)
   image: ^4.1.3

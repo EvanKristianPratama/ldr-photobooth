@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
 
+/// RoomParticipant model
 class RoomParticipant {
   final String id;
   final String displayName;
@@ -18,26 +19,42 @@ class RoomParticipant {
   factory RoomParticipant.fromJson(Map<String, dynamic> json, String selfId) {
     return RoomParticipant(
       id: json['id'] ?? '',
-      displayName: json['displayName'] ?? '',
-      isYou: json['id'] == selfId,
+      displayName: json['displayName'] ?? json['name'] ?? 'Unknown',
+      isYou: (json['id'] ?? '') == selfId,
     );
   }
 }
 
+/// Native WebSocket adapter — mirrors client/lib/SocketAdapter.js exactly.
+/// Connects to: wss://<server>/ws?room=ROOMCODE
+/// Message format: { "type": "event:name", "payload": { ... } }
 class RoomState extends ChangeNotifier {
-  io.Socket? _socket;
   final String serverUrl;
 
-  List<RoomParticipant> _participants = [];
+  WebSocket? _ws;
+  bool _connected = false;
+  bool _isConnecting = false;
+  bool _isManualClose = false;
+  String? _pendingRoomCode;
   String _selfId = '';
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+
+  List<RoomParticipant> _participants = [];
   String _status = 'Disconnected';
   String _roomCode = '';
   String _displayName = '';
   bool _showToast = false;
   String _step = 'join';
 
+  // Pending emits queue (before connection opens)
+  final List<Map<String, dynamic>> _pendingEmits = [];
+
+  // Event listeners map
+  final Map<String, List<Function(dynamic)>> _listeners = {};
+
   // Getters
-  io.Socket? get socket => _socket;
+  bool get isConnected => _connected;
   List<RoomParticipant> get participants => _participants;
   String get selfId => _selfId;
   String get status => _status;
@@ -46,9 +63,11 @@ class RoomState extends ChangeNotifier {
   bool get showToast => _showToast;
   String get step => _step;
 
-  RoomState({required this.serverUrl}) {
-    _initSocket();
-  }
+  RoomState({required this.serverUrl});
+
+  // ─────────────────────────────────────────────────────────────────
+  // PUBLIC STATE SETTERS
+  // ─────────────────────────────────────────────────────────────────
 
   void setStep(String newStep) {
     _step = newStep;
@@ -65,53 +84,15 @@ class RoomState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _initSocket() {
-    _socket = io.io(serverUrl, io.OptionBuilder()
-      .setTransports(['websocket', 'polling'])
-      .enableReconnection()
-      .setReconnectionAttempts(5)
-      .setReconnectionDelay(1000)
-      .setTimeout(10000)
-      .build()
-    );
-
-    _socket?.onConnect((_) {
-      _status = 'Connected';
-      _selfId = _socket?.id ?? '';
-      notifyListeners();
-    });
-
-    _socket?.onConnectError((err) {
-      _status = 'Connection Error: $err';
-      notifyListeners();
-    });
-
-    _socket?.onDisconnect((reason) {
-      _status = 'Disconnected: $reason';
-      notifyListeners();
-    });
-
-    _socket?.on('room:error', (data) {
-      _status = 'Room Error: ${data['message'] ?? data}';
-      _step = 'join';
-      notifyListeners();
-    });
-
-    _socket?.on('room:joined', (data) {
-      final String? serverSelfId = data['selfId'];
-      if (serverSelfId != null) {
-        _selfId = serverSelfId;
-      }
-
-      final List<dynamic>? joined = data['participants'];
-      if (joined != null) {
-        _participants = joined
-            .map((p) => RoomParticipant.fromJson(p, _selfId))
-            .toList();
-      }
-      notifyListeners();
-    });
+  void generateRoomCode() {
+    const uuid = Uuid();
+    _roomCode = uuid.v4().split('-')[0].toUpperCase();
+    notifyListeners();
   }
+
+  // ─────────────────────────────────────────────────────────────────
+  // SOLO SESSION (no WebSocket needed)
+  // ─────────────────────────────────────────────────────────────────
 
   void startSoloSession() {
     _displayName = 'YOU';
@@ -123,90 +104,231 @@ class RoomState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void generateRoomCode() {
-    const uuid = Uuid();
-    _roomCode = uuid.v4().split('-')[0].toUpperCase();
-    notifyListeners();
+  // ─────────────────────────────────────────────────────────────────
+  // NATIVE WEBSOCKET CONNECTION
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Connects to wss://<server>/ws?room=<roomCode>
+  /// Called when the user emits 'room:join'
+  void _connect(String roomCode) {
+    if (_ws != null && _ws!.readyState == WebSocket.open) return;
+    if (_isConnecting) return;
+
+    _pendingRoomCode = roomCode;
+    _isConnecting = true;
+    _isManualClose = false;
+
+    final wsUrl = _buildWsUrl(roomCode);
+    debugPrint('[Socket] Connecting to: $wsUrl');
+
+    WebSocket.connect(wsUrl).then((ws) {
+      _ws = ws;
+      _isConnecting = false;
+      _reconnectAttempts = 0;
+      _connected = true;
+      _selfId = const Uuid().v4();
+      _status = 'Connected';
+      notifyListeners();
+
+      // Flush pending emits
+      for (final item in List.from(_pendingEmits)) {
+        _sendRaw(item['event'] as String, item['data']);
+      }
+      _pendingEmits.clear();
+
+      // Listen for incoming messages
+      ws.listen(
+        _handleRawMessage,
+        onDone: () {
+          debugPrint('[Socket] Disconnected');
+          _connected = false;
+          _status = 'Disconnected';
+          notifyListeners();
+          if (!_isManualClose) _scheduleReconnect();
+        },
+        onError: (e) {
+          debugPrint('[Socket] Error: $e');
+          _connected = false;
+          _status = 'Connection Error';
+          notifyListeners();
+          if (!_isManualClose) _scheduleReconnect();
+        },
+        cancelOnError: true,
+      );
+    }).catchError((e) {
+      debugPrint('[Socket] Connect failed: $e');
+      _isConnecting = false;
+      _status = 'Connection Failed';
+      notifyListeners();
+      _scheduleReconnect();
+    });
   }
 
-  bool joinRoom({int groupSize = 2}) {
-    if (_displayName.trim().isEmpty) return false;
-    if (_roomCode.trim().isEmpty) return false;
+  String _buildWsUrl(String roomCode) {
+    final uri = Uri.parse(serverUrl);
+    final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
+    return Uri(
+      scheme: scheme,
+      host: uri.host,
+      port: uri.hasPort ? uri.port : null,
+      path: '/ws',
+      queryParameters: {'room': roomCode},
+    ).toString();
+  }
 
-    _socket?.emit('room:join', {
+  void _handleRawMessage(dynamic raw) {
+    try {
+      final decoded = jsonDecode(raw as String) as Map<String, dynamic>;
+      final type = decoded['type'] as String? ?? '';
+      final payload = decoded['payload'];
+      _dispatchEvent(type, payload);
+    } catch (e) {
+      debugPrint('[Socket] Parse error: $e');
+    }
+  }
+
+  void _dispatchEvent(String event, dynamic payload) {
+    switch (event) {
+      case 'room:joined':
+        final data = payload as Map<String, dynamic>? ?? {};
+        final serverSelfId = data['selfId'] as String?;
+        if (serverSelfId != null) _selfId = serverSelfId;
+        final joined = data['participants'] as List<dynamic>?;
+        if (joined != null) {
+          _participants = joined
+              .map((p) => RoomParticipant.fromJson(
+                    Map<String, dynamic>.from(p as Map),
+                    _selfId,
+                  ))
+              .toList();
+        }
+        notifyListeners();
+        break;
+      case 'room:update':
+        final data = payload as Map<String, dynamic>? ?? {};
+        final updated = data['participants'] as List<dynamic>?;
+        if (updated != null) {
+          _participants = updated
+              .map((p) => RoomParticipant.fromJson(
+                    Map<String, dynamic>.from(p as Map),
+                    _selfId,
+                  ))
+              .toList();
+        }
+        notifyListeners();
+        break;
+      case 'session:start':
+        _step = 'countdown';
+        notifyListeners();
+        break;
+      case 'room:error':
+        _status = 'Room Error';
+        _step = 'join';
+        notifyListeners();
+        break;
+    }
+
+    // Also fire any registered external listeners (for WebRTC, etc.)
+    final handlers = _listeners[event] ?? [];
+    for (final h in handlers) {
+      try {
+        h(payload);
+      } catch (e) {
+        debugPrint('[Socket] Handler error for $event: $e');
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // EMIT SYSTEM
+  // ─────────────────────────────────────────────────────────────────
+
+  void emit(String event, dynamic data) {
+    // Special: room:join triggers connection
+    if (event == 'room:join') {
+      final code = (data as Map<String, dynamic>?)?['code'] as String? ?? _roomCode;
+      _connect(code);
+      _pendingEmits.add({'event': event, 'data': data});
+      return;
+    }
+
+    if (_ws == null || _ws!.readyState != WebSocket.open) {
+      _pendingEmits.add({'event': event, 'data': data});
+      return;
+    }
+
+    _sendRaw(event, data);
+  }
+
+  void _sendRaw(String event, dynamic data) {
+    if (_ws?.readyState == WebSocket.open) {
+      _ws!.add(jsonEncode({'type': event, 'payload': data}));
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // EVENT LISTENER REGISTRATION (for WebRTC service)
+  // ─────────────────────────────────────────────────────────────────
+
+  void on(String event, Function(dynamic) handler) {
+    _listeners.putIfAbsent(event, () => []).add(handler);
+  }
+
+  void off(String event, Function(dynamic) handler) {
+    _listeners[event]?.remove(handler);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // JOIN ROOM (called from JoinScreen button)
+  // ─────────────────────────────────────────────────────────────────
+
+  bool joinRoom() {
+    if (_displayName.trim().isEmpty || _roomCode.trim().isEmpty) return false;
+    emit('room:join', {
       'code': _roomCode,
       'displayName': _displayName,
     });
-    
-    _step = 'room';
-    notifyListeners();
     return true;
   }
 
-  void leaveRoom() {
-    _socket?.emit('room:leave');
-    _participants.clear();
-    _step = 'join';
-    notifyListeners();
-  }
-
-  void emitLayout(String layout) {
-    _socket?.emit('session:layout', layout);
-  }
-
-  void emitGroupSize(int size) {
-    _socket?.emit('room:group-size', size);
-  }
+  // ─────────────────────────────────────────────────────────────────
+  // SESSION CONTROL
+  // ─────────────────────────────────────────────────────────────────
 
   void emitSessionStart(String layout) {
-    _socket?.emit('session:start', {'layout': layout});
+    emit('session:start', {'layout': layout});
   }
 
-  Future<void> requestAndSendLocation(double lat, double lng, double accuracy) async {
-    if (_socket == null || _selfId.isEmpty) return;
+  // ─────────────────────────────────────────────────────────────────
+  // RECONNECT LOGIC
+  // ─────────────────────────────────────────────────────────────────
 
-    String? city;
-    String? country;
-
-    // 1. Try BigDataCloud Reverse Geocoding API
-    try {
-      final url = Uri.parse(
-        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$lat&longitude=$lng&localityLanguage=en'
-      );
-      final res = await http.get(url);
-      if (res.statusCode == 200) {
-        final data = json.decode(res.body);
-        city = data['city'] ?? data['locality'] ?? data['principalSubdivision'];
-        country = data['countryName'];
-      }
-    } catch (_) {}
-
-    // 2. Fallback to GeocodeMaps API
-    if (city == null && country == null) {
-      try {
-        final url = Uri.parse('https://geocode.maps.co/reverse?lat=$lat&lon=$lng');
-        final res = await http.get(url);
-        if (res.statusCode == 200) {
-          final data = json.decode(res.body);
-          final addr = data['address'] ?? {};
-          city = addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? addr['state'];
-          country = addr['country'];
-        }
-      } catch (_) {}
+  void _scheduleReconnect() {
+    if (_pendingRoomCode == null) return;
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      debugPrint('[Socket] Max reconnect attempts reached');
+      return;
     }
 
-    _socket?.emit('location:update', {
-      'lat': lat,
-      'lng': lng,
-      'accuracy': accuracy,
-      'city': city,
-      'country': country,
+    final delay = Duration(
+      milliseconds: min(1000 * pow(2, _reconnectAttempts).toInt(), 30000),
+    );
+    debugPrint('[Socket] Reconnecting in ${delay.inMilliseconds}ms (attempt ${_reconnectAttempts + 1})');
+
+    Future.delayed(delay, () {
+      _reconnectAttempts++;
+      _connect(_pendingRoomCode!);
     });
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // CLEANUP
+  // ─────────────────────────────────────────────────────────────────
+
   @override
   void dispose() {
-    _socket?.dispose();
+    _isManualClose = true;
+    _ws?.close();
     super.dispose();
   }
 }
