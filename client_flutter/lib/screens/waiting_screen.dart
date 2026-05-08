@@ -40,6 +40,9 @@ class _WaitingScreenState extends State<WaitingScreen> {
       if (_hasNavigatedToCapture) return;
       _hasNavigatedToCapture = true;
 
+      // Unregister listener IMMEDIATELY to prevent any recursive notifyListeners from triggering another push!
+      widget.roomState.removeListener(_onRoomStateChanged);
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.pushReplacement(
