@@ -197,17 +197,21 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
         if (!mounted) return;
 
-        // Complete! Move to Editor Screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditorScreen(
-              roomState: widget.roomState,
-              capturedPhotos: _capturedPhotos,
-              locale: widget.locale,
-            ),
-          ),
-        );
+        // Complete! Move to Editor Screen safely after frame layout completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditorScreen(
+                  roomState: widget.roomState,
+                  capturedPhotos: _capturedPhotos,
+                  locale: widget.locale,
+                ),
+              ),
+            );
+          }
+        });
       }
     } catch (e) {
       debugPrint('Photo Capture Error: $e');

@@ -35,21 +35,29 @@ class _WaitingScreenState extends State<WaitingScreen> {
   void _onRoomStateChanged() {
     if (!mounted) return;
     if (widget.roomState.step == 'countdown') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CaptureScreen(
-            roomState: widget.roomState,
-            locale: widget.locale,
-            isSolo: false,
-          ),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CaptureScreen(
+                roomState: widget.roomState,
+                locale: widget.locale,
+                isSolo: false,
+              ),
+            ),
+          );
+        }
+      });
       return;
     }
     
-    // Trigger real-time visual update of the participants list on any state change!
-    setState(() {});
+    // Safely trigger real-time visual update after current frame layout finishes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
