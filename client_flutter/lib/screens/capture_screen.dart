@@ -95,6 +95,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         return;
       }
 
+      bool shouldCapture = false;
       setState(() {
         if (_countdown > 1) {
           _countdown--;
@@ -102,11 +103,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
             _alertText = AppTranslations.translate('capture.smile', widget.locale);
           }
         } else {
-          // Take picture
           timer.cancel();
-          _triggerShutterCapture();
+          shouldCapture = true;
         }
       });
+
+      if (shouldCapture) {
+        _triggerShutterCapture();
+      }
     });
   }
 
@@ -140,7 +144,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       final XFile rawFile = await _cameraController!.takePicture();
       final Uint8List bytes = await rawFile.readAsBytes();
-      _capturedPhotos.add(bytes);
+      
+      if (mounted) {
+        setState(() {
+          _capturedPhotos.add(bytes);
+        });
+      }
 
       // In Duo/Group (LDR) mode, broadcast captured photo to other peers with lightning compression
       if (!widget.isSolo) {
@@ -231,7 +240,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     const Color ink = Color(0xFF1A1A2E);
     const Color yellow = Color(0xFFFFD93D);
-    const Color teal = Color(0xFF06D6A0);
 
     return Scaffold(
       backgroundColor: ink,
@@ -310,7 +318,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             ),
           ),
 
-          // 5. Immersive Phone Camera Bottom Controls & Status HUD
+          // 5. Immersive Phone Camera Bottom Status HUD & Taken Photos Filmstrip
           Positioned(
             bottom: 40,
             left: 20,
@@ -336,58 +344,51 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 
-                // Camera Shutter Button & Progress Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Dynamic bullet progress indicators on the left side
-                    SizedBox(
-                      width: 80,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: List.generate(_maxShots, (index) {
-                          final isDone = index < _currentShot - 1;
-                          final isCurrent = index == _currentShot - 1;
-                          return Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: isDone
-                                  ? teal
-                                  : isCurrent
-                                      ? yellow
-                                      : Colors.white.withOpacity(0.4),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.black.withOpacity(0.3), width: 1),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    
-                    // Native Circular Shutter Button in the center
-                    Container(
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                // Horizontal Row of Captured Photo Previews at the bottom (Filmstrip Style!)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_maxShots, (index) {
+                      final hasPhoto = index < _capturedPhotos.length;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        width: 70,
+                        height: 105, // 2:3 aspect ratio matching the photobooth cells!
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: index == _currentShot - 1
+                                ? yellow
+                                : Colors.white.withOpacity(0.2),
+                            width: index == _currentShot - 1 ? 3 : 1.5,
+                          ),
                         ),
-                      ),
-                    ),
-                    
-                    // Balanced placeholder on the right side
-                    const SizedBox(width: 80),
-                  ],
+                        child: hasPhoto
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.memory(
+                                  _capturedPhotos[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    fontFamily: 'Gaegu',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white.withOpacity(0.4),
+                                  ),
+                                ),
+                              ),
+                      );
+                    }),
+                  ),
                 ),
               ],
             ),
