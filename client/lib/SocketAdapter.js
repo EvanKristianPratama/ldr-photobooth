@@ -67,13 +67,17 @@ class SocketAdapter {
      * Connect to server (called automatically on first emit if not connected)
      * For Cloudflare Workers, we connect when joining a room with the room code.
      */
-    _connect(roomCode) {
+    _connect(roomCode, isAutoReconnect = false) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             return;
         }
 
         if (this.isConnecting) {
             return;
+        }
+
+        if (!isAutoReconnect) {
+            this.reconnectAttempts = 0;
         }
 
         this.roomCode = roomCode;
@@ -119,6 +123,12 @@ class SocketAdapter {
             this._id = this._generateId();
 
             this._emit('connect');
+
+            // If we have lastJoinData, automatically rejoin the room on the server!
+            if (this.lastJoinData) {
+                console.log('[Socket] Auto-rejoining room after reconnect:', this.lastJoinData);
+                this._send('room:join', this.lastJoinData);
+            }
 
             // Process pending emits
             while (this._pendingEmits.length > 0) {
@@ -208,10 +218,15 @@ class SocketAdapter {
     emit(event, data) {
         // Special case: room:join triggers connection with room code
         if (event === 'room:join' && data?.code) {
+            this.lastJoinData = data; // Keep track of the last join payload for auto-rejoin
             this._connect(data.code);
             // Queue the join event to be sent after connection
             this._pendingEmits.push({ event, data });
             return this;
+        }
+
+        if (event === 'room:leave') {
+            this.lastJoinData = null;
         }
 
         // If not connected, queue the emit
@@ -263,6 +278,7 @@ class SocketAdapter {
     disconnect() {
         this.isManualClose = true;
         this._connected = false;
+        this.lastJoinData = null;
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -290,7 +306,7 @@ class SocketAdapter {
 
         setTimeout(() => {
             this.reconnectAttempts++;
-            this._connect(this.roomCode);
+            this._connect(this.roomCode, true);
         }, delay);
     }
 
