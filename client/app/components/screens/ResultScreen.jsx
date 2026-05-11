@@ -19,7 +19,9 @@ export default function ResultScreen({
   remoteBlobsByPeer,
   locationsById,
   mergePhotos,
-  participants
+  participants,
+  frameLayout,
+  orientation
 }) {
   const { t } = useLanguage();
   const [showPostModal, setShowPostModal] = useState(false);
@@ -28,6 +30,7 @@ export default function ResultScreen({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [gifProgress, setGifProgress] = useState(0);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   const downloadAnimatedGif = async () => {
     if (isGeneratingGif) return;
@@ -203,7 +206,15 @@ export default function ResultScreen({
         <div className="result-main-content">
           <div 
             className="fs__preview-box" 
-            style={{ maxWidth: sessionMode === 'solo' ? '280px' : '600px' }}
+            style={{ 
+              maxWidth: sessionMode === 'solo' ? '280px' : '500px',
+              height: '55vh', // Force exact max bounding reference
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              background: 'transparent'
+            }}
           >
             {isMerging ? (
               <div className="fs__loading">
@@ -211,7 +222,7 @@ export default function ResultScreen({
                 <p>{t('result.developing')}</p>
               </div>
             ) : (
-              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <LivePhotoViewer
                   mergedImage={mergedImage}
                   isMerging={isMerging}
@@ -234,30 +245,21 @@ export default function ResultScreen({
             </button>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <button className="btn-dl" onClick={onDownload} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
-                {t('result.download')}
+              <button 
+                className="btn-dl" 
+                onClick={() => setShowDownloadModal(true)} 
+                style={{ 
+                  width: '100%', 
+                  fontSize: '18px', 
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px'
+                }}
+              >
+                <span>📥</span> {t('result.download')}
               </button>
-
-              {localLiveFrames?.length > 0 && (
-                <button 
-                  className="btn-share" 
-                  onClick={downloadAnimatedGif} 
-                  disabled={isGeneratingGif}
-                  style={{ 
-                    width: '100%', 
-                    fontSize: '16px', 
-                    padding: '14px', 
-                    background: 'var(--yellow)', 
-                    color: 'var(--ink)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '8px' 
-                  }}
-                >
-                  {isGeneratingGif ? `Generating GIF (${gifProgress}%)...` : '📥 Download Animated GIF'}
-                </button>
-              )}
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.share')}
               </button>
@@ -349,6 +351,87 @@ export default function ResultScreen({
             >
               {isPublishing ? t('community.publishing') : t('community.publish')}
             </button>
+          </div>
+        </div>
+      )}
+      {/* ── DOWNLOAD OPTIONS MODAL ── */}
+      {showDownloadModal && (
+        <div className="comm-modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="comm-modal" style={{ maxWidth: '420px', border: '3px solid var(--ink)', boxShadow: '8px 8px 0 var(--ink)' }}>
+            <button className="comm-modal-close" onClick={() => setShowDownloadModal(false)}>×</button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h2 className="comm-modal-title" style={{ marginBottom: '4px' }}>Select <span className="outline">Format</span></h2>
+              <p style={{ fontFamily: "'Gaegu', cursive", opacity: 0.7, fontSize: '16px' }}>How would you like to save it? ✨</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Option 1: Classic Strip */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--ink)', width: '100%', padding: '14px' }}
+                onClick={() => { onDownload('ORIGINAL'); setShowDownloadModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px' }}>✂️</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download Standard Strip</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Raw length vertical strip</div>
+                </div>
+              </button>
+
+              {/* Option 2: 4R Printable */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--yellow)', background: 'var(--yellow-lt, #fffbea)', width: '100%', padding: '14px', borderColor: 'var(--yellow)' }}
+                onClick={() => { onDownload('4R'); setShowDownloadModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--yellow)' }}>🖨️</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download as 4R</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Printable size (6" x 4" format)</div>
+                </div>
+              </button>
+
+              {/* Option 3: Duplicated 4R Strip (Classic Double) - ONLY show if layout is Strip! */}
+              {frameLayout === 'strip' && (
+                <button 
+                  className="mode-option-card"
+                  style={{ boxShadow: '4px 4px 0 var(--pink)', background: 'var(--pink-lt, #fff0f5)', width: '100%', padding: '14px', borderColor: 'var(--pink)' }}
+                  onClick={() => { onDownload('4R_DUPLICATED_STRIP'); setShowDownloadModal(false); }}
+                >
+                  <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--pink)', color: 'white' }}>👥</div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download 2R Duo Strip</div>
+                    <div style={{ fontSize: '12px', opacity: 0.6 }}>2 Lembar 2R digabung dalam 1 Kertas 4R (Classic)</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Option 4: Animated GIF */}
+              {localLiveFrames?.length > 0 && (
+                <button 
+                  className="mode-option-card"
+                  style={{ 
+                    boxShadow: '4px 4px 0 var(--teal)', 
+                    background: 'var(--teal-lt, #e6fffa)', 
+                    width: '100%', 
+                    padding: '14px',
+                    borderColor: 'var(--teal)',
+                    opacity: isGeneratingGif ? 0.7 : 1
+                  }}
+                  disabled={isGeneratingGif}
+                  onClick={() => { setShowDownloadModal(false); downloadAnimatedGif(); }}
+                >
+                  <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--teal)', color: 'white' }}>🎞️</div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>
+                      {isGeneratingGif ? `Generating...` : `Download Animated GIF`}
+                    </div>
+                    <div style={{ fontSize: '12px', opacity: 0.6 }}>Interactive motion photos</div>
+                  </div>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

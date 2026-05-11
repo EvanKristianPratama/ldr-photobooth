@@ -94,8 +94,19 @@ const drawDuplicatedStripTo4R = (img, fillColor = '#ffffff') => {
  */
 const drawToFixedPaper = (img, paperConfig, fillColor = '#ffffff') => {
   const canvas = document.createElement('canvas');
-  const targetW = paperConfig.width;
-  const targetH = paperConfig.height;
+  let targetW = paperConfig.width;
+  let targetH = paperConfig.height;
+  
+  // Dinamis: Jika gambar sumber adalah Landscape, tukar dimensi kertas ke Landscape agar sinkron!
+  const isImgLandscape = img.width > img.height;
+  const isPaperLandscape = targetW > targetH;
+  
+  if (isImgLandscape !== isPaperLandscape) {
+    // Flip dimensi
+    const temp = targetW;
+    targetW = targetH;
+    targetH = temp;
+  }
   
   canvas.width = targetW;
   canvas.height = targetH;

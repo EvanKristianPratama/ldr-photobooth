@@ -188,8 +188,8 @@ export default function useFrame({ participants, locationsById = {} }) {
       const activeTextColor = (frameTextColor || '#FFFFFF').trim();
 
       const isPortrait = orientation === 'portrait';
-      const cellW = isPortrait ? FRAME_CANVAS.cellW : FRAME_CANVAS.cellH;
-      const cellH = isPortrait ? FRAME_CANVAS.cellH : FRAME_CANVAS.cellW;
+      const baseCellW = isPortrait ? FRAME_CANVAS.cellW : FRAME_CANVAS.cellH;
+      const baseCellH = isPortrait ? FRAME_CANVAS.cellH : FRAME_CANVAS.cellW;
       const gap = FRAME_CANVAS.gap;
       const headerH = FRAME_CANVAS.headerH;
       const footerH = FRAME_CANVAS.footerH;
@@ -204,23 +204,51 @@ export default function useFrame({ participants, locationsById = {} }) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      let totalW, totalH;
+      // 1. TENTUKAN TOTAL WIDTH DULU BERDASARKAN JUMLAH KOLOM
+      let totalW, totalRows;
+      const cellW = baseCellW; // Lebar fix
+
       if (isStack) {
         totalW = cellW + (2 * gap);
-        const totalRows = count * 3;
-        totalH = (cellH * totalRows) + (gap * (totalRows + 1)) + headerH + footerH;
+        totalRows = count * 3;
       } else if (isQuad2x2) {
         totalW = (cellW * 2) + (gap * 3);
-        const totalRows = count * 2;
-        totalH = (cellH * totalRows) + (gap * (totalRows + 1)) + headerH + footerH;
+        totalRows = count * 2;
       } else if (isGrid) {
         const cols = participantCount * 2;
-        const rows = Math.ceil(count / 2);
         totalW = (cellW * cols) + (gap * (cols + 1));
-        totalH = (cellH * rows) + (gap * (rows + 1)) + headerH + footerH;
+        totalRows = Math.ceil(count / 2);
       } else {
         totalW = (cellW * participantCount) + (gap * (participantCount + 1));
-        totalH = (cellH * count) + (gap * (count + 1)) + headerH + footerH;
+        totalRows = count;
+      }
+
+      // 2. DYNAMIC RATIO FITTING (LUMABOOTH / DSLRBOOTH STYLE)
+      // Hitung target aspect ratio berdasarkan layout terpilih agar FIT di kertas
+      let targetRatio; 
+      if (isGrid) {
+        // Target 4R format
+        targetRatio = isPortrait ? (4 / 6) : (6 / 4); 
+      } else {
+        // Target photobooth strip format
+        targetRatio = isPortrait ? (1 / 3) : (3 / 1);
+      }
+
+      // Kunci totalH berdasarkan rasio ideal tersebut
+      let totalH = Math.floor(totalW / targetRatio);
+
+      // 3. HITUNG TINGGI FOTO DINAMIS (CELL HEIGHT)
+      const staticHeightUsed = headerH + footerH + (gap * (totalRows + 1));
+      let cellH = Math.floor((totalH - staticHeightUsed) / totalRows);
+
+      // Safety fallback jika foto jadi sangat gepeng (jika ada bug / settingan aneh)
+      if (cellH < (cellW * 0.4)) {
+        cellH = Math.floor(cellW * 0.4);
+        totalH = (cellH * totalRows) + staticHeightUsed; // Recalc height jika overflow
+      } else if (cellH > (cellW * 1.8)) {
+        // Safety fallback jika foto terlalu tinggi jenjang
+        cellH = Math.floor(cellW * 1.6);
+        totalH = (cellH * totalRows) + staticHeightUsed; 
       }
 
       canvas.width = totalW;

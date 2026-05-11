@@ -519,12 +519,13 @@ export default function Page() {
     sessionStorage.removeItem('ldr_session_mode');
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (format = 'AUTO') => {
     if (!frame.mergedImage) return;
     
     try {
       // Memproses gambar agar sesuai ukuran kertas final (misal diduplikat ke 4R)
       const processedDataUrl = await convertToPaperSize(frame.mergedImage, {
+        targetPaper: format,
         sessionMode: sessionMode,
         layout: frame.frameLayout,
         count: frame.lastMergeCount,
@@ -806,6 +807,8 @@ export default function Page() {
             locationsById={locationsById}
             mergePhotos={frame.mergePhotos}
             participants={capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf}
+            frameLayout={frame.frameLayout}
+            orientation={frame.orientation}
           />
         )}
       </main>
