@@ -23,6 +23,11 @@ export default function useRoom({
   const onLocationUpdateRef = useRef(onLocationUpdate);
   const onPartnerPauseRef = useRef(onPartnerPause);
   const onPartnerResumeRef = useRef(onPartnerResume);
+  
+  // Persistence refs for resilient auto-reconnection
+  const displayNameRef = useRef(displayName);
+  const roomCodeRef = useRef(roomCode);
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
     stepRef.current = step;
@@ -39,6 +44,14 @@ export default function useRoom({
   useEffect(() => {
     onPartnerResumeRef.current = onPartnerResume;
   }, [onPartnerResume]);
+
+  useEffect(() => {
+    displayNameRef.current = displayName;
+  }, [displayName]);
+
+  useEffect(() => {
+    roomCodeRef.current = roomCode;
+  }, [roomCode]);
 
   useEffect(() => {
     const socket = io(serverUrl, {
@@ -59,6 +72,14 @@ export default function useRoom({
     socket.on('connect', () => {
       setStatus('Connected');
       setSelfId(socket.id || '');
+      
+      // AUTO-REJOIN MECHANISM:
+      // If a network blip causes a silent reconnect while the user is active in a room,
+      // we automatically re-emit the join packet without the user noticing.
+      if (hasJoinedRef.current && roomCodeRef.current && displayNameRef.current) {
+        console.log('[useRoom] Reconnected! Resending room:join state robustly.');
+        socket.emit('room:join', { code: roomCodeRef.current, displayName: displayNameRef.current });
+      }
     });
 
     socket.on('connect_error', (error) => {
@@ -128,12 +149,14 @@ export default function useRoom({
     const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}&size=${groupSize}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
 
+    hasJoinedRef.current = true; // Arm the reconnection safeguard
     socketRef.current.emit('room:join', { code: roomCode, displayName });
     setStep('room');
     return true;
   };
 
   const leaveRoom = () => {
+    hasJoinedRef.current = false; // Disarm reconnection safe-guard
     if (socketRef.current) {
       socketRef.current.emit('room:leave');
     }

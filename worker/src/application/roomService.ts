@@ -25,7 +25,11 @@ export class RoomService {
     const entitlement = this.getEntitlement();
 
     if (!this.engine.hasParticipant(sessionId)) {
-      const decision = canJoinRoom(this.engine.getParticipantCount(), entitlement);
+      const decision = canJoinRoom(
+        this.engine.getParticipantCount(),
+        this.engine.getGroupSize(),
+        entitlement
+      );
       if (!decision.allowed) {
         return { ok: false, reason: decision.reason, entitlement };
       }

@@ -33,6 +33,10 @@ export class RoomEngine {
     }
   }
 
+  getGroupSize(): number {
+    return this.groupSize;
+  }
+
   leave(id: string): void {
     this.participants.delete(id);
     if (this.participants.size < 2) {
