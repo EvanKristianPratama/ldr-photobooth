@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import LivePhotoViewer from '../ui/LivePhotoViewer';
+import { 
+  FRAME_LAYOUT_OPTIONS, 
+  FRAME_FONTS, 
+  FRAME_COLORS, 
+  TEXT_COLORS, 
+  PHOTO_FILTERS, 
+  FRAME_GLARES,
+  STICKER_PACK 
+} from '../../configs/frameAssets';
 
 /**
  * LocationInput – smart text input with auto-detected location suggestions.
@@ -86,6 +96,12 @@ export default function FrameSelectScreen({
   isMerging,
   onContinue,
   onReapply,
+  localLiveFrames,
+  remoteLiveFrames,
+  localBlobs,
+  remoteBlobsByPeer,
+  locationsById,
+  mergePhotos,
   framePresets,
   framePresetId,
   selectFramePreset,
@@ -134,50 +150,25 @@ export default function FrameSelectScreen({
 }) {
   const { t } = useLanguage();
   const [showPresetsModal, setShowPresetsModal] = useState(false);
-
-  const layoutOptions = [
-    { id: 'strip', label: 'Strip' },
-    { id: 'grid', label: 'Wide' }
-  ];
-
-  const fonts = [
-    { id: "'Quicksand', sans-serif", label: 'Modern', preview: 'Aa' },
-    { id: "'Gaegu', cursive", label: 'Doodle', preview: 'Aa' },
-    { id: "'Pastel Crayon', cursive", label: 'Crayon', preview: 'Aa' },
-    { id: "'Calculator', monospace", label: 'Calculator', preview: 'Aa' },
-    { id: "'VT323', monospace", label: 'LCD Retro', preview: 'Aa' },
-    { id: "'Silkscreen', monospace", label: 'Pixel', preview: 'Aa' },
-    { id: "'Special Elite', cursive", label: 'Typewriter', preview: 'Aa' },
-    { id: "'Pacifico', cursive", label: 'Retro Neon', preview: 'Aa' },
-    { id: "'Caveat', cursive", label: 'Script', preview: 'Aa' },
-    { id: "'Playfair Display', serif", label: 'Elegant', preview: 'Aa' }
-  ];
-
-  const colors = [
-    { bg: '#ffffff', text: '#1a1a2e', date: '#aaa' },
-    { bg: '#1a1a2e', text: '#fffdf5', date: 'rgba(255,255,255,0.3)' },
-    { bg: '#ffd93d', text: '#1a1a2e', date: '#666' },
-    { bg: '#ff6b9d', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
-    { bg: '#06d6a0', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
-    { bg: '#c77dff', text: '#1a1a2e', date: 'rgba(0,0,0,0.4)' },
-  ];
+  const [livePhotoPlayback, setLivePhotoPlayback] = useState(true);
 
   return (
     <section className="page active" id="page-frame">
       <div className="frame-editor">
-        <div className="preview-container">
-          {isMerging ? (
-            <div className="rendering-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-              <div className="room-dot" />
-              <span style={{ fontFamily: 'Gaegu', fontSize: '20px' }}>Rendering...</span>
-            </div>
-          ) : (
-            <img 
-              src={mergedImage} 
-              alt="Strip Preview" 
-              className="preview-img"
-            />
-          )}
+        <div className="preview-container" style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <LivePhotoViewer
+            mergedImage={mergedImage}
+            isMerging={isMerging}
+            count={localBlobs?.length || 1}
+            participants={participants}
+            localBlobs={localBlobs}
+            remoteBlobsByPeer={remoteBlobsByPeer}
+            locationsById={locationsById}
+            localLiveFrames={localLiveFrames}
+            remoteLiveFrames={remoteLiveFrames}
+            mergePhotos={mergePhotos}
+            livePhotoPlayback={livePhotoPlayback}
+          />
         </div>
       </div>
 
@@ -188,7 +179,7 @@ export default function FrameSelectScreen({
           <div className="ctrl-section">
             <div className="ctrl-label">{t('frame.printStyle')}</div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              {layoutOptions.map(l => (
+              {FRAME_LAYOUT_OPTIONS.map(l => (
                 <button 
                   key={l.id}
                   className={`btn-secondary ${frameLayout === l.id ? 'active' : ''}`}
@@ -201,6 +192,40 @@ export default function FrameSelectScreen({
             </div>
           </div>
         )}
+
+        <div className="ctrl-section">
+          <div className="ctrl-label">LIVE PHOTO PREVIEW</div>
+          <button 
+            className={`btn-secondary ${livePhotoPlayback ? 'active' : ''}`}
+            style={{ 
+              width: '100%', 
+              background: livePhotoPlayback ? 'var(--yellow)' : 'white', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '8px',
+              fontFamily: "'Gaegu', cursive",
+              fontSize: '16px',
+              fontWeight: 'bold',
+              minHeight: '40px',
+              borderRadius: '12px',
+              border: '2px solid var(--ink)',
+              cursor: 'pointer'
+            }}
+            onClick={() => setLivePhotoPlayback(!livePhotoPlayback)}
+          >
+            <div
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: livePhotoPlayback ? '#ff6b9d' : '#888',
+                boxShadow: livePhotoPlayback ? '0 0 8px #ff6b9d' : 'none'
+              }}
+            />
+            {livePhotoPlayback ? 'LIVE ANIMATION: PLAY ON' : 'LIVE ANIMATION: PLAY OFF'}
+          </button>
+        </div>
 
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.orientations')}</div>
@@ -225,7 +250,7 @@ export default function FrameSelectScreen({
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.typography')}</div>
           <div className="scroll-row" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
-            {fonts.map(f => (
+            {FRAME_FONTS.map(f => (
               <button 
                 key={f.id}
                 className={`btn-secondary ${frameFont === f.id ? 'active' : ''}`}
@@ -250,14 +275,7 @@ export default function FrameSelectScreen({
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.photoFilter')}</div>
           <div className="scroll-row" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', flexWrap: 'nowrap' }}>
-            {[
-              { id: 'none', label: 'Normal', color: '#eee' },
-              { id: 'bw', label: 'B&W', color: '#666' },
-              { id: 'sepia', label: 'Sepia', color: '#a68069' },
-              { id: 'vintage', label: 'Retro', color: '#8e735b' },
-              { id: 'warm', label: 'Warm', color: '#ffb38a' },
-              { id: 'cold', label: 'Cold', color: '#8ac6ff' },
-            ].map(f => (
+            {PHOTO_FILTERS.map(f => (
               <button 
                 key={f.id}
                 className={`btn-secondary ${photoFilter === f.id ? 'active' : ''}`}
@@ -318,18 +336,7 @@ export default function FrameSelectScreen({
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.glare')}</div>
           <div className="scroll-row" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'nowrap' }}>
-            {[
-              { id: 'none', label: 'None' },
-              { id: 'warm', label: 'Warm' },
-              { id: 'retro', label: 'Retro' },
-              { id: 'aurora', label: 'Aurora' },
-              { id: 'fire', label: 'Fire' },
-              { id: 'nebula', label: 'Nebula' },
-              { id: 'sunset', label: 'Sunset' },
-              { id: 'vintage', label: 'Vintage Wash' },
-              { id: 'rainbow', label: 'Rainbow' },
-              { id: 'cyberpunk', label: 'Cyberpunk' }
-            ].map(g => (
+            {FRAME_GLARES.map(g => (
               <button
                 key={g.id}
                 className={`btn-secondary ${frameGlare === g.id ? 'active' : ''}`}
@@ -361,7 +368,7 @@ export default function FrameSelectScreen({
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.color')}</div>
           <div className="swatch-row">
-            {colors.map((c, i) => (
+            {FRAME_COLORS.map((c, i) => (
               <div 
                 key={i}
                 className={`swatch ${frameColor === c.bg ? 'sel' : ''}`} 
@@ -388,14 +395,7 @@ export default function FrameSelectScreen({
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.fontColor')}</div>
           <div className="swatch-row">
-            {[
-              '#ffffff',
-              '#1a1a2e',
-              '#ffd93d',
-              '#ff6b9d',
-              '#06d6a0',
-              '#c77dff'
-            ].map((colorHex) => (
+            {TEXT_COLORS.map((colorHex) => (
               <div 
                 key={colorHex}
                 className={`swatch ${frameTextColor === colorHex ? 'sel' : ''}`} 
@@ -504,7 +504,7 @@ export default function FrameSelectScreen({
               🎲 Random
             </button>
             <div style={{ width: '2px', height: '24px', background: '#eee', flexShrink: 0 }} />
-            {['✨', '💖', '⭐', '🎈', '🍀', '🎀', '🍭', '🌸', '🌈', '🍦', '🍩', '🦋', '🐱', '🐶'].map(s => (
+            {STICKER_PACK.map(s => (
               <button 
                 key={s} 
                 className="sticker" 

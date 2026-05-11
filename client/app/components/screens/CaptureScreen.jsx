@@ -8,7 +8,9 @@ export default function CaptureScreen({
   currentShotIndex,
   progress,
   isProcessing,
-  localBlobs = [] // Mengambil data foto yang sudah diambil
+  localBlobs = [], // Mengambil data foto yang sudah diambil
+  livePhotoEnabled,
+  setLivePhotoEnabled
 }) {
   const { t } = useLanguage();
 
@@ -51,7 +53,44 @@ export default function CaptureScreen({
 
 
         {/* ── Camera frame full card ── */}
-        <div className="camera-card">
+        <div className="camera-card" style={{ position: 'relative' }}>
+          
+          {/* Live Photo Toggle Button */}
+          <button
+            onClick={() => setLivePhotoEnabled(prev => !prev)}
+            style={{
+              position: 'absolute',
+              top: '15px',
+              right: '15px',
+              zIndex: 20,
+              background: livePhotoEnabled ? 'rgba(255, 217, 61, 0.95)' : 'rgba(0, 0, 0, 0.65)',
+              color: livePhotoEnabled ? '#1a1a2e' : '#fff',
+              border: livePhotoEnabled ? '2px solid #1a1a2e' : '2px solid rgba(255,255,255,0.4)',
+              borderRadius: '25px',
+              padding: '6px 14px',
+              fontFamily: "'Gaegu', cursive",
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            <div
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: livePhotoEnabled ? '#ff6b9d' : '#888',
+                boxShadow: livePhotoEnabled ? '0 0 8px #ff6b9d' : 'none'
+              }}
+            />
+            {livePhotoEnabled ? 'LIVE PHOTO: ON' : 'LIVE PHOTO: OFF'}
+          </button>
+
           <video
             ref={videoRef}
             autoPlay

@@ -8,6 +8,7 @@ import {
 
 export default function useCapture({
   sendPhotoToPeer,
+  sendLiveFramesToPeer,
   onProcessingComplete,
   onProgress,
   onFlash,
@@ -19,10 +20,15 @@ export default function useCapture({
   const streamRef = useRef(null);
   const localBlobsRef = useRef([]);
   const remoteBlobsRef = useRef(new Map()); // Map<peerId, blob[]>
+  const liveFramesRef = useRef(new Map()); // Map<shotIndex, blob[]>
+  const remoteLiveFramesRef = useRef(new Map()); // Map<peerId, Map<shotIndex, blob[]>>
   const [countdown, setCountdown] = useState(null);
   const [currentShotIndex, setCurrentShotIndex] = useState(0);
   const [totalShots, setTotalShots] = useState(0);
   const [localBlobs, setLocalBlobs] = useState([]);
+  const [liveFrames, setLiveFrames] = useState([]); // Array of entries of shotIndex -> blob[]
+  const [remoteLiveFrames, setRemoteLiveFrames] = useState(new Map());
+  const [livePhotoEnabled, setLivePhotoEnabled] = useState(true);
 
   const attachStream = useCallback(() => {
     if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
@@ -104,6 +110,40 @@ export default function useCapture({
     }, 'image/jpeg', 0.9);
   });
 
+  const captureLiveBurst = async (video, shotIndex) => {
+    const burstBlobs = [];
+    const framesCount = 10; // 10 frames
+    const intervalMs = 150; // Every 150ms over 1.5 seconds
+
+    const burstCanvas = document.createElement('canvas');
+    // Set a reasonable small size for live photo preview frames to ensure fast processing and networking
+    burstCanvas.width = 480;
+    burstCanvas.height = 270;
+    const bCtx = burstCanvas.getContext('2d');
+
+    for (let f = 0; f < framesCount; f++) {
+      if (!video || video.paused || video.ended) break;
+      bCtx.save();
+      bCtx.scale(-1, 1);
+      bCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, -burstCanvas.width, 0, burstCanvas.width, burstCanvas.height);
+      bCtx.restore();
+
+      const blob = await new Promise(resolve => burstCanvas.toBlob(resolve, 'image/jpeg', 0.6));
+      if (blob) {
+        burstBlobs.push(blob);
+      }
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+
+    liveFramesRef.current.set(shotIndex, burstBlobs);
+    setLiveFrames(Array.from(liveFramesRef.current.entries()));
+    console.log(`[LivePhoto] Captured ${burstBlobs.length} burst frames for shot index ${shotIndex}`);
+
+    if (typeof sendLiveFramesToPeer === 'function') {
+      sendLiveFramesToPeer(shotIndex, burstBlobs, participantsCount - 1);
+    }
+  };
+
   const triggerCaptureAndSend = async (index, chunkSize) => {
     if (typeof onFlash === 'function') onFlash(true);
     await new Promise(r => setTimeout(r, 100));
@@ -135,6 +175,12 @@ export default function useCapture({
 
     localBlobsRef.current[index] = blob;
     setLocalBlobs([...localBlobsRef.current]); // Update state to trigger re-render
+
+    // Start capturing live photo burst frames in parallel (non-blocking) only if enabled
+    if (livePhotoEnabled) {
+      captureLiveBurst(videoRef.current, index);
+    }
+
     await sendPhotoToPeer(blob, index, chunkSize, participantsCount - 1);
   };
 
@@ -214,10 +260,28 @@ export default function useCapture({
     peerBlobs[idx] = blob;
   };
 
+  const storeRemoteLiveFrame = (peerId, shotIndex, frameIndex, blob) => {
+    if (!remoteLiveFramesRef.current.has(peerId)) {
+      remoteLiveFramesRef.current.set(peerId, new Map());
+    }
+    const peerMap = remoteLiveFramesRef.current.get(peerId);
+    if (!peerMap.has(shotIndex)) {
+      peerMap.set(shotIndex, []);
+    }
+    const frames = peerMap.get(shotIndex);
+    frames[frameIndex] = blob;
+    setRemoteLiveFrames(new Map(remoteLiveFramesRef.current));
+    console.log(`[LivePhoto] Stored remote live frame index ${frameIndex} for shot ${shotIndex} from ${peerId.slice(0,8)}`);
+  };
+
   const resetCapture = () => {
     localBlobsRef.current = [];
     remoteBlobsRef.current = new Map();
+    liveFramesRef.current = new Map();
+    remoteLiveFramesRef.current = new Map();
     setLocalBlobs([]);
+    setLiveFrames([]);
+    setRemoteLiveFrames(new Map());
     setCurrentShotIndex(0);
     setTotalShots(0);
     setCountdown(null);
@@ -228,16 +292,23 @@ export default function useCapture({
     streamRef,
     localBlobsRef,
     remoteBlobsRef,
+    liveFramesRef,
+    remoteLiveFramesRef,
     countdown,
     currentShotIndex,
     totalShots,
     localBlobs,
+    liveFrames,
+    remoteLiveFrames,
+    livePhotoEnabled,
+    setLivePhotoEnabled,
     setTotalShots,
     startCamera,
     attachStream,
     startCaptureSequence,
     checkProcessingComplete,
     storeRemoteBlob,
+    storeRemoteLiveFrame,
     resetCapture
   };
 }

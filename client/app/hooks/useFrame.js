@@ -164,15 +164,25 @@ export default function useFrame({ participants, locationsById = {} }) {
     localBlobs,
     remoteBlobsByPeer, // Map<peerId, blob[]>
     locationsById,
+    frameIndex = null,
+    localLiveFrames = null,
+    remoteLiveFrames = null
   }) => {
-    const key = mergeKey(count);
+    const isLiveRender = frameIndex !== null;
+    const key = isLiveRender ? `${mergeKey(count)}|live|${frameIndex}` : mergeKey(count);
+
     if (mergeCacheRef.current.has(key)) {
-      setMergedImage(mergeCacheRef.current.get(key));
-      setLastMergeCount(count);
-      return;
+      const cached = mergeCacheRef.current.get(key);
+      if (!isLiveRender) {
+        setMergedImage(cached);
+        setLastMergeCount(count);
+      }
+      return cached;
     }
 
-    setIsMerging(true);
+    if (!isLiveRender) {
+      setIsMerging(true);
+    }
     try {
       const activeFrameColor = (frameColor || '#9b87f5').trim();
       const activeTextColor = (frameTextColor || '#FFFFFF').trim();
@@ -406,8 +416,22 @@ export default function useFrame({ participants, locationsById = {} }) {
             rowY = headerH + gap + (i * (cellH + gap));
           }
           
-          const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
-          const blob = blobs[i];
+          let blob;
+          if (isLiveRender) {
+            if (participant.isYou) {
+              const liveBurst = localLiveFrames?.find(entry => entry[0] === i)?.[1];
+              blob = liveBurst?.[frameIndex];
+            } else {
+              const peerLiveMap = remoteLiveFrames?.get(participant.id);
+              const liveBurst = peerLiveMap?.get(i);
+              blob = liveBurst?.[frameIndex];
+            }
+          }
+
+          if (!blob) {
+            const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
+            blob = blobs[i];
+          }
 
           if (blob) {
             const img = await blobToImage(blob);
@@ -567,12 +591,17 @@ export default function useFrame({ participants, locationsById = {} }) {
         ctx.restore();
       }
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const dataUrl = canvas.toDataURL('image/jpeg', isLiveRender ? 0.75 : 0.85);
       mergeCacheRef.current.set(key, dataUrl);
-      setMergedImage(dataUrl);
-      setLastMergeCount(count);
+      if (!isLiveRender) {
+        setMergedImage(dataUrl);
+        setLastMergeCount(count);
+      }
+      return dataUrl;
     } finally {
-      setIsMerging(false);
+      if (!isLiveRender) {
+        setIsMerging(false);
+      }
     }
   }, [
     frameMode,

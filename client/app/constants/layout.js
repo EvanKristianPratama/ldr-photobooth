@@ -5,15 +5,11 @@ export const LAYOUTS = {
   layout4: { shots: 4, label: 'Layout 4' }
 };
 
-export const FRAME_CANVAS = {
-  cellW: 500,
-  cellH: 750,
-  gap: 40,
-  headerH: 150,
-  footerH: 200
-};
+import { CANVAS_BASE_CONFIG } from '../configs/canvas/paperSizes';
 
-export const COUNTDOWN_SECONDS = 6;
+export const FRAME_CANVAS = CANVAS_BASE_CONFIG;
+
+export const COUNTDOWN_SECONDS = 3;
 export const SHOT_DELAY_MS = 2000;
 export const PROCESSING_RETRY_LIMIT = 120; // 60 seconds (120 * 500ms)
 export const PROCESSING_RETRY_DELAY_MS = 500;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import LivePhotoViewer from '../ui/LivePhotoViewer';
 
 export default function ResultScreen({
   mergedImage,
@@ -11,13 +12,99 @@ export default function ResultScreen({
   onDonate,
   photoFilter,
   sessionMode,
-  selectedFrameId
+  selectedFrameId,
+  localLiveFrames,
+  remoteLiveFrames,
+  localBlobs,
+  remoteBlobsByPeer,
+  locationsById,
+  mergePhotos,
+  participants
 }) {
   const { t } = useLanguage();
   const [showPostModal, setShowPostModal] = useState(false);
   const [postName, setPostName] = useState('Anonymous');
   const [postCaption, setPostCaption] = useState('Our photobooth moment! ✨');
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isGeneratingGif, setIsGeneratingGif] = useState(false);
+  const [gifProgress, setGifProgress] = useState(0);
+
+  const downloadAnimatedGif = async () => {
+    if (isGeneratingGif) return;
+    setIsGeneratingGif(true);
+    setGifProgress(10);
+    try {
+      const loadGifshot = () => {
+        return new Promise((resolve, reject) => {
+          if (window.gifshot) {
+            resolve(window.gifshot);
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js';
+          script.onload = () => resolve(window.gifshot);
+          script.onerror = () => reject(new Error('Failed to load gifshot CDN'));
+          document.head.appendChild(script);
+        });
+      };
+
+      const gifshot = await loadGifshot();
+      setGifProgress(30);
+
+      const frameUrls = [];
+      const count = localBlobs?.length || 1;
+      
+      for (let f = 0; f < 10; f++) {
+        const dataUrl = await mergePhotos({
+          count,
+          participants,
+          localBlobs,
+          remoteBlobsByPeer,
+          locationsById,
+          frameIndex: f,
+          localLiveFrames,
+          remoteLiveFrames
+        });
+        if (dataUrl) {
+          frameUrls.push(dataUrl);
+        }
+        setGifProgress(30 + Math.floor((f + 1) * 4));
+      }
+
+      setGifProgress(80);
+
+      gifshot.createGIF({
+        images: frameUrls,
+        interval: 0.15,
+        gifWidth: sessionMode === 'solo' ? 280 : 600,
+        gifHeight: sessionMode === 'solo' ? 840 : 450,
+        numFrames: 10,
+        sampleInterval: 10
+      }, function (obj) {
+        if (!obj.error) {
+          setGifProgress(100);
+          const link = document.createElement('a');
+          link.href = obj.image;
+          link.download = downloadName ? downloadName.replace(/\.[^/.]+$/, '') + '.gif' : `ldr-photo-${Date.now()}.gif`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setIsGeneratingGif(false);
+          setGifProgress(0);
+        } else {
+          console.error('Gifshot error:', obj.error);
+          alert('Failed to generate GIF: ' + obj.error);
+          setIsGeneratingGif(false);
+          setGifProgress(0);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to generate GIF:', err);
+      alert('Error loading GIF compiler: ' + err.message);
+      setIsGeneratingGif(false);
+      setGifProgress(0);
+    }
+  };
 
   const handleShare = async () => {
     if (!mergedImage) return;
@@ -124,18 +211,20 @@ export default function ResultScreen({
                 <p>{t('result.developing')}</p>
               </div>
             ) : (
-              <img 
-                src={mergedImage} 
-                alt="Final Strip" 
-                style={{ 
-                  width: '100%', 
-                  maxHeight: '65vh',
-                  objectFit: 'contain',
-                  borderRadius: '4px', 
-                  border: '3.5px solid var(--ink)', 
-                  boxShadow: '10px 10px 0 var(--ink)'
-                }} 
-              />
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <LivePhotoViewer
+                  mergedImage={mergedImage}
+                  isMerging={isMerging}
+                  count={localBlobs?.length || 1}
+                  participants={participants}
+                  localBlobs={localBlobs}
+                  remoteBlobsByPeer={remoteBlobsByPeer}
+                  locationsById={locationsById}
+                  localLiveFrames={localLiveFrames}
+                  remoteLiveFrames={remoteLiveFrames}
+                  mergePhotos={mergePhotos}
+                />
+              </div>
             )}
           </div>
 
@@ -148,6 +237,27 @@ export default function ResultScreen({
               <button className="btn-dl" onClick={onDownload} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.download')}
               </button>
+
+              {localLiveFrames?.length > 0 && (
+                <button 
+                  className="btn-share" 
+                  onClick={downloadAnimatedGif} 
+                  disabled={isGeneratingGif}
+                  style={{ 
+                    width: '100%', 
+                    fontSize: '16px', 
+                    padding: '14px', 
+                    background: 'var(--yellow)', 
+                    color: 'var(--ink)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '8px' 
+                  }}
+                >
+                  {isGeneratingGif ? `Generating GIF (${gifProgress}%)...` : '📥 Download Animated GIF'}
+                </button>
+              )}
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.share')}
               </button>

@@ -42,20 +42,28 @@ export default function useWebRTC({
     const data = e.data;
     if (typeof data === 'string') {
       const msg = JSON.parse(data);
-      if (msg.type === 'meta') {
+      if (msg.type === 'meta' || msg.type === 'live-meta') {
         incomingFilesRef.current.set(peerId, {
           chunks: [],
           meta: msg
         });
-      } else if (msg.type === 'done') {
+      } else if (msg.type === 'done' || msg.type === 'live-done') {
         const fileData = incomingFilesRef.current.get(peerId);
         if (!fileData) return;
         
         const resultBlob = new Blob(fileData.chunks, { type: fileData.meta.mime });
-        const idx = fileData.meta.index || 0;
+        const isLive = fileData.meta.type === 'live-meta';
+        const idx = isLive ? (fileData.meta.shotIndex || 0) : (fileData.meta.index || 0);
+        const frameIndex = isLive ? (fileData.meta.frameIndex || 0) : null;
         
         if (typeof onDataChannelMessageRef.current === 'function') {
-          onDataChannelMessageRef.current({ from: peerId, index: idx, blob: resultBlob });
+          onDataChannelMessageRef.current({ 
+            from: peerId, 
+            index: idx, 
+            blob: resultBlob,
+            isLive,
+            frameIndex
+          });
         }
         incomingFilesRef.current.delete(peerId);
       }
@@ -163,6 +171,51 @@ export default function useWebRTC({
 
     return true;
   }, [onSocketPhotoReceive]);
+
+  const sendLiveFramesToPeer = useCallback(async (shotIndex, blobs, expectedPeersCount = 1) => {
+    if (!blobs || blobs.length === 0) return;
+    
+    if (socketOnlyRef.current) {
+      return;
+    }
+
+    for (let f = 0; f < blobs.length; f++) {
+      const blob = blobs[f];
+      const buffer = await blob.arrayBuffer();
+      const fileId = `live-${shotIndex}-${f}-${crypto.randomUUID ? crypto.randomUUID() : Math.random()}`;
+
+      const sendPromises = Array.from(dcsRef.current.entries()).map(async ([peerId, dc]) => {
+        if (dc.readyState !== 'open') return;
+        try {
+          dc.send(JSON.stringify({
+            type: 'live-meta',
+            id: fileId,
+            size: blob.size,
+            mime: blob.type,
+            shotIndex,
+            frameIndex: f
+          }));
+
+          let offset = 0;
+          const chunkSize = 16384; // 16KB chunks
+          while (offset < buffer.byteLength) {
+            const chunk = buffer.slice(offset, offset + chunkSize);
+            while (dc.bufferedAmount > 10 * 1024 * 1024) {
+              await new Promise(r => setTimeout(r, 50));
+            }
+            if (dc.readyState !== 'open') throw new Error('Channel closed during transfer');
+            dc.send(chunk);
+            offset += chunk.byteLength;
+          }
+          dc.send(JSON.stringify({ type: 'live-done', id: fileId }));
+        } catch (err) {
+          console.warn(`[WebRTC] Failed to send live frame ${f} to ${peerId}`, err);
+        }
+      });
+      await Promise.all(sendPromises);
+    }
+    console.log(`[WebRTC] Finished sending all ${blobs.length} live frames for shot ${shotIndex}`);
+  }, []);
 
   const enableSocketFallback = useCallback((reason) => {
     socketOnlyRef.current = true;
@@ -285,6 +338,7 @@ export default function useWebRTC({
     handleCandidate,
     connectPeers,
     sendPhotoToPeer,
+    sendLiveFramesToPeer,
     enableSocketFallback
   };
 }

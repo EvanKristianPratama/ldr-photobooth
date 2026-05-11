@@ -23,6 +23,7 @@ import useFrame from './hooks/useFrame';
 import useDebouncedValue from './hooks/useDebouncedValue';
 import usePhotoTransfer from './hooks/usePhotoTransfer';
 import { LAYOUTS, STEP_LABELS, CHUNK_SIZE } from './constants/layout';
+import { convertToPaperSize } from './services/paperService';
 
 const SERVER_URL = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
@@ -216,12 +217,19 @@ export default function Page() {
   const webRTC = useWebRTC({
     socketRef: room.socketRef,
     setStatus: room.setStatus,
-    onDataChannelMessage: ({ from, index, blob }) => capture.storeRemoteBlob(from, index, blob),
+    onDataChannelMessage: ({ from, index, blob, isLive, frameIndex }) => {
+      if (isLive) {
+        capture.storeRemoteLiveFrame(from, index, frameIndex, blob);
+      } else {
+        capture.storeRemoteBlob(from, index, blob);
+      }
+    },
     onSocketPhotoReceive: (blob, index) => photoTransfer.sendPhotoViaSocket(blob, index)
   });
 
   const capture = useCapture({
     sendPhotoToPeer: webRTC.sendPhotoToPeer,
+    sendLiveFramesToPeer: webRTC.sendLiveFramesToPeer,
     onProcessingComplete: ({ localBlobs, remoteBlobsByPeer }) => {
       setCapturedParticipants(participantsWithSelf);
       setStep('frame-select');
@@ -511,14 +519,35 @@ export default function Page() {
     sessionStorage.removeItem('ldr_session_mode');
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!frame.mergedImage) return;
-    const link = document.createElement('a');
-    link.href = frame.mergedImage;
-    link.download = downloadName || `ldr-photo-${Date.now()}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    try {
+      // Memproses gambar agar sesuai ukuran kertas final (misal diduplikat ke 4R)
+      const processedDataUrl = await convertToPaperSize(frame.mergedImage, {
+        sessionMode: sessionMode,
+        layout: frame.frameLayout,
+        count: frame.lastMergeCount,
+        orientation: frame.orientation,
+        frameColor: frame.frameColor
+      });
+
+      const link = document.createElement('a');
+      link.href = processedDataUrl;
+      link.download = downloadName || `ldr-photo-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Export failed:', err);
+      // Fallback ke raw image jika processing gagal
+      const link = document.createElement('a');
+      link.href = frame.mergedImage;
+      link.download = downloadName || `ldr-photo-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleReapply = () => {
@@ -678,6 +707,8 @@ export default function Page() {
             progress={progress}
             isProcessing={step === 'processing'}
             localBlobs={capture.localBlobs}
+            livePhotoEnabled={capture.livePhotoEnabled}
+            setLivePhotoEnabled={capture.setLivePhotoEnabled}
           />
         )}
 
@@ -687,6 +718,12 @@ export default function Page() {
             isMerging={frame.isMerging}
             onContinue={() => setStep('result')}
             onReapply={handleReapply}
+            localLiveFrames={capture.liveFrames}
+            remoteLiveFrames={capture.remoteLiveFrames}
+            localBlobs={capture.localBlobs}
+            remoteBlobsByPeer={capture.remoteBlobsRef.current}
+            locationsById={locationsById}
+            mergePhotos={frame.mergePhotos}
             framePresets={frame.framePresets}
             framePresetId={frame.framePresetId}
             selectFramePreset={frame.selectFramePreset}
@@ -762,6 +799,13 @@ export default function Page() {
             photoFilter={frame.photoFilter}
             sessionMode={sessionMode}
             selectedFrameId={frame.framePresetId}
+            localLiveFrames={capture.liveFrames}
+            remoteLiveFrames={capture.remoteLiveFrames}
+            localBlobs={capture.localBlobs}
+            remoteBlobsByPeer={capture.remoteBlobsRef.current}
+            locationsById={locationsById}
+            mergePhotos={frame.mergePhotos}
+            participants={capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf}
           />
         )}
       </main>
