@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function CaptureScreen({
@@ -18,6 +18,16 @@ export default function CaptureScreen({
   isTransmitting
 }) {
   const { t } = useLanguage();
+  const [selectedRetakeIdx, setSelectedRetakeIdx] = useState(null);
+
+  const handleRetakeClick = () => {
+    if (selectedRetakeIdx !== null) {
+      onRetakeSingle(selectedRetakeIdx);
+      setSelectedRetakeIdx(null); // Reset
+    } else {
+      onRetake(); // Retake ALL
+    }
+  };
 
   // Membuat URL untuk preview foto agar bisa ditampilkan
   const photoPreviews = useMemo(() => {
@@ -186,13 +196,17 @@ export default function CaptureScreen({
              >
                <div style={{ color: '#fff', fontSize: '28px', fontFamily: "'Gaegu', cursive", textAlign: 'center', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
                  ✨ Nice Shots! ✨<br/>
-                 <span style={{ fontSize: '18px', opacity: 0.9 }}>Would you like to use these or retake?</span>
+                 <span style={{ fontSize: '18px', opacity: 0.9 }}>
+                   {selectedRetakeIdx !== null 
+                     ? `You selected Photo #${selectedRetakeIdx + 1}.` 
+                     : 'Would you like to use these or retake?'}
+                 </span>
                </div>
 
                <div style={{ display: 'flex', gap: '16px', width: '80%', maxWidth: '380px' }}>
                  {/* Retake Button - disabled if no time left or actively captures */}
                  <button
-                   onClick={onRetake}
+                   onClick={handleRetakeClick}
                    disabled={sessionTimeLeft <= 0}
                    className="btn-share"
                    style={{
@@ -200,7 +214,8 @@ export default function CaptureScreen({
                      background: '#fff',
                      color: '#1a1a2e',
                      border: '3px solid #1a1a2e',
-                     boxShadow: '4px 4px 0 #1a1a2e',
+                     boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 #1a1a2e',
+                     borderColor: selectedRetakeIdx !== null ? '#FF5252' : '#1a1a2e',
                      opacity: sessionTimeLeft <= 0 ? 0.5 : 1,
                      cursor: sessionTimeLeft <= 0 ? 'not-allowed' : 'pointer',
                      fontSize: '18px',
@@ -208,10 +223,12 @@ export default function CaptureScreen({
                      display: 'flex',
                      alignItems: 'center',
                      justifyContent: 'center',
-                     gap: '6px'
+                     gap: '6px',
+                     transition: 'all 0.2s ease',
+                     transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none'
                    }}
                  >
-                   🔄 {t('action.retake') || 'Retake'}
+                   🔄 {selectedRetakeIdx !== null ? `Retake #${selectedRetakeIdx + 1}` : t('action.retake') || 'Retake All'}
                  </button>
 
                  <button
@@ -241,6 +258,7 @@ export default function CaptureScreen({
             {Array.from({ length: totalShots }).map((_, i) => {
               const isPhotoTaken = !!photoPreviews[i];
               const canRetakeThis = isFinishedAllShots && isPhotoTaken && countdown === null && sessionTimeLeft > 0;
+              const isThisSelected = selectedRetakeIdx === i;
 
               return (
                 <div
@@ -253,12 +271,20 @@ export default function CaptureScreen({
                     background: '#000',
                     position: 'relative',
                     cursor: canRetakeThis ? 'pointer' : 'default',
-                    border: canRetakeThis ? '2px solid var(--yellow)' : 'none',
-                    transition: 'transform 0.2s ease'
+                    border: isThisSelected 
+                      ? '4px dashed #FFD700' // Cute yellow dashed line for selected
+                      : canRetakeThis 
+                        ? '2px solid rgba(255, 255, 255, 0.5)' 
+                        : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    transform: isThisSelected ? 'scale(1.1)' : 'scale(1)',
+                    boxShadow: isThisSelected ? '0 0 15px rgba(255, 215, 0, 0.6)' : 'none',
+                    zIndex: isThisSelected ? 10 : 1
                   }}
                   onClick={() => {
-                    if (canRetakeThis && typeof onRetakeSingle === 'function') {
-                      onRetakeSingle(i);
+                    if (canRetakeThis) {
+                      // Toggle selection instead of firing immediately
+                      setSelectedRetakeIdx(isThisSelected ? null : i);
                     }
                   }}
                 >
@@ -276,7 +302,7 @@ export default function CaptureScreen({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: 'rgba(0,0,0,0.3)',
+                          background: isThisSelected ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0,0,0,0.3)',
                           color: '#fff',
                           fontFamily: "'Gaegu', cursive",
                           fontSize: '14px',
@@ -284,7 +310,7 @@ export default function CaptureScreen({
                           textAlign: 'center',
                           textShadow: '0 1px 2px rgba(0,0,0,0.8)'
                         }}>
-                          🔄 Tap to Retake
+                          {isThisSelected ? '⭐ Selected' : '🔄 Select'}
                         </div>
                       )}
                     </>
