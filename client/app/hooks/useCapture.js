@@ -29,6 +29,11 @@ export default function useCapture({
   const [liveFrames, setLiveFrames] = useState([]); // Array of entries of shotIndex -> blob[]
   const [remoteLiveFrames, setRemoteLiveFrames] = useState(new Map());
   const [livePhotoEnabled, setLivePhotoEnabled] = useState(true);
+  
+  // Timer and review states
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
+  const sessionTimerRef = useRef(null);
+  const [isTransmitting, setIsTransmitting] = useState(false);
 
   const attachStream = useCallback(() => {
     if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
@@ -40,6 +45,9 @@ export default function useCapture({
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (sessionTimerRef.current) {
+        clearInterval(sessionTimerRef.current);
       }
     };
   }, []);
@@ -137,11 +145,8 @@ export default function useCapture({
 
     liveFramesRef.current.set(shotIndex, burstBlobs);
     setLiveFrames(Array.from(liveFramesRef.current.entries()));
-    console.log(`[LivePhoto] Captured ${burstBlobs.length} burst frames for shot index ${shotIndex}`);
-
-    if (typeof sendLiveFramesToPeer === 'function') {
-      sendLiveFramesToPeer(shotIndex, burstBlobs, participantsCount - 1);
-    }
+    console.log(`[LivePhoto] Locally captured ${burstBlobs.length} burst frames for shot index ${shotIndex}`);
+    // NOTE: Transmission logic deferred to transmitAllLocalData()
   };
 
   const triggerCaptureAndSend = async (index, chunkSize) => {
@@ -178,10 +183,12 @@ export default function useCapture({
 
     // Start capturing live photo burst frames in parallel (non-blocking) only if enabled
     if (livePhotoEnabled) {
+      // captureLiveBurst returns void immediately as it runs on intervals
       captureLiveBurst(videoRef.current, index);
     }
-
-    await sendPhotoToPeer(blob, index, chunkSize, participantsCount - 1);
+    
+    // DEFERRED: Wait for user review phase or timer expiration before sending
+    // await sendPhotoToPeer(blob, index, chunkSize, participantsCount - 1);
   };
 
   const startCaptureSequence = async (shots, chunkSize) => {
@@ -195,6 +202,19 @@ export default function useCapture({
       await triggerCaptureAndSend(i, chunkSize);
       await new Promise(r => setTimeout(r, SHOT_DELAY_MS));
     }
+  };
+
+  const startSingleShotRetake = async (targetIndex, chunkSize) => {
+    // Highlight the active slot being retaken in UI
+    const prevIndex = currentShotIndex;
+    setCurrentShotIndex(targetIndex); 
+    if (typeof onShotIndex === 'function') onShotIndex(targetIndex + 1);
+
+    await runCountdown(COUNTDOWN_SECONDS);
+    await triggerCaptureAndSend(targetIndex, chunkSize);
+    
+    // Reset highlight to indicate all done
+    setCurrentShotIndex(totalShots);
   };
 
   const checkProcessingComplete = async (sessionMode, participantsCount, expectedShots = totalShots) => {
@@ -274,7 +294,63 @@ export default function useCapture({
     console.log(`[LivePhoto] Stored remote live frame index ${frameIndex} for shot ${shotIndex} from ${peerId.slice(0,8)}`);
   };
 
+  const startSessionTimer = (seconds, onTimeoutCallback) => {
+    if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
+    setSessionTimeLeft(seconds);
+    
+    sessionTimerRef.current = setInterval(() => {
+      setSessionTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(sessionTimerRef.current);
+          sessionTimerRef.current = null;
+          if (typeof onTimeoutCallback === 'function') onTimeoutCallback();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const stopSessionTimer = () => {
+    if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
+    sessionTimerRef.current = null;
+    setSessionTimeLeft(null);
+  };
+
+  const transmitAllLocalData = async (chunkSize) => {
+    setIsTransmitting(true);
+    const expectedPeers = participantsCount - 1;
+
+    try {
+      // 1. Transmit static photos in order
+      for (let i = 0; i < localBlobsRef.current.length; i++) {
+        const blob = localBlobsRef.current[i];
+        if (blob && typeof sendPhotoToPeer === 'function') {
+          console.log(`[Transmit] Batch sending static photo ${i}`);
+          await sendPhotoToPeer(blob, i, chunkSize, expectedPeers);
+        }
+      }
+
+      // 2. Transmit Live Photo Bursts
+      if (livePhotoEnabled && typeof sendLiveFramesToPeer === 'function') {
+        for (const [shotIndex, burstBlobs] of liveFramesRef.current.entries()) {
+           console.log(`[Transmit] Batch sending live burst for shot index ${shotIndex}`);
+           await sendLiveFramesToPeer(shotIndex, burstBlobs, expectedPeers);
+        }
+      }
+    } catch (err) {
+       console.error('[Transmit] Batch upload error:', err);
+    } finally {
+       setIsTransmitting(false);
+    }
+  };
+
   const resetCapture = () => {
+    if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
+    sessionTimerRef.current = null;
+    setSessionTimeLeft(null);
+    setIsTransmitting(false);
+    
     localBlobsRef.current = [];
     remoteBlobsRef.current = new Map();
     liveFramesRef.current = new Map();
@@ -302,10 +378,16 @@ export default function useCapture({
     remoteLiveFrames,
     livePhotoEnabled,
     setLivePhotoEnabled,
+    sessionTimeLeft,
+    isTransmitting,
     setTotalShots,
     startCamera,
     attachStream,
     startCaptureSequence,
+    startSingleShotRetake,
+    startSessionTimer,
+    stopSessionTimer,
+    transmitAllLocalData,
     checkProcessingComplete,
     storeRemoteBlob,
     storeRemoteLiveFrame,

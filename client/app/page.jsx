@@ -319,6 +319,30 @@ export default function Page() {
     capture.attachStream();
   }, [step, capture.attachStream]);
 
+  const handleFinishCapture = async (shots) => {
+    // 1. Stop any remaining timer
+    captureRef.current.stopSessionTimer();
+    
+    // 2. Advance local UI to processing state immediately
+    setStep('processing');
+    
+    // 3. Transmit existing local blobs to peer batchwise
+    await captureRef.current.transmitAllLocalData(CHUNK_SIZE);
+    
+    // 4. Wait for counterpart photos to arrive robustly
+    await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length, shots);
+  };
+
+  const handleRetakeSession = async () => {
+    const shots = LAYOUTS[selectedLayoutRef.current]?.shots || 1;
+    // Keep timer running! Just restart the sequence index locally.
+    await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
+  };
+
+  const handleRetakeSingle = async (index) => {
+    await captureRef.current.startSingleShotRetake(index, CHUNK_SIZE);
+  };
+
   const startBoothSession = async ({ startTime, layout }) => {
     if (layout) setSelectedLayout(layout);
 
@@ -334,12 +358,22 @@ export default function Page() {
     }
 
     setStep('countdown');
-    // Wait for React to mount the video element in CaptureScreen
+    
+    // Wait for video element to mount 
     await new Promise(r => setTimeout(r, 300));
     captureRef.current.attachStream();
+    
+    // A. Start the Global 60s Session Timer!
+    captureRef.current.startSessionTimer(60, () => {
+       console.log('[Session] Time expired! Auto-committing captures.');
+       handleFinishCapture(shots);
+    });
+
+    // B. Run initial capture sequence
     await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
-    setStep('processing');
-    await captureRef.current.checkProcessingComplete(sessionMode, participantsWithSelf.length, shots);
+    
+    // C. Wait in capture view for either user explicitly clicking 'Done' or timer expiring.
+    // The UI (CaptureScreen) will offer Retake / Send buttons if sessionTimeLeft > 0.
   };
 
   useEffect(() => {
@@ -710,6 +744,11 @@ export default function Page() {
             localBlobs={capture.localBlobs}
             livePhotoEnabled={capture.livePhotoEnabled}
             setLivePhotoEnabled={capture.setLivePhotoEnabled}
+            sessionTimeLeft={capture.sessionTimeLeft}
+            onRetake={handleRetakeSession}
+            onRetakeSingle={handleRetakeSingle}
+            onFinish={() => handleFinishCapture(capture.totalShots)}
+            isTransmitting={capture.isTransmitting}
           />
         )}
 
