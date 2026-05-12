@@ -218,6 +218,7 @@ class SocketAdapter {
      * Send message to server (Socket.IO API)
      * Special handling for room:join - this triggers the WebSocket connection
      */
+    emit(event, data) {
         // Special case: room:join triggers connection with room code
         if (event === 'room:join' && data?.code) {
             this.lastJoinData = data; // Keep track of the last join payload for auto-rejoin
