@@ -72,14 +72,6 @@ export default function useRoom({
     socket.on('connect', () => {
       setStatus('Connected');
       setSelfId(socket.id || '');
-      
-      // AUTO-REJOIN MECHANISM:
-      // If a network blip causes a silent reconnect while the user is active in a room,
-      // we automatically re-emit the join packet without the user noticing.
-      if (hasJoinedRef.current && roomCodeRef.current && displayNameRef.current) {
-        console.log('[useRoom] Reconnected! Resending room:join state robustly.');
-        socket.emit('room:join', { code: roomCodeRef.current, displayName: displayNameRef.current });
-      }
     });
 
     socket.on('connect_error', (error) => {

@@ -124,13 +124,16 @@ class SocketAdapter {
 
             this._emit('connect');
 
-            // If we have lastJoinData, automatically rejoin the room on the server!
-            if (this.lastJoinData) {
-                console.log('[Socket] Auto-rejoining room after reconnect:', this.lastJoinData);
+            // AUTO-REJOIN ON SILENT RECONNECT:
+            // If we have lastJoinData and we didn't JUST queue a join event explicitly,
+            // robustly resend the join signal to restore session context on the server.
+            const isJoinAlreadyQueued = this._pendingEmits.some(p => p.event === 'room:join');
+            if (this.lastJoinData && !isJoinAlreadyQueued) {
+                console.log('[Socket] Performing robust auto-rejoin recovery.');
                 this._send('room:join', this.lastJoinData);
             }
 
-            // Process pending emits
+            // Process pending emits which includes our primary room:join
             while (this._pendingEmits.length > 0) {
                 const { event, data } = this._pendingEmits.shift();
                 this._send(event, data);
@@ -215,13 +218,18 @@ class SocketAdapter {
      * Send message to server (Socket.IO API)
      * Special handling for room:join - this triggers the WebSocket connection
      */
-    emit(event, data) {
         // Special case: room:join triggers connection with room code
         if (event === 'room:join' && data?.code) {
             this.lastJoinData = data; // Keep track of the last join payload for auto-rejoin
-            this._connect(data.code);
-            // Queue the join event to be sent after connection
-            this._pendingEmits.push({ event, data });
+            
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                // Already connected? Send immediately, do not queue.
+                this._send(event, data);
+            } else {
+                this._connect(data.code);
+                // Queue the join event to be sent after connection drains
+                this._pendingEmits.push({ event, data });
+            }
             return this;
         }
 
