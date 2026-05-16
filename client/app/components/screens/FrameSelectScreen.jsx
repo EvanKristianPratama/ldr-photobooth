@@ -175,6 +175,14 @@ export default function FrameSelectScreen({
       <div className="frame-controls">
         <div className="ctrl-title">{t('frame.editFrame')}</div>
 
+        {/* ── PRESETS BUTTON AT THE TOP ── */}
+        <div className="ctrl-section">
+          <div className="ctrl-label">{t('frame.presets')}</div>
+          <button className="btn-secondary" style={{ width: '100%', background: 'var(--yellow)', fontWeight: 'bold' }} onClick={() => setShowPresetsModal(true)}>
+            {t('frame.browsePresets')} ({framePresets?.length || 0})
+          </button>
+        </div>
+
         {(sessionMode === 'solo' || sessionMode === 'duo') && (
           <div className="ctrl-section">
             <div className="ctrl-label">{t('frame.printStyle')}</div>
@@ -358,12 +366,6 @@ export default function FrameSelectScreen({
           </div>
         </div>
 
-        <div className="ctrl-section">
-          <div className="ctrl-label">{t('frame.presets')}</div>
-          <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setShowPresetsModal(true)}>
-            {t('frame.browsePresets')} ({framePresets?.length || 0})
-          </button>
-        </div>
 
         <div className="ctrl-section">
           <div className="ctrl-label">{t('frame.color')}</div>
@@ -599,16 +601,35 @@ export default function FrameSelectScreen({
                     setShowPresetsModal(false);
                   }}
                 >
-                  <div className="frame-card__thumb">
-                    <img 
-                      src={fp.src} 
-                      alt={fp.label} 
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = '<span style="font-size:12px;opacity:0.5">Err</span>';
-                      }}
-                    />
+                  <div className="frame-card__thumb" style={{ background: fp.template?.background_color || '#eee', position: 'relative', overflow: 'hidden' }}>
+                    {fp.src ? (
+                      <img 
+                        src={fp.src} 
+                        alt={fp.label} 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 10 }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : fp.template ? (
+                      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                        {fp.template.slots?.map(s => (
+                           <div key={s.id} style={{ 
+                             position: 'absolute', 
+                             left: `${(s.x / fp.template.canvas_width) * 100}%`,
+                             top: `${(s.y / fp.template.canvas_height) * 100}%`,
+                             width: `${(s.width / fp.template.canvas_width) * 100}%`,
+                             height: `${(s.height / fp.template.canvas_height) * 100}%`,
+                             background: 'rgba(255,255,255,0.8)',
+                             boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
+                           }} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                        <span style={{ fontSize: '12px', opacity: 0.5 }}>No Preview</span>
+                      </div>
+                    )}
                   </div>
                   <div className="frame-card__title">{fp.label}</div>
                 </div>
