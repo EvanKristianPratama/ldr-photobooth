@@ -892,6 +892,7 @@ body::before {
 
 /* Live photo toggle button */
 .live-toggle-btn {
+  display: none !important;
   position: absolute;
   top: 15px;
   right: 15px;
