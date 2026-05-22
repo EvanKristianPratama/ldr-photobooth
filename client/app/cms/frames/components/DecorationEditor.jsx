@@ -1,8 +1,9 @@
 import React from 'react';
+import NumField from './NumField';
 
 /**
  * DecorationEditor — Property editor panel for a selected sticker/decoration.
- * Allows editing X, Y, Width, Height, and Rotation.
+ * Allows editing X, Y, Width, Height, Rotation, and Opacity.
  */
 export default function DecorationEditor({ decoration, onUpdate, onDragEnd, canvasWidth, canvasHeight }) {
   const handleChange = (field, value) => {
@@ -14,22 +15,6 @@ export default function DecorationEditor({ decoration, onUpdate, onDragEnd, canv
     onDragEnd?.();
   };
 
-  const numField = (label, field, min, max, step = 1) => (
-    <div className="cms-field">
-      <label className="cms-field__label">{label}</label>
-      <input
-        type="number"
-        className="cms-field__input"
-        value={decoration[field]}
-        min={min}
-        max={max}
-        step={step}
-        onChange={e => handleChange(field, parseFloat(e.target.value) || 0)}
-        onBlur={() => onDragEnd?.()}
-      />
-    </div>
-  );
-
   return (
     <div className="cms-panel-section">
       <div className="cms-panel-section__title">
@@ -37,13 +22,13 @@ export default function DecorationEditor({ decoration, onUpdate, onDragEnd, canv
       </div>
 
       <div className="cms-field-row">
-        {numField('X', 'x', 0, canvasWidth)}
-        {numField('Y', 'y', 0, canvasHeight)}
+        <NumField label="X" value={decoration.x} min={0} max={canvasWidth} onChange={v => handleChange('x', v)} onBlur={() => onDragEnd?.()} />
+        <NumField label="Y" value={decoration.y} min={0} max={canvasHeight} onChange={v => handleChange('y', v)} onBlur={() => onDragEnd?.()} />
       </div>
 
       <div className="cms-field-row">
-        {numField('Width', 'width', 10, canvasWidth)}
-        {numField('Height', 'height', 10, canvasHeight)}
+        <NumField label="Width" value={decoration.width} min={10} max={canvasWidth} onChange={v => handleChange('width', v)} onBlur={() => onDragEnd?.()} />
+        <NumField label="Height" value={decoration.height} min={10} max={canvasHeight} onChange={v => handleChange('height', v)} onBlur={() => onDragEnd?.()} />
       </div>
 
       <div className="cms-field">
@@ -83,7 +68,6 @@ export default function DecorationEditor({ decoration, onUpdate, onDragEnd, canv
           onTouchEnd={() => onDragEnd?.()}
         />
       </div>
-
     </div>
   );
 }

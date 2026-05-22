@@ -9,6 +9,8 @@ import WaitRoomScreen from './components/screens/WaitRoomScreen';
 import LayoutSelectScreen from './components/screens/LayoutSelectScreen';
 import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
+import CheckoutScreen from './components/screens/CheckoutScreen';
+import InvoiceScreen from './components/screens/InvoiceScreen';
 import StepIndicator from './components/ui/StepIndicator';
 import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
@@ -20,6 +22,8 @@ import useAppController from './hooks/useAppController';
 export default function Page() {
   const {
     step, setStep,
+    invoiceData,
+    SERVER_URL,
     sessionMode, setSessionMode,
     groupSize,
     capturedParticipants,
@@ -97,7 +101,10 @@ export default function Page() {
       {/* TOPBAR */}
       {step !== 'community' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
-          <div className="logo">LDR Photobooth</div>
+          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleGoHome}>
+            <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '4px' }} />
+            <span style={{ color: 'var(--ink)', fontSize: '26px', lineHeight: 'normal', verticalAlign: 'middle' }}>LDR Photobooth</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
             <LanguagePicker />
@@ -106,6 +113,26 @@ export default function Page() {
       )}
 
       <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        {step === 'loading' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '20px', fontFamily: "'Gaegu', cursive", color: 'var(--ink)' }}>
+            <style>{`
+              @keyframes ldr-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '6px solid var(--cream-dk, #eedec9)',
+              borderTopColor: 'var(--pink)',
+              borderRadius: '50%',
+              animation: 'ldr-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+            }} />
+            <div style={{ fontSize: '28px', fontWeight: '700', letterSpacing: '0.5px' }}>Memuat Pesanan Anda... ✨</div>
+          </div>
+        )}
+
         {step === 'mode-select' && (
           <ModeSelectScreen onSelectMode={handleModeSelect} onShowHelp={() => setShowHowTo(true)} />
         )}
@@ -284,6 +311,36 @@ export default function Page() {
             participants={capturedParticipants.length > 0 ? capturedParticipants : participantsWithSelf}
             frameLayout={frame.frameLayout}
             orientation={frame.orientation}
+            onCheckout={() => setStep('checkout')}
+          />
+        )}
+
+        {step === 'checkout' && frame.mergedImage && (
+          <CheckoutScreen
+            photoData={frame.mergedImage}
+            frameId={frame.framePresetId}
+            sessionMode={sessionMode}
+            onBack={() => setStep('result')}
+            onHome={handleGoHome}
+          />
+        )}
+
+        {step === 'invoice' && invoiceData && (
+          <InvoiceScreen
+            orderId={invoiceData.id}
+            photoData={invoiceData.photo_url ? `${SERVER_URL}${invoiceData.photo_url}` : null}
+            orderTotal={invoiceData.total_price}
+            pricing={{
+              qty1: JSON.parse(invoiceData.shipping_address_1 || '{}').qty || 1,
+              qty2: JSON.parse(invoiceData.shipping_address_2 || '{}').qty || 0,
+              shippingCost1: invoiceData.shipping_cost_1,
+              shippingCost2: invoiceData.shipping_cost_2,
+              adminFee: invoiceData.admin_fee,
+            }}
+            addr1={JSON.parse(invoiceData.shipping_address_1 || '{}')}
+            addr2={JSON.parse(invoiceData.shipping_address_2 || '{}')}
+            isSolo={invoiceData.session_mode === 'solo'}
+            onHome={handleGoHome}
           />
         )}
       </main>

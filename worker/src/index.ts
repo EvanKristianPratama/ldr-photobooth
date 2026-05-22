@@ -11,7 +11,7 @@ export default {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection',
           'Access-Control-Max-Age': '86400'
         }
@@ -415,8 +415,334 @@ export default {
       }
     }
 
-    // 3. Serve images from R2 (Support /frames/, /posts/, and /frame-templates/)
-    if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/') || url.pathname.startsWith('/frame-templates/')) {
+    // ── RAJAONGKIR MOCK PROXY ──
+    const PROVINCES = [
+      { province_id: '6', province: 'DKI Jakarta' },
+      { province_id: '9', province: 'Jawa Barat' },
+      { province_id: '10', province: 'Jawa Tengah' },
+      { province_id: '11', province: 'Jawa Timur' },
+      { province_id: '3', province: 'Banten' },
+      { province_id: '5', province: 'DI Yogyakarta' },
+      { province_id: '1', province: 'Bali' },
+      { province_id: '21', province: 'Sumatera Utara' },
+      { province_id: '24', province: 'Sumatera Selatan' },
+      { province_id: '28', province: 'Sulawesi Selatan' },
+    ];
+    const CITIES: Record<string, any[]> = {
+      '6': [
+        { city_id: '152', city_name: 'Jakarta Pusat', type: 'Kota', postal_code: '10110' },
+        { city_id: '153', city_name: 'Jakarta Selatan', type: 'Kota', postal_code: '12190' },
+        { city_id: '151', city_name: 'Jakarta Barat', type: 'Kota', postal_code: '11210' },
+        { city_id: '154', city_name: 'Jakarta Utara', type: 'Kota', postal_code: '14110' },
+        { city_id: '155', city_name: 'Jakarta Timur', type: 'Kota', postal_code: '13110' },
+      ],
+      '9': [
+        { city_id: '23', city_name: 'Bandung', type: 'Kota', postal_code: '40111' },
+        { city_id: '78', city_name: 'Bogor', type: 'Kota', postal_code: '16111' },
+        { city_id: '115', city_name: 'Depok', type: 'Kota', postal_code: '16411' },
+        { city_id: '55', city_name: 'Bekasi', type: 'Kota', postal_code: '17111' },
+        { city_id: '182', city_name: 'Karawang', type: 'Kabupaten', postal_code: '41311' },
+        { city_id: '272', city_name: 'Tasikmalaya', type: 'Kota', postal_code: '46111' },
+        { city_id: '275', city_name: 'Cimahi', type: 'Kota', postal_code: '40511' },
+      ],
+      '10': [
+        { city_id: '399', city_name: 'Semarang', type: 'Kota', postal_code: '50111' },
+        { city_id: '427', city_name: 'Surakarta (Solo)', type: 'Kota', postal_code: '57111' },
+        { city_id: '177', city_name: 'Purwokerto', type: 'Kota', postal_code: '53111' },
+      ],
+      '11': [
+        { city_id: '444', city_name: 'Surabaya', type: 'Kota', postal_code: '60111' },
+        { city_id: '255', city_name: 'Malang', type: 'Kota', postal_code: '65111' },
+        { city_id: '294', city_name: 'Jember', type: 'Kabupaten', postal_code: '68111' },
+      ],
+      '3': [
+        { city_id: '457', city_name: 'Tangerang', type: 'Kota', postal_code: '15111' },
+        { city_id: '455', city_name: 'Tangerang Selatan', type: 'Kota', postal_code: '15310' },
+        { city_id: '88', city_name: 'Cilegon', type: 'Kota', postal_code: '42411' },
+      ],
+      '5': [
+        { city_id: '501', city_name: 'Yogyakarta', type: 'Kota', postal_code: '55111' },
+        { city_id: '113', city_name: 'Sleman', type: 'Kabupaten', postal_code: '55511' },
+        { city_id: '27', city_name: 'Bantul', type: 'Kabupaten', postal_code: '55711' },
+      ],
+      '1': [
+        { city_id: '114', city_name: 'Denpasar', type: 'Kota', postal_code: '80111' },
+        { city_id: '1', city_name: 'Badung', type: 'Kabupaten', postal_code: '80351' },
+      ],
+      '21': [{ city_id: '318', city_name: 'Medan', type: 'Kota', postal_code: '20111' }],
+      '24': [{ city_id: '404', city_name: 'Palembang', type: 'Kota', postal_code: '30111' }],
+      '28': [{ city_id: '456', city_name: 'Makassar', type: 'Kota', postal_code: '90111' }],
+    };
+    const mockShipping = (cityId: string): number => {
+      if (['23','275'].includes(cityId)) return 9000; // Same city (Bandung / Cimahi)
+      if (['78','115','55','182','272','457','455','88'].includes(cityId)) return 11000; // West Java & Banten
+      if (['151','152','153','154','155'].includes(cityId)) return 15000; // Jakarta / Jabodetabek
+      if (['399','427','177','501','113','27'].includes(cityId)) return 22000; // Central Java & DIY
+      if (['444','255','294'].includes(cityId)) return 28000; // East Java
+      if (['114','1'].includes(cityId)) return 38000; // Bali
+      if (['318','404','456'].includes(cityId)) return 48000; // Sumatra / Sulawesi
+      return 25000;
+    };
+
+    if (url.pathname === '/api/rajaongkir/provinces' && request.method === 'GET') {
+      return new Response(JSON.stringify({ success: true, provinces: PROVINCES }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    if (url.pathname === '/api/rajaongkir/cities' && request.method === 'GET') {
+      const pid = url.searchParams.get('provinceId') || '';
+      return new Response(JSON.stringify({ success: true, cities: CITIES[pid] || [] }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
+    // ── ORDERS API ──
+    if (url.pathname === '/api/orders' && request.method === 'POST') {
+      try {
+        const formData = await request.formData();
+        const photoFile = formData.get('photo') as File | null;
+        const address1Json = formData.get('address1') as string;
+        const address2Json = formData.get('address2') as string;
+        const frameId = formData.get('frameId') as string || '';
+        const sessionMode = formData.get('sessionMode') as string || 'duo';
+        const cityId1 = formData.get('cityId1') as string || '';
+        const cityId2 = sessionMode === 'solo' ? '' : (formData.get('cityId2') as string || '');
+        const qty1Str = formData.get('qty1') as string || '1';
+        const qty2Str = formData.get('qty2') as string || '1';
+        const finishUrl = formData.get('finishUrl') as string || '';
+
+        const qty1 = parseInt(qty1Str, 10) || 1;
+        const qty2 = sessionMode === 'solo' ? 0 : (parseInt(qty2Str, 10) || 1);
+
+        const shippingCost1 = mockShipping(cityId1);
+        const shippingCost2 = sessionMode === 'solo' ? 0 : mockShipping(cityId2);
+
+        const isSolo = sessionMode === 'solo';
+        const BASE_PACKAGE_PRICE = isSolo ? 35000 : 50000;
+
+        // Rp15,000 per extra print
+        const extraQty1 = Math.max(0, qty1 - 1);
+        const extraQty2 = isSolo ? 0 : Math.max(0, qty2 - 1);
+        const extraPrintsCost = (extraQty1 + extraQty2) * 15000;
+
+        const totalBasePrice = BASE_PACKAGE_PRICE + extraPrintsCost;
+        const ADMIN_FEE = 1000;
+        const totalPrice = totalBasePrice + shippingCost1 + shippingCost2 + ADMIN_FEE;
+
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        let photoUrl = '';
+        if (photoFile && photoFile.size > 0) {
+          const photoPath = `orders/${id}.jpg`;
+          await env.BUCKET.put(photoPath, photoFile.stream(), { httpMetadata: { contentType: photoFile.type || 'image/jpeg' } });
+          photoUrl = `/${photoPath}`;
+        }
+
+        // Store qty1 & qty2 inside address structures in D1 to stay backward-compatible without DB migration
+        const parsedAddress1 = JSON.parse(address1Json || '{}');
+        parsedAddress1.qty = qty1;
+
+        let parsedAddress2 = {};
+        if (!isSolo) {
+          parsedAddress2 = JSON.parse(address2Json || '{}');
+          parsedAddress2.qty = qty2;
+        }
+
+        // ── MIDTRANS INTEGRATION ──
+        let snapToken = '';
+        let snapUrl = '';
+        let midtransDebugPayload: any = null;
+        try {
+          const serverKey = env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-BWUE1Wzf_X6lBLEWqGHSpvah';
+          const base64Key = btoa(serverKey + ':');
+          const midtransBody: any = {
+            transaction_details: {
+              order_id: id,
+              gross_amount: totalPrice
+            },
+            credit_card: {
+              secure: true
+            },
+            customer_details: {
+              first_name: parsedAddress1.fullName || 'User LDR',
+              phone: parsedAddress1.phone || '08123456789'
+            }
+          };
+          if (finishUrl) {
+            midtransBody.callbacks = {
+              finish: finishUrl,
+              unfinish: finishUrl,
+              error: finishUrl
+            };
+          }
+          const midtransResp = await fetch('https://app.sandbox.midtrans.com/snap/v1/transactions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': `Basic ${base64Key}`
+            },
+            body: JSON.stringify(midtransBody)
+          });
+          const midtransResult = await midtransResp.json() as any;
+          midtransDebugPayload = midtransResult;
+          if (midtransResult && midtransResult.token) {
+            snapToken = midtransResult.token;
+            snapUrl = midtransResult.redirect_url;
+          } else {
+            console.error('Midtrans failed to return a token. Response payload:', JSON.stringify(midtransResult));
+          }
+        } catch (midtransErr: any) {
+          console.error('Midtrans direct token integration error:', midtransErr?.message || midtransErr);
+          midtransDebugPayload = { error: midtransErr?.message || String(midtransErr) };
+        }
+
+        // If Midtrans Snap token generation failed, reject the order creation
+        if (!snapToken) {
+          const errMsg = midtransDebugPayload?.error_messages?.join(', ') || midtransDebugPayload?.error || 'Gagal membuat transaksi pembayaran dengan Midtrans';
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: `Midtrans Payment Error: ${errMsg}`,
+            midtransDebug: midtransDebugPayload
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+
+        await env.DB.prepare(
+          `INSERT INTO orders (id, photo_url, frame_id, total_price, shipping_cost_1, shipping_cost_2, admin_fee, status, shipping_address_1, shipping_address_2, session_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?)`
+        ).bind(id, photoUrl, frameId, totalPrice, shippingCost1, shippingCost2, ADMIN_FEE, JSON.stringify(parsedAddress1), JSON.stringify(parsedAddress2), sessionMode, now, now).run();
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          orderId: id, 
+          totalPrice, 
+          snapToken,
+          snapUrl,
+          midtransDebug: midtransDebugPayload,
+          pricing: { 
+            basePrice: totalBasePrice, 
+            shippingCost1, 
+            shippingCost2, 
+            adminFee: ADMIN_FEE,
+            qty1,
+            qty2
+          } 
+        }), {
+          status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Create order failed', details: err.message }), {
+          status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    if (url.pathname === '/api/orders' && request.method === 'GET') {
+      try {
+        const statusFilter = url.searchParams.get('status');
+        let query = 'SELECT * FROM orders';
+        const bindings: any[] = [];
+        if (statusFilter) { query += ' WHERE status = ?'; bindings.push(statusFilter); }
+        query += ' ORDER BY created_at DESC';
+        const stmt = env.DB.prepare(query);
+        const { results } = bindings.length > 0 ? await stmt.bind(...bindings).all() : await stmt.all();
+        return new Response(JSON.stringify(results), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'DB error', details: err.message }), {
+          status: 500, headers: { 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    if (url.pathname.match(/^\/api\/orders\/[^/]+$/) && request.method === 'GET') {
+      try {
+        const id = url.pathname.split('/').pop();
+        const order = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+        if (!order) {
+          return new Response(JSON.stringify({ error: 'Order not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+        return new Response(JSON.stringify(order), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Get order failed', details: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    if (url.pathname.match(/^\/api\/orders\/[^/]+$/) && request.method === 'PATCH') {
+      try {
+        const id = url.pathname.split('/').pop();
+        const body = await request.json() as any;
+        const { status } = body;
+        const valid = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'CANCELLED'];
+        if (!valid.includes(status)) {
+          return new Response(JSON.stringify({ error: 'Invalid status' }), { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+        const now = new Date().toISOString();
+        await env.DB.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?').bind(status, now, id).run();
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Update failed', details: err.message }), {
+          status: 500, headers: { 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    // ── MIDTRANS PAYMENT WEBHOOK ──
+    if (url.pathname === '/api/payment-webhook' && request.method === 'POST') {
+      try {
+        const body = await request.json() as any;
+        console.log('Payment webhook received:', body);
+        const orderId = body.order_id;
+        const transactionStatus = body.transaction_status;
+        const fraudStatus = body.fraud_status;
+
+        let status = 'PENDING';
+        if (transactionStatus === 'capture') {
+          if (fraudStatus === 'challenge') {
+            status = 'PENDING';
+          } else if (fraudStatus === 'accept') {
+            status = 'PAID';
+          }
+        } else if (transactionStatus === 'settlement') {
+          status = 'PAID';
+        } else if (['cancel', 'deny', 'expire'].includes(transactionStatus)) {
+          status = 'CANCELLED';
+        } else if (transactionStatus === 'pending') {
+          status = 'PENDING';
+        }
+
+        if (orderId && status !== 'PENDING') {
+          const now = new Date().toISOString();
+          await env.DB.prepare(
+            `UPDATE orders SET status = ?, updated_at = ? WHERE id = ?`
+          ).bind(status, now, orderId).run();
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Webhook processing failed', details: err.message }), {
+          status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
+    // 3. Serve images from R2 (Support /frames/, /posts/, /frame-templates/, /orders/)
+    if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/') || url.pathname.startsWith('/frame-templates/') || url.pathname.startsWith('/orders/')) {
       const filename = url.pathname.slice(1);
       const object = await env.BUCKET.get(filename);
       if (!object) {

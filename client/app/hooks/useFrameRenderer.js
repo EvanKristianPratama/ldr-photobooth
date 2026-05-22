@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { FRAME_CANVAS } from '../constants/layout';
 import { SHAPE_PATHS } from '../utils/shapes';
+import { saveSessionToIndexedDb } from '../utils/indexedDb';
 
 
 export function useFrameRenderer({
@@ -24,6 +25,12 @@ export function useFrameRenderer({
   useEffect(() => {
     mergeCacheRef.current.clear();
   }, [sessionSeed]);
+
+  useEffect(() => {
+    if (mergedImage) {
+      saveSessionToIndexedDb({ mergedImage });
+    }
+  }, [mergedImage]);
 
   const getAutoLocationString = useCallback((id, locationsById) => {
     const loc = locationsById[id];
@@ -123,15 +130,21 @@ export function useFrameRenderer({
       // ═══ TEMPLATE MODE: Render using CMS template slots ═══
       if (activeTemplate && activeTemplate.slots && activeTemplate.slots.length > 0) {
         const tpl = activeTemplate;
-        const tplSlots = [...tpl.slots].sort((a, b) => a.zIndex - b.zIndex);
         const canvas = document.createElement('canvas');
         canvas.width = tpl.canvas_width;
         canvas.height = tpl.canvas_height;
         const ctx = canvas.getContext('2d');
 
-        // Background
-        ctx.fillStyle = tpl.background_color || frameColor || '#1a1a2e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Extract metadata and active decorations
+        let loadedDecos = tpl.decorations || [];
+        let backgroundZIndex = 10;
+        let overlayZIndex = 90;
+        const metaBlock = loadedDecos.find(d => d.id === 'meta-zindexes');
+        if (metaBlock) {
+          backgroundZIndex = metaBlock.backgroundZIndex ?? 10;
+          overlayZIndex = metaBlock.overlayZIndex ?? 90;
+          loadedDecos = loadedDecos.filter(d => d.id !== 'meta-zindexes');
+        }
 
         // Collect all available blobs (flatten local + remote by participant)
         const sorted = [...participants].sort((a, b) => a.id.localeCompare(b.id));
@@ -157,152 +170,185 @@ export function useFrameRenderer({
           }
         }
 
-        // Draw photos into template slots
-        for (let si = 0; si < tplSlots.length; si++) {
-          const slot = tplSlots[si];
+        // Gather all unified renderable layers
+        const renderLayers = [];
+
+        // 1. Solid Background
+        renderLayers.push({
+          type: 'background',
+          zIndex: backgroundZIndex,
+          draw: async () => {
+            ctx.fillStyle = tpl.background_color || frameColor || '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+        });
+
+        // 2. Slots (Photos)
+        tpl.slots.forEach((slot, si) => {
           const blob = allBlobs[si];
-          if (!blob) continue;
-
-          const img = await blobToImage(blob);
-          ctx.save();
-          if (slot.rotation) {
-            ctx.translate(slot.x + slot.width / 2, slot.y + slot.height / 2);
-            ctx.rotate((slot.rotation * Math.PI) / 180);
-            ctx.translate(-(slot.x + slot.width / 2), -(slot.y + slot.height / 2));
-          }
-          // Draw shape path to clip the image
-          const shape = slot.shape || 'rect';
-
-          if (shape === 'oval') {
-            ctx.beginPath();
-            ctx.ellipse(slot.x + slot.width / 2, slot.y + slot.height / 2, slot.width / 2, slot.height / 2, 0, 0, 2 * Math.PI);
-            ctx.clip();
-          } else if (SHAPE_PATHS[shape]) {
-            const p = new Path2D(SHAPE_PATHS[shape]);
-            ctx.save();
-            ctx.translate(slot.x, slot.y);
-            ctx.scale(slot.width / 100, slot.height / 100);
-            ctx.clip(p);
-            // Since we scaled the context, we must draw the image in this scaled space.
-            // But we already have a translation for the whole slot (if rotated).
-            // Actually, it's easier to just clip, and then restore to draw the image normally.
-            // Oh wait! We can't restore because that removes the clip.
-            // We can draw the image while scaled!
-            const imgRatio = img.width / img.height;
-            const targetRatio = slot.width / slot.height;
-            let sw, sh, sx, sy;
-            if (imgRatio > targetRatio) {
-              sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
-            } else {
-              sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
-            }
-            // Draw image filling the 0-100 local space
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 100, 100);
-            ctx.restore(); // Restore scale AND clip
-            ctx.restore(); // Restore rotation
-            continue; // Skip the rest since we already drew it
-          } else if (shape === 'rounded' || (shape === 'rect' && slot.borderRadius)) {
-            ctx.beginPath();
-            ctx.roundRect(slot.x, slot.y, slot.width, slot.height, slot.borderRadius || 24);
-            ctx.clip();
-          } else {
-            ctx.beginPath();
-            ctx.rect(slot.x, slot.y, slot.width, slot.height);
-            ctx.clip();
-          }
-          // drawCroppedImage inline
-          const imgRatio = img.width / img.height;
-          const targetRatio = slot.width / slot.height;
-          let sw, sh, sx, sy;
-          if (imgRatio > targetRatio) {
-            sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
-          } else {
-            sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
-          }
-          ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
-
-          // Apply photo filter
-          if (photoFilter !== 'none') {
-            try {
-              const imgData = ctx.getImageData(slot.x, slot.y, slot.width, slot.height);
-              const data = imgData.data;
-              const len = data.length;
-              if (photoFilter === 'bw') {
-                for (let i = 0; i < len; i += 4) {
-                  const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                  data[i] = gray; data[i + 1] = gray; data[i + 2] = gray;
-                }
-              } else if (photoFilter === 'sepia') {
-                for (let i = 0; i < len; i += 4) {
-                  const r = data[i], g = data[i + 1], b = data[i + 2];
-                  data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
-                  data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
-                  data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
-                }
+          renderLayers.push({
+            type: 'slot',
+            zIndex: slot.zIndex ?? 20,
+            draw: async () => {
+              if (!blob) return;
+              const img = await blobToImage(blob);
+              ctx.save();
+              if (slot.rotation) {
+                ctx.translate(slot.x + slot.width / 2, slot.y + slot.height / 2);
+                ctx.rotate((slot.rotation * Math.PI) / 180);
+                ctx.translate(-(slot.x + slot.width / 2), -(slot.y + slot.height / 2));
               }
-              ctx.putImageData(imgData, slot.x, slot.y);
-            } catch (e) { /* filter failed */ }
-          }
-          ctx.restore();
-        }
+              
+              const shape = slot.shape || 'rect';
+              if (shape === 'oval') {
+                ctx.beginPath();
+                ctx.ellipse(slot.x + slot.width / 2, slot.y + slot.height / 2, slot.width / 2, slot.height / 2, 0, 0, 2 * Math.PI);
+                ctx.clip();
+              } else if (SHAPE_PATHS[shape]) {
+                const p = new Path2D(SHAPE_PATHS[shape]);
+                ctx.save();
+                ctx.translate(slot.x, slot.y);
+                ctx.scale(slot.width / 100, slot.height / 100);
+                ctx.clip(p);
+                const imgRatio = img.width / img.height;
+                const targetRatio = slot.width / slot.height;
+                let sw, sh, sx, sy;
+                if (imgRatio > targetRatio) {
+                  sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
+                } else {
+                  sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
+                }
+                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 100, 100);
+                ctx.restore();
+                ctx.restore();
+                return;
+              } else if (shape === 'rounded' || (shape === 'rect' && slot.borderRadius)) {
+                ctx.beginPath();
+                ctx.roundRect(slot.x, slot.y, slot.width, slot.height, slot.borderRadius || 24);
+                ctx.clip();
+              } else {
+                ctx.beginPath();
+                ctx.rect(slot.x, slot.y, slot.width, slot.height);
+                ctx.clip();
+              }
 
-        // Draw overlay if exists
+              const imgRatio = img.width / img.height;
+              const targetRatio = slot.width / slot.height;
+              let sw, sh, sx, sy;
+              if (imgRatio > targetRatio) {
+                sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
+              } else {
+                sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
+              }
+              ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
+
+              if (photoFilter !== 'none') {
+                try {
+                  const imgData = ctx.getImageData(slot.x, slot.y, slot.width, slot.height);
+                  const data = imgData.data;
+                  const len = data.length;
+                  if (photoFilter === 'bw') {
+                    for (let i = 0; i < len; i += 4) {
+                      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                      data[i] = gray; data[i + 1] = gray; data[i + 2] = gray;
+                    }
+                  } else if (photoFilter === 'sepia') {
+                    for (let i = 0; i < len; i += 4) {
+                      const r = data[i], g = data[i + 1], b = data[i + 2];
+                      data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+                      data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+                      data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+                    }
+                  }
+                  ctx.putImageData(imgData, slot.x, slot.y);
+                } catch (e) { /* filter failed */ }
+              }
+              ctx.restore();
+            }
+          });
+        });
+
+        // 3. Overlay Frame (PNG)
         if (tpl.overlay_url) {
-          const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
-          let overlayUrl = tpl.overlay_url;
-          if (!overlayUrl.startsWith('http')) {
-            overlayUrl = `${API_BASE.replace(/\/$/, '')}${overlayUrl.startsWith('/') ? overlayUrl : '/' + overlayUrl}`;
-          }
-          const overlayImg = await loadImage(overlayUrl);
-          if (overlayImg) ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+          renderLayers.push({
+            type: 'overlay',
+            zIndex: overlayZIndex,
+            draw: async () => {
+              const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
+              let overlayUrl = tpl.overlay_url;
+              if (!overlayUrl.startsWith('http')) {
+                overlayUrl = `${API_BASE.replace(/\/$/, '')}${overlayUrl.startsWith('/') ? overlayUrl : '/' + overlayUrl}`;
+              }
+              const overlayImg = await loadImage(overlayUrl);
+              if (overlayImg) ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+            }
+          });
         }
 
-        // Draw text elements from template
+        // 4. Texts
         const tplTexts = tpl.text_elements || [];
-        for (const te of tplTexts) {
-          ctx.save();
-          ctx.fillStyle = te.color || '#ffffff';
-          ctx.font = `700 ${te.fontSize || 32}px ${te.fontFamily || frameFont}`;
-          ctx.textAlign = te.textAlign || 'center';
-          ctx.textBaseline = 'middle';
+        tplTexts.forEach(te => {
+          renderLayers.push({
+            type: 'text',
+            zIndex: te.zIndex ?? 100,
+            draw: async () => {
+              ctx.save();
+              ctx.fillStyle = te.color || '#ffffff';
+              ctx.font = `700 ${te.fontSize || 32}px ${te.fontFamily || frameFont}`;
+              ctx.textAlign = te.textAlign || 'center';
+              ctx.textBaseline = 'middle';
 
-          let content = te.content || '';
-          content = content.replace('{{name}}', locTextLeft || sorted[0]?.displayName || '');
-          content = content.replace('{{date}}', frameDate);
-          content = content.replace('{{location}}', locTextLeft || '');
+              let content = te.content || '';
+              content = content.replace('{{name}}', locTextLeft || sorted[0]?.displayName || '');
+              content = content.replace('{{date}}', frameDate);
+              content = content.replace('{{location}}', locTextLeft || '');
 
-          const textY = te.y >= 0 ? te.y : canvas.height + te.y;
-          ctx.fillText(content, te.x, textY);
-          ctx.restore();
+              const textY = te.y >= 0 ? te.y : canvas.height + te.y;
+              ctx.fillText(content, te.x, textY);
+              ctx.restore();
+            }
+          });
+        });
+
+        // 5. Decorations (Stickers)
+        loadedDecos.forEach(deco => {
+          if (!deco.src) return;
+          renderLayers.push({
+            type: 'deco',
+            zIndex: deco.zIndex ?? 110,
+            draw: async () => {
+              ctx.save();
+              const centerX = deco.x + deco.width / 2;
+              const centerY = deco.y + deco.height / 2;
+              ctx.translate(centerX, centerY);
+              
+              if (deco.rotation) ctx.rotate((deco.rotation * Math.PI) / 180);
+              if (deco.opacity !== undefined) ctx.globalAlpha = deco.opacity;
+              
+              let decoUrl = deco.src;
+              if (decoUrl && !decoUrl.startsWith('http') && !decoUrl.startsWith('data:')) {
+                const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
+                decoUrl = `${API_BASE.replace(/\/$/, '')}${decoUrl.startsWith('/') ? decoUrl : '/' + decoUrl}`;
+              }
+              
+              const decoImg = await loadImage(decoUrl);
+              if (decoImg) {
+                ctx.drawImage(decoImg, -deco.width / 2, -deco.height / 2, deco.width, deco.height);
+              }
+              ctx.restore();
+            }
+          });
+        });
+
+        // Sort all layers ascending by zIndex
+        renderLayers.sort((a, b) => a.zIndex - b.zIndex);
+
+        // Draw sequentially in ascending z-index order
+        for (const layer of renderLayers) {
+          await layer.draw();
         }
 
-        // Draw decorations from template
-        const tplDecos = tpl.decorations || [];
-        for (const deco of tplDecos) {
-          if (!deco.src) continue;
-          ctx.save();
-          
-          const centerX = deco.x + deco.width / 2;
-          const centerY = deco.y + deco.height / 2;
-          ctx.translate(centerX, centerY);
-          
-          if (deco.rotation) ctx.rotate((deco.rotation * Math.PI) / 180);
-          if (deco.opacity !== undefined) ctx.globalAlpha = deco.opacity;
-          
-          let decoUrl = deco.src;
-          if (decoUrl && !decoUrl.startsWith('http') && !decoUrl.startsWith('data:')) {
-            const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
-            decoUrl = `${API_BASE.replace(/\/$/, '')}${decoUrl.startsWith('/') ? decoUrl : '/' + decoUrl}`;
-          }
-          
-          const decoImg = await loadImage(decoUrl);
-          if (decoImg) {
-            ctx.drawImage(decoImg, -deco.width / 2, -deco.height / 2, deco.width, deco.height);
-          }
-          ctx.restore();
-        }
-
-        // Stickers
+        // Draw dynamic session stickers (always drawn last on top of everything)
         stickers.forEach(s => {
           ctx.save();
           ctx.translate(s.x * canvas.width, s.y * canvas.height);

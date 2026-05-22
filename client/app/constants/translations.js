@@ -17,6 +17,11 @@ export const TRANSLATIONS = {
     'common.waiting': 'Waiting...',
     'common.error': 'Error',
     'common.success': 'Success!',
+    'action.retake': 'Retake All',
+    'action.done': 'Done',
+    'capture.niceShots': '✨ Nice Shots! ✨',
+    'capture.selectedPhoto': 'You selected Photo #{num}.',
+    'capture.useOrRetake': 'Would you like to use these or retake?',
 
     // Mode Selection
     'mode.howMany': 'How many',
@@ -86,6 +91,16 @@ export const TRANSLATIONS = {
     'result.editAgain': 'Edit Again ↺',
     'result.donate': 'Donate ♥',
     'result.webShareError': 'Web Share is not supported in this browser. Please download and share manually! ✌️',
+    'result.print': '🖨️ Print Photo',
+    'result.printing': 'Printing your photo strip...',
+    'result.printSuccess': 'Printed successfully! 🖨️✨',
+    'result.printFailed': 'Print failed, please try again!',
+    'result.format.story': 'Download as Story',
+    'result.format.4r': 'Download as 4R',
+    'result.format.strip': 'Download Standard Strip',
+    'result.format.duoStrip': 'Download 2R Duo Strip',
+    'result.format.gif': 'Download Animated GIF',
+    'result.format.generating': 'Generating...',
 
     // Community Modal
     'community.shareTo': 'Share to',
@@ -162,6 +177,11 @@ export const TRANSLATIONS = {
     'common.waiting': 'Menunggu...',
     'common.error': 'Error',
     'common.success': 'Berhasil!',
+    'action.retake': 'Ulangi Semua',
+    'action.done': 'Selesai',
+    'capture.niceShots': '✨ Keren Banget! ✨',
+    'capture.selectedPhoto': 'Kamu memilih Foto #{num}.',
+    'capture.useOrRetake': 'Mau pakai foto-foto ini atau foto ulang?',
 
     // Mode Selection
     'mode.howMany': 'Berapa',
@@ -231,6 +251,16 @@ export const TRANSLATIONS = {
     'result.editAgain': 'Edit Lagi ↺',
     'result.donate': 'Donasi ♥',
     'result.webShareError': 'Web Share tidak didukung di browser ini. Silakan unduh dan bagikan secara manual! ✌️',
+    'result.print': '🖨️ Cetak Foto',
+    'result.printing': 'Sedang mencetak foto strip...',
+    'result.printSuccess': 'Cetak berhasil! 🖨️✨',
+    'result.printFailed': 'Cetak gagal, silakan coba lagi!',
+    'result.format.story': 'Unduh sebagai Story',
+    'result.format.4r': 'Unduh sebagai 4R',
+    'result.format.strip': 'Unduh Standard Strip',
+    'result.format.duoStrip': 'Unduh 2R Duo Strip',
+    'result.format.gif': 'Unduh GIF Animasi',
+    'result.format.generating': 'Sedang memproses...',
 
     // Community Modal
     'community.shareTo': 'Bagikan ke',
@@ -307,6 +337,11 @@ export const TRANSLATIONS = {
     'common.waiting': '대기 중...',
     'common.error': '오류',
     'common.success': '성공!',
+    'action.retake': '모두 재촬영',
+    'action.done': '완료',
+    'capture.niceShots': '✨ 멋진 사진이네요! ✨',
+    'capture.selectedPhoto': '#{num}번 사진을 선택하셨습니다.',
+    'capture.useOrRetake': '이 사진들을 사용할까요, 아니면 다시 찍을까요?',
 
     // Mode Selection
     'mode.howMany': '몇 명에서',
@@ -376,6 +411,16 @@ export const TRANSLATIONS = {
     'result.editAgain': '다시 편집하기 ↺',
     'result.donate': '기부하기 ♥',
     'result.webShareError': '이 브라우저에서는 웹 공유가 지원되지 않습니다. 직접 다운로드하여 공유해주세요! ✌️',
+    'result.print': '🖨️ 사진 인쇄',
+    'result.printing': '사진을 인쇄하는 중...',
+    'result.printSuccess': '인쇄 성공! 🖨️✨',
+    'result.printFailed': '인쇄 실패, 다시 시도해주세요!',
+    'result.format.story': '스토리로 다운로드',
+    'result.format.4r': '4R로 다운로드',
+    'result.format.strip': '기본 스트립 다운로드',
+    'result.format.duoStrip': '2R 듀오 스트립 다운로드',
+    'result.format.gif': '움직이는 GIF 다운로드',
+    'result.format.generating': '생성 중...',
 
     // Community Modal
     'community.shareTo': '공유 대상',
@@ -452,6 +497,11 @@ export const TRANSLATIONS = {
     'common.waiting': '待機中...',
     'common.error': 'エラー',
     'common.success': '成功！',
+    'action.retake': 'すべて撮り直し',
+    'action.done': '完了',
+    'capture.niceShots': '✨ いい感じ！ ✨',
+    'capture.selectedPhoto': '#{num}枚目の写真を選択しました。',
+    'capture.useOrRetake': 'この写真を使いますか？それとも撮り直しますか？',
 
     // Mode Selection
     'mode.howMany': '何人で',
@@ -521,6 +571,16 @@ export const TRANSLATIONS = {
     'result.editAgain': 'もう一度編集する ↺',
     'result.donate': '寄付する ♥',
     'result.webShareError': 'このブラウザはウェブ共有をサポートしていません。保存してから手動で共有してください！ ✌️',
+    'result.print': '🖨️ 写真を印刷',
+    'result.printing': '写真を印刷中...',
+    'result.printSuccess': '印刷が完了しました！ 🖨️✨',
+    'result.printFailed': '印刷に失敗しました。再試行してください。',
+    'result.format.story': 'ストーリーとして保存',
+    'result.format.4r': '4Rとして保存',
+    'result.format.strip': 'スタンダードストリップを保存',
+    'result.format.duoStrip': '2Rデュオストリップを保存',
+    'result.format.gif': 'GIFアニメーションを保存',
+    'result.format.generating': '作成中...',
 
     // Community Modal
     'community.shareTo': 'シェア先',

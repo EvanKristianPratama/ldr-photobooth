@@ -164,7 +164,7 @@ export default function useFrame({ participants, locationsById = {} }) {
     locTextRight, setLocTextRight,
     setLocTextEdited,
     photoFilter, setPhotoFilter,
-    mergedImage,
+    mergedImage, setMergedImage,
     isMerging,
     mergePhotos,
     handleFrameUpload,

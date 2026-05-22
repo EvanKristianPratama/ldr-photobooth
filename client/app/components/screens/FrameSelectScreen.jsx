@@ -425,6 +425,21 @@ export default function FrameSelectScreen({
             <div className="ctrl-label">
               {sessionMode === 'solo' ? t('frame.customName') : t('frame.locations')}
             </div>
+            {sessionMode === 'solo' && !locTextLeft.trim() && (
+              <div style={{
+                background: 'rgba(255, 107, 157, 0.1)',
+                border: '2px solid #ff6b9d',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '12px',
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: '14px',
+                color: '#1a1a2e',
+                fontWeight: '600'
+              }}>
+                ⓘ Silakan isi nama Anda agar ditampilkan di frame
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <LocationInput

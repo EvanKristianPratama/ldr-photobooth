@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import FrameCanvas from './components/FrameCanvas';
 import SlotEditor from './components/SlotEditor';
 import TextElementEditor from './components/TextElementEditor';
 import DecorationEditor from './components/DecorationEditor';
 import ToolBar from './components/ToolBar';
 import FrameList from './components/FrameList';
+import LayerList from './components/LayerList';
+import { UndoIcon, RedoIcon, ArrowLeftIcon } from './components/icons';
 import './cms-frames.css';
 
 const API_BASE = typeof window !== 'undefined'
@@ -17,57 +20,39 @@ const DEFAULT_CANVAS = { width: 580, height: 1740 };
 const MAX_HISTORY = 50;
 const MAX_SLOTS = 4;
 
+// ── Factory Functions ──
+
 function createSlot(index, canvasW, canvasH, frameMode = 'solo', existingSlots = []) {
   let slotW, slotH, x, y;
 
-  if (existingSlots && existingSlots.length > 0) {
-    // Copy the last slot's dimensions and cascade slightly
+  if (existingSlots?.length > 0) {
     const last = existingSlots[existingSlots.length - 1];
     slotW = last.width;
     slotH = last.height;
-    x = last.x + 40;
-    y = last.y + 40;
-    // Prevent it from going completely off screen
-    if (x + slotW > canvasW) x = canvasW - slotW;
-    if (y + slotH > canvasH) y = canvasH - slotH;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
+    x = Math.min(canvasW - slotW, Math.max(0, last.x + 40));
+    y = Math.min(canvasH - slotH, Math.max(0, last.y + 40));
   } else {
-    // Default strip layout calculation for the first slot
     slotW = Math.round(canvasW * 0.86);
     slotH = Math.round(slotW * 1.5);
-    
-    // If it's a wide canvas (landscape), don't make it insanely tall
     if (slotH > canvasH * 0.8) {
       slotH = Math.round(canvasH * 0.8);
       slotW = Math.round(slotH / 1.5);
     }
-
     x = Math.round((canvasW - slotW) / 2);
-    const gap = 40;
-    const headerH = 150;
+    const gap = 40, headerH = 150;
     y = headerH + gap + index * (slotH + gap);
-    
-    // If y is off canvas, just center it
-    if (y + slotH > canvasH) {
-      y = Math.round((canvasH - slotH) / 2);
-    }
+    if (y + slotH > canvasH) y = Math.round((canvasH - slotH) / 2);
   }
 
-  // In duo mode, auto-alternate owners: even=userA, odd=userB
   const owner = frameMode === 'duo' ? (index % 2 === 0 ? 'userA' : 'userB') : 'any';
   
   return {
     id: `slot-${Date.now()}-${index}`,
-    x, y,
-    width: slotW,
-    height: slotH,
-    rotation: 0,
-    zIndex: index + 1,
-    borderRadius: 0,
+    x, y, width: slotW, height: slotH,
+    rotation: 0, zIndex: index + 1, borderRadius: 0,
     label: `Photo ${index + 1}`,
     aspectRatioLocked: false,
-    owner // 'userA' | 'userB' | 'any'
+    owner,
   };
 }
 
@@ -85,32 +70,85 @@ function createTextElement(index, canvasW, canvasH) {
   };
 }
 
-const defaultTextElements = [
+const DEFAULT_TEXT_ELEMENTS = [
   {
-    id: 'text-header',
-    type: 'name',
-    x: 290, y: 70,
-    fontSize: 36,
+    id: 'text-header', type: 'name',
+    x: 290, y: 70, fontSize: 36,
     fontFamily: "'Quicksand', sans-serif",
-    color: '#ffffff',
-    textAlign: 'center',
-    content: '{{name}}'
+    color: '#ffffff', textAlign: 'center', content: '{{name}}'
   },
   {
-    id: 'text-date',
-    type: 'date',
-    x: 290, y: -80,
-    fontSize: 28,
+    id: 'text-date', type: 'date',
+    x: 290, y: -80, fontSize: 28,
     fontFamily: "'Quicksand', sans-serif",
-    color: '#ffffff',
-    textAlign: 'center',
-    content: '{{date}}'
+    color: '#ffffff', textAlign: 'center', content: '{{date}}'
   }
 ];
 
+// ── Thumbnail Capture via html2canvas ──
+
+async function captureCanvasThumb(canvasRef) {
+  const el = canvasRef?.current?.getCanvasElement?.();
+  if (!el) return null;
+  try {
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      scale: 0.5, // downscale for smaller thumbnail
+    });
+    return new Promise(resolve => {
+      canvas.toBlob(blob => resolve(blob || null), 'image/png');
+    });
+  } catch (err) {
+    console.error('Thumbnail capture error:', err);
+    return null;
+  }
+}
+
+// ── Z-Index Normalization for Unified Stacking ──
+function normalizeZIndexes(slots, texts, decos, bgZ = null, overlayZ = null) {
+  const sortedSlots = [...slots].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+  const sortedDecos = [...decos]
+    .filter(d => d.id !== 'meta-zindexes')
+    .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+  const sortedTexts = [...texts].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+  let items = [];
+  items.push({ type: 'background', ref: null, currentZ: bgZ ?? 10 });
+  sortedSlots.forEach(s => items.push({ type: 'slot', ref: s, currentZ: s.zIndex ?? 20 }));
+  items.push({ type: 'overlay', ref: null, currentZ: overlayZ ?? 90 });
+  sortedTexts.forEach(t => items.push({ type: 'text', ref: t, currentZ: t.zIndex ?? 100 }));
+  sortedDecos.forEach(d => items.push({ type: 'deco', ref: d, currentZ: d.zIndex ?? 110 }));
+
+  items.sort((a, b) => a.currentZ - b.currentZ);
+
+  let finalBgZ = 10;
+  let finalOverlayZ = 90;
+
+  items.forEach((item, idx) => {
+    const newZ = (idx + 1) * 10;
+    if (item.type === 'slot') item.ref.zIndex = newZ;
+    else if (item.type === 'text') item.ref.zIndex = newZ;
+    else if (item.type === 'deco') item.ref.zIndex = newZ;
+    else if (item.type === 'background') finalBgZ = newZ;
+    else if (item.type === 'overlay') finalOverlayZ = newZ;
+  });
+
+  return {
+    slots: sortedSlots,
+    texts: sortedTexts,
+    decos: sortedDecos,
+    backgroundZIndex: finalBgZ,
+    overlayZIndex: finalOverlayZ
+  };
+}
+
+// ── Main Component ──
+
 export default function CmsFramesPage() {
   // View state
-  const [view, setView] = useState('list'); // 'list' | 'editor'
+  const [view, setView] = useState('list');
   const [editingId, setEditingId] = useState(null);
 
   // Template list
@@ -124,22 +162,29 @@ export default function CmsFramesPage() {
   const [canvasHeight, setCanvasHeight] = useState(DEFAULT_CANVAS.height);
   const [orientation, setOrientation] = useState('portrait');
   const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
-  const [frameMode, setFrameMode] = useState('solo'); // 'solo' | 'duo'
+  const [backgroundZIndex, setBackgroundZIndex] = useState(10);
+  const [overlayZIndex, setOverlayZIndex] = useState(90);
+  const [frameMode, setFrameMode] = useState('solo');
   const [slots, setSlots] = useState([]);
-  const [textElements, setTextElements] = useState(defaultTextElements);
+  const [textElements, setTextElements] = useState(DEFAULT_TEXT_ELEMENTS);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [overlayFile, setOverlayFile] = useState(null);
   const [overlayPreview, setOverlayPreview] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
+  const [category, setCategory] = useState('klasik');
+  const [showDummy, setShowDummy] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [zoom, setZoom] = useState(0.45);
   const [snapEnabled, setSnapEnabled] = useState(true);
 
-  // Decoration stickers (individual draggable images)
+  // Decorations
   const [decorations, setDecorations] = useState([]);
   const [selectedDecoId, setSelectedDecoId] = useState(null);
+
+  // Canvas ref for thumbnail capture
+  const canvasRef = useRef(null);
 
   // ── UNDO / REDO ──
   const historyRef = useRef([]);
@@ -150,14 +195,14 @@ export default function CmsFramesPage() {
     slots: JSON.parse(JSON.stringify(slots)),
     textElements: JSON.parse(JSON.stringify(textElements)),
     decorations: JSON.parse(JSON.stringify(decorations)),
-  }), [slots, textElements, decorations]);
+    backgroundZIndex,
+    overlayZIndex,
+  }), [slots, textElements, decorations, backgroundZIndex, overlayZIndex]);
 
   const pushHistory = useCallback(() => {
     if (skipHistoryRef.current) return;
     const snap = getEditorSnapshot();
-    const idx = historyIdxRef.current;
-    // Truncate future states
-    historyRef.current = historyRef.current.slice(0, idx + 1);
+    historyRef.current = historyRef.current.slice(0, historyIdxRef.current + 1);
     historyRef.current.push(snap);
     if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift();
     historyIdxRef.current = historyRef.current.length - 1;
@@ -168,29 +213,26 @@ export default function CmsFramesPage() {
     setSlots(snap.slots);
     setTextElements(snap.textElements);
     setDecorations(snap.decorations || []);
+    setBackgroundZIndex(snap.backgroundZIndex ?? 10);
+    setOverlayZIndex(snap.overlayZIndex ?? 90);
     setTimeout(() => { skipHistoryRef.current = false; }, 0);
   }, []);
 
   const handleUndo = useCallback(() => {
-    const idx = historyIdxRef.current;
-    if (idx <= 0) return;
-    historyIdxRef.current = idx - 1;
-    applySnapshot(historyRef.current[idx - 1]);
+    if (historyIdxRef.current <= 0) return;
+    historyIdxRef.current -= 1;
+    applySnapshot(historyRef.current[historyIdxRef.current]);
   }, [applySnapshot]);
 
   const handleRedo = useCallback(() => {
-    const idx = historyIdxRef.current;
-    if (idx >= historyRef.current.length - 1) return;
-    historyIdxRef.current = idx + 1;
-    applySnapshot(historyRef.current[idx + 1]);
+    if (historyIdxRef.current >= historyRef.current.length - 1) return;
+    historyIdxRef.current += 1;
+    applySnapshot(historyRef.current[historyIdxRef.current]);
   }, [applySnapshot]);
 
-  // Push history on meaningful state changes (debounced via mouseup)
-  const handleDragEnd = useCallback(() => {
-    pushHistory();
-  }, [pushHistory]);
+  const handleDragEnd = useCallback(() => { pushHistory(); }, [pushHistory]);
 
-  // Keyboard shortcuts
+  // ── Keyboard Shortcuts ──
   useEffect(() => {
     const onKey = (e) => {
       if (view !== 'editor') return;
@@ -202,16 +244,13 @@ export default function CmsFramesPage() {
         if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
         if (selectedSlotId) {
           setSlots(prev => prev.filter(s => s.id !== selectedSlotId));
-          setSelectedSlotId(null);
-          pushHistory();
+          setSelectedSlotId(null); pushHistory();
         } else if (selectedTextId) {
           setTextElements(prev => prev.filter(t => t.id !== selectedTextId));
-          setSelectedTextId(null);
-          pushHistory();
+          setSelectedTextId(null); pushHistory();
         } else if (selectedDecoId) {
           setDecorations(prev => prev.filter(d => d.id !== selectedDecoId));
-          setSelectedDecoId(null);
-          pushHistory();
+          setSelectedDecoId(null); pushHistory();
         }
       }
     };
@@ -219,7 +258,7 @@ export default function CmsFramesPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [view, selectedSlotId, selectedTextId, selectedDecoId, handleUndo, handleRedo, pushHistory]);
 
-  // Fetch templates
+  // ── Fetch Templates ──
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
     try {
@@ -259,56 +298,100 @@ export default function CmsFramesPage() {
     setSelectedDecoId(null);
   }, []);
 
+  // ── Generic Layer Update Dispatch ──
+  const getLayerUpdater = useCallback((type) => {
+    if (type === 'slot') return (id, updates) => setSlots(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    if (type === 'text') return (id, updates) => setTextElements(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    if (type === 'deco') return (id, updates) => setDecorations(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d));
+    return () => {};
+  }, []);
+
+  const handleUpdateSlot = useCallback((slotId, updates) => {
+    setSlots(prev => prev.map(s => s.id === slotId ? { ...s, ...updates } : s));
+  }, []);
+
+  const handleUpdateText = useCallback((textId, updates) => {
+    setTextElements(prev => prev.map(t => t.id === textId ? { ...t, ...updates } : t));
+  }, []);
+
+  const handleUpdateDeco = useCallback((decoId, updates) => {
+    setDecorations(prev => prev.map(d => d.id === decoId ? { ...d, ...updates } : d));
+  }, []);
+
   // ── Create / Edit / Delete Template ──
+  const initHistory = (initSlots, initTexts, initDecos = [], initBgZ = 10, initOverlayZ = 90) => {
+    historyRef.current = [{
+      slots: initSlots,
+      textElements: initTexts,
+      decorations: initDecos,
+      backgroundZIndex: initBgZ,
+      overlayZIndex: initOverlayZ
+    }];
+    historyIdxRef.current = 0;
+  };
+
   const handleNew = () => {
     setEditingId(null);
-    setTemplateName('');
-    setAuthor('Admin');
-    setCanvasWidth(DEFAULT_CANVAS.width);
-    setCanvasHeight(DEFAULT_CANVAS.height);
-    setOrientation('portrait');
-    setBackgroundColor('#1a1a2e');
-    setFrameMode('solo');
+    setTemplateName(''); setAuthor('Admin');
+    setCanvasWidth(DEFAULT_CANVAS.width); setCanvasHeight(DEFAULT_CANVAS.height);
+    setOrientation('portrait'); setBackgroundColor('#1a1a2e'); setFrameMode('solo');
     const initSlots = [createSlot(0, DEFAULT_CANVAS.width, DEFAULT_CANVAS.height, 'solo')];
-    setSlots(initSlots);
-    setTextElements([...defaultTextElements]);
-    setDecorations([]);
-    setSelectedSlotId(null);
-    setSelectedTextId(null);
-    setSelectedDecoId(null);
-    setOverlayFile(null);
-    setOverlayPreview(null);
-    setIsPublished(false);
-    setSaveMsg('');
+    const initTexts = [...DEFAULT_TEXT_ELEMENTS];
+    
+    // Normalize z-indexes for fresh canvas
+    const normalized = normalizeZIndexes(initSlots, initTexts, [], 10, 90);
+    setSlots(normalized.slots);
+    setTextElements(normalized.texts);
+    setDecorations(normalized.decos);
+    setBackgroundZIndex(normalized.backgroundZIndex);
+    setOverlayZIndex(normalized.overlayZIndex);
+
+    handleDeselectAll();
+    setOverlayFile(null); setOverlayPreview(null);
+    setIsPublished(false); setCategory('klasik');
+    setShowDummy(true); setSaveMsg('');
     setView('editor');
-    // Init history
-    historyRef.current = [{ slots: initSlots, textElements: [...defaultTextElements], decorations: [] }];
-    historyIdxRef.current = 0;
+    initHistory(normalized.slots, normalized.texts, normalized.decos, normalized.backgroundZIndex, normalized.overlayZIndex);
   };
 
   const handleEdit = (template) => {
     setEditingId(template.id);
-    setTemplateName(template.name);
-    setAuthor(template.author);
-    setCanvasWidth(template.canvas_width);
-    setCanvasHeight(template.canvas_height);
+    setTemplateName(template.name); setAuthor(template.author);
+    setCanvasWidth(template.canvas_width); setCanvasHeight(template.canvas_height);
     setOrientation(template.orientation || 'portrait');
     setBackgroundColor(template.background_color || '#1a1a2e');
     setFrameMode(template.frame_mode || 'solo');
+    
     const loadedSlots = (template.slots || []).map(s => ({ ...s, aspectRatioLocked: s.aspectRatioLocked || false, owner: s.owner || 'any' }));
-    setSlots(loadedSlots);
-    setTextElements(template.text_elements || []);
-    setDecorations(template.decorations || []);
-    setSelectedSlotId(null);
-    setSelectedTextId(null);
-    setSelectedDecoId(null);
+    const loadedTexts = template.text_elements || [];
+    let loadedDecos = template.decorations || [];
+    
+    // Parse meta-zindexes metadata block
+    let bgZ = 10;
+    let overlayZ = 90;
+    const metaBlock = loadedDecos.find(d => d.id === 'meta-zindexes');
+    if (metaBlock) {
+      bgZ = metaBlock.backgroundZIndex ?? 10;
+      overlayZ = metaBlock.overlayZIndex ?? 90;
+      loadedDecos = loadedDecos.filter(d => d.id !== 'meta-zindexes');
+    }
+
+    // Normalize loaded template elements
+    const normalized = normalizeZIndexes(loadedSlots, loadedTexts, loadedDecos, bgZ, overlayZ);
+    setSlots(normalized.slots);
+    setTextElements(normalized.texts);
+    setDecorations(normalized.decos);
+    setBackgroundZIndex(normalized.backgroundZIndex);
+    setOverlayZIndex(normalized.overlayZIndex);
+
+    handleDeselectAll();
     setOverlayFile(null);
     setOverlayPreview(template.overlay_url ? `${API_BASE}${template.overlay_url}` : null);
     setIsPublished(!!template.is_published);
-    setSaveMsg('');
+    setCategory(template.category || 'klasik');
+    setShowDummy(true); setSaveMsg('');
     setView('editor');
-    historyRef.current = [{ slots: loadedSlots, textElements: template.text_elements || [], decorations: template.decorations || [] }];
-    historyIdxRef.current = 0;
+    initHistory(normalized.slots, normalized.texts, normalized.decos, normalized.backgroundZIndex, normalized.overlayZIndex);
   };
 
   const handleDelete = async (id) => {
@@ -321,13 +404,21 @@ export default function CmsFramesPage() {
     }
   };
 
+  const getMaxZ = useCallback(() => {
+    let max = 0;
+    slots.forEach(s => { if ((s.zIndex ?? 0) > max) max = s.zIndex; });
+    textElements.forEach(t => { if ((t.zIndex ?? 0) > max) max = t.zIndex; });
+    decorations.forEach(d => { if ((d.zIndex ?? 0) > max) max = d.zIndex; });
+    if (backgroundZIndex > max) max = backgroundZIndex;
+    if (overlayZIndex > max) max = overlayZIndex;
+    return max;
+  }, [slots, textElements, decorations, backgroundZIndex, overlayZIndex]);
+
   // ── Slot CRUD ──
   const handleAddSlot = () => {
-    if (slots.length >= MAX_SLOTS) {
-      setSaveMsg(`⚠️ Maksimal ${MAX_SLOTS} photo slot`);
-      return;
-    }
+    if (slots.length >= MAX_SLOTS) { setSaveMsg(`⚠️ Maksimal ${MAX_SLOTS} photo slot`); return; }
     const newSlot = createSlot(slots.length, canvasWidth, canvasHeight, frameMode, slots);
+    newSlot.zIndex = getMaxZ() + 10;
     setSlots(prev => [...prev, newSlot]);
     handleSelectSlot(newSlot.id);
     pushHistory();
@@ -338,31 +429,10 @@ export default function CmsFramesPage() {
     if (selectedSlotId === slotId) setSelectedSlotId(null);
   };
 
-  const handleUpdateSlot = (slotId, updates) => {
-    setSlots(prev => prev.map(s => s.id === slotId ? { ...s, ...updates } : s));
-  };
-
-  const handleReorderSlot = (slotId, direction) => {
-    setSlots(prev => {
-      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
-      const idx = sorted.findIndex(s => s.id === slotId);
-      if (direction === 'up' && idx < sorted.length - 1) {
-        const tmp = sorted[idx].zIndex;
-        sorted[idx].zIndex = sorted[idx + 1].zIndex;
-        sorted[idx + 1].zIndex = tmp;
-      } else if (direction === 'down' && idx > 0) {
-        const tmp = sorted[idx].zIndex;
-        sorted[idx].zIndex = sorted[idx - 1].zIndex;
-        sorted[idx - 1].zIndex = tmp;
-      }
-      return sorted;
-    });
-    pushHistory();
-  };
-
-  // ── Text Element CRUD ──
+  // ── Text CRUD ──
   const handleAddText = () => {
     const newText = createTextElement(textElements.length, canvasWidth, canvasHeight);
+    newText.zIndex = getMaxZ() + 10;
     setTextElements(prev => [...prev, newText]);
     handleSelectText(newText.id);
     pushHistory();
@@ -373,11 +443,7 @@ export default function CmsFramesPage() {
     if (selectedTextId === textId) setSelectedTextId(null);
   };
 
-  const handleUpdateText = (textId, updates) => {
-    setTextElements(prev => prev.map(t => t.id === textId ? { ...t, ...updates } : t));
-  };
-
-  // ── Decoration Sticker CRUD ──
+  // ── Decoration CRUD ──
   const handleAddDeco = (file) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -392,11 +458,9 @@ export default function CmsFramesPage() {
           src: ev.target.result,
           x: Math.round((canvasWidth - w) / 2),
           y: Math.round((canvasHeight - h) / 2),
-          width: w,
-          height: h,
-          rotation: 0,
-          zIndex: 100 + decorations.length,
-          aspectRatioLocked: true
+          width: w, height: h, rotation: 0,
+          zIndex: getMaxZ() + 10,
+          aspectRatioLocked: true,
         };
         setDecorations(prev => [...prev, deco]);
         handleSelectDeco(deco.id);
@@ -412,8 +476,183 @@ export default function CmsFramesPage() {
     if (selectedDecoId === decoId) setSelectedDecoId(null);
   };
 
-  const handleUpdateDeco = (decoId, updates) => {
-    setDecorations(prev => prev.map(d => d.id === decoId ? { ...d, ...updates } : d));
+  // ── Generic Reorder ──
+  const handleReorderLayer = useCallback((id, type, direction) => {
+    // 1. Gather all active elements with their type, id/ref, and current zIndex
+    const items = [];
+    
+    // Background canvas
+    items.push({ type: 'background', id: 'background', zIndex: backgroundZIndex });
+    
+    // Slots
+    slots.forEach(s => items.push({ type: 'slot', id: s.id, ref: s, zIndex: s.zIndex ?? 0 }));
+    
+    // Overlay
+    if (overlayPreview) {
+      items.push({ type: 'overlay', id: 'overlay', zIndex: overlayZIndex });
+    }
+    
+    // Texts
+    textElements.forEach(t => items.push({ type: 'text', id: t.id, ref: t, zIndex: t.zIndex ?? 0 }));
+    
+    // Decorations (excluding meta block)
+    decorations
+      .filter(d => d.id !== 'meta-zindexes')
+      .forEach(d => items.push({ type: 'deco', id: d.id, ref: d, zIndex: d.zIndex ?? 0 }));
+
+    // Sort ascending by zIndex
+    items.sort((a, b) => a.zIndex - b.zIndex);
+
+    // Find the item index
+    const idx = items.findIndex(item => item.type === type && item.id === id);
+    if (idx === -1) return;
+
+    // Swap index
+    const swapIdx = direction === 'up' ? idx + 1 : idx - 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return; // out of bounds
+
+    // Swap z-index values
+    const tempZ = items[idx].zIndex;
+    items[idx].zIndex = items[swapIdx].zIndex;
+    items[swapIdx].zIndex = tempZ;
+
+    // Separate back into component lists
+    let newBgZ = backgroundZIndex;
+    let newOverlayZ = overlayZIndex;
+    const newSlots = [...slots];
+    const newTexts = [...textElements];
+    const newDecos = [...decorations];
+
+    items.forEach(item => {
+      if (item.type === 'background') {
+        newBgZ = item.zIndex;
+      } else if (item.type === 'overlay') {
+        newOverlayZ = item.zIndex;
+      } else if (item.type === 'slot') {
+        const sIdx = newSlots.findIndex(s => s.id === item.id);
+        if (sIdx !== -1) newSlots[sIdx].zIndex = item.zIndex;
+      } else if (item.type === 'text') {
+        const tIdx = newTexts.findIndex(t => t.id === item.id);
+        if (tIdx !== -1) newTexts[tIdx].zIndex = item.zIndex;
+      } else if (item.type === 'deco') {
+        const dIdx = newDecos.findIndex(d => d.id === item.id);
+        if (dIdx !== -1) newDecos[dIdx].zIndex = item.zIndex;
+      }
+    });
+
+    // Run normalize to get clean 10, 20, 30... z-indexes
+    const normalized = normalizeZIndexes(newSlots, newTexts, newDecos, newBgZ, newOverlayZ);
+
+    // Apply states
+    setSlots(normalized.slots);
+    setTextElements(normalized.texts);
+    setDecorations(normalized.decos);
+    setBackgroundZIndex(normalized.backgroundZIndex);
+    setOverlayZIndex(normalized.overlayZIndex);
+
+    pushHistory();
+  }, [slots, textElements, decorations, backgroundZIndex, overlayZIndex, overlayPreview, pushHistory]);
+
+  // ── Generic Layer Actions (for LayerList) ──
+  const handleToggleLock = useCallback((id, type, locked) => {
+    getLayerUpdater(type)(id, { locked });
+  }, [getLayerUpdater]);
+
+  const handleToggleHide = useCallback((id, type, hidden) => {
+    getLayerUpdater(type)(id, { hidden });
+  }, [getLayerUpdater]);
+
+  const handleDuplicateElement = useCallback(() => {
+    if (selectedSlotId) {
+      const orig = slots.find(s => s.id === selectedSlotId);
+      if (!orig || slots.length >= MAX_SLOTS) {
+        if (slots.length >= MAX_SLOTS) setSaveMsg(`⚠️ Maksimal ${MAX_SLOTS} photo slot`);
+        return;
+      }
+      const newSlot = {
+        ...JSON.parse(JSON.stringify(orig)),
+        id: `slot-${Date.now()}-${slots.length}`,
+        x: Math.min(canvasWidth - orig.width, orig.x + 30),
+        y: Math.min(canvasHeight - orig.height, orig.y + 30),
+        zIndex: getMaxZ() + 10,
+        label: `${orig.label} (Copy)`
+      };
+      setSlots(prev => [...prev, newSlot]);
+      setSelectedSlotId(newSlot.id);
+      pushHistory();
+    } else if (selectedTextId) {
+      const orig = textElements.find(t => t.id === selectedTextId);
+      if (!orig) return;
+      const newText = {
+        ...JSON.parse(JSON.stringify(orig)),
+        id: `text-${Date.now()}-${textElements.length}`,
+        x: Math.min(canvasWidth, orig.x + 30),
+        y: orig.y >= 0 ? Math.min(canvasHeight, orig.y + 30) : orig.y - 30,
+        zIndex: getMaxZ() + 10,
+      };
+      setTextElements(prev => [...prev, newText]);
+      setSelectedTextId(newText.id);
+      pushHistory();
+    } else if (selectedDecoId) {
+      const orig = decorations.find(d => d.id === selectedDecoId);
+      if (!orig) return;
+      const newDeco = {
+        ...JSON.parse(JSON.stringify(orig)),
+        id: `deco-${Date.now()}`,
+        x: Math.min(canvasWidth - orig.width, orig.x + 30),
+        y: Math.min(canvasHeight - orig.height, orig.y + 30),
+        zIndex: getMaxZ() + 10,
+      };
+      setDecorations(prev => [...prev, newDeco]);
+      setSelectedDecoId(newDeco.id);
+      pushHistory();
+    }
+  }, [selectedSlotId, selectedTextId, selectedDecoId, slots, textElements, decorations, canvasWidth, canvasHeight, getMaxZ, pushHistory]);
+
+  const handleDuplicateLayer = useCallback((id, type) => {
+    // Select first, then duplicate
+    if (type === 'slot') { setSelectedSlotId(id); setSelectedTextId(null); setSelectedDecoId(null); }
+    else if (type === 'text') { setSelectedTextId(id); setSelectedSlotId(null); setSelectedDecoId(null); }
+    else if (type === 'deco') { setSelectedDecoId(id); setSelectedSlotId(null); setSelectedTextId(null); }
+    // Defer to let state update
+    setTimeout(() => handleDuplicateElement(), 0);
+  }, [handleDuplicateElement]);
+
+  const handleDeleteLayer = useCallback((id, type) => {
+    if (type === 'slot') { handleRemoveSlot(id); pushHistory(); }
+    else if (type === 'text') { handleRemoveText(id); pushHistory(); }
+    else if (type === 'deco') { handleRemoveDeco(id); pushHistory(); }
+  }, [pushHistory]);
+
+  // ── Toggle Publish (from list) ──
+  const handleTogglePublish = async (template) => {
+    try {
+      const formData = new FormData();
+      formData.append('name', template.name);
+      formData.append('author', template.author || 'Admin');
+      formData.append('photo_count', String(template.photo_count || 1));
+      formData.append('canvas_width', String(template.canvas_width));
+      formData.append('canvas_height', String(template.canvas_height));
+      formData.append('orientation', template.orientation || 'portrait');
+      formData.append('background_color', template.background_color || '#1a1a2e');
+      formData.append('frame_mode', template.frame_mode || 'solo');
+      formData.append('slots_json', JSON.stringify(template.slots || []));
+      formData.append('text_elements_json', JSON.stringify(template.text_elements || []));
+      formData.append('decorations_json', JSON.stringify(template.decorations || []));
+      formData.append('is_published', template.is_published ? '0' : '1');
+      formData.append('category', template.category || 'klasik');
+
+      const res = await fetch(`${API_BASE}/api/cms/frames/${template.id}`, { method: 'PUT', body: formData });
+      if (res.ok) {
+        setSaveMsg(`✅ Status template ${template.name} diperbarui!`);
+        fetchTemplates();
+      } else {
+        const errData = await res.json();
+        setSaveMsg(`❌ Gagal: ${errData.error || 'Server error'}`);
+      }
+    } catch (err) {
+      setSaveMsg(`❌ Error: ${err.message}`);
+    }
   };
 
   // ── Overlay Upload ──
@@ -432,8 +671,11 @@ export default function CmsFramesPage() {
     if (slots.length === 0) { setSaveMsg('⚠️ Minimal 1 photo slot'); return; }
 
     setSaving(true);
-    setSaveMsg('');
+    setSaveMsg('📸 Capturing thumbnail...');
     try {
+      const thumbBlob = await captureCanvasThumb(canvasRef);
+
+      setSaveMsg('💾 Saving template...');
       const formData = new FormData();
       formData.append('name', templateName);
       formData.append('author', author);
@@ -443,11 +685,17 @@ export default function CmsFramesPage() {
       formData.append('orientation', orientation);
       formData.append('background_color', backgroundColor);
       formData.append('frame_mode', frameMode);
+      const decorationsWithMeta = [
+        ...decorations.filter(d => d.id !== 'meta-zindexes'),
+        { id: 'meta-zindexes', backgroundZIndex, overlayZIndex }
+      ];
       formData.append('slots_json', JSON.stringify(slots));
       formData.append('text_elements_json', JSON.stringify(textElements));
-      formData.append('decorations_json', JSON.stringify(decorations));
+      formData.append('decorations_json', JSON.stringify(decorationsWithMeta));
       formData.append('is_published', isPublished ? '1' : '0');
+      formData.append('category', category);
       if (overlayFile) formData.append('overlay', overlayFile);
+      if (thumbBlob) formData.append('thumbnail', thumbBlob, 'thumbnail.png');
 
       const url = editingId ? `${API_BASE}/api/cms/frames/${editingId}` : `${API_BASE}/api/cms/frames`;
       const method = editingId ? 'PUT' : 'POST';
@@ -467,9 +715,11 @@ export default function CmsFramesPage() {
     }
   };
 
+  // ── Derived State ──
   const selectedSlot = slots.find(s => s.id === selectedSlotId);
   const selectedText = textElements.find(t => t.id === selectedTextId);
   const selectedDeco = decorations.find(d => d.id === selectedDecoId);
+  const hasSelection = !!(selectedSlot || selectedText || selectedDeco);
   const photoCount = slots.length;
   const canUndo = historyIdxRef.current > 0;
   const canRedo = historyIdxRef.current < historyRef.current.length - 1;
@@ -481,24 +731,29 @@ export default function CmsFramesPage() {
           <a href="/" className="cms-logo">LDR Photobooth</a>
           <span className="cms-badge">CMS</span>
           <span className="cms-title">Frame Editor</span>
-          <a href="/cms/posts" className="cms-btn cms-btn--xs" style={{ textDecoration: 'none', marginLeft: '10px' }}>Manage Posts</a>
+          <a href="/cms/posts" className="cms-btn cms-btn--xs cms-header__link">Manage Posts</a>
         </div>
         <div className="cms-header__right">
           {view === 'editor' && (
             <>
-              {/* Undo / Redo */}
               <div className="cms-header__undo-group">
-                <button className="cms-btn cms-btn--sm" onClick={handleUndo} disabled={!canUndo} title="Undo (⌘Z)">↩</button>
-                <button className="cms-btn cms-btn--sm" onClick={handleRedo} disabled={!canRedo} title="Redo (⌘⇧Z)">↪</button>
+                <button className="cms-btn cms-btn--sm cms-btn--icon" onClick={handleUndo} disabled={!canUndo} title="Undo (⌘Z)">
+                  <UndoIcon />
+                </button>
+                <button className="cms-btn cms-btn--sm cms-btn--icon" onClick={handleRedo} disabled={!canRedo} title="Redo (⌘⇧Z)">
+                  <RedoIcon />
+                </button>
               </div>
               <label className="cms-toggle cms-toggle--compact" title="Snap to guides">
                 <input type="checkbox" checked={snapEnabled} onChange={e => setSnapEnabled(e.target.checked)} />
                 <span className="cms-toggle__slider" />
                 <span className="cms-toggle__label-inline">Snap</span>
               </label>
-              <span className="cms-photo-count">{photoCount}/{MAX_SLOTS} foto · {frameMode === 'duo' ? '👫 Duo' : '🧑 Solo'}</span>
-              <button className="cms-btn cms-btn--ghost" onClick={() => { setView('list'); setSaveMsg(''); }}>
-                ← Back
+              <span className="cms-photo-count">
+                {photoCount}/{MAX_SLOTS} foto · {frameMode === 'duo' ? 'Duo LDR' : 'Solo'}
+              </span>
+              <button className="cms-btn cms-btn--ghost cms-btn--icon-text" onClick={() => { setView('list'); setSaveMsg(''); }}>
+                <ArrowLeftIcon /> Back
               </button>
               <button className="cms-btn cms-btn--primary" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update' : 'Save'}
@@ -511,10 +766,38 @@ export default function CmsFramesPage() {
       {saveMsg && <div className="cms-toast">{saveMsg}</div>}
 
       {view === 'list' ? (
-        <FrameList templates={templates} loading={loading} onNew={handleNew} onEdit={handleEdit} onDelete={handleDelete} apiBase={API_BASE} />
+        <FrameList
+          templates={templates} loading={loading}
+          onNew={handleNew} onEdit={handleEdit} onDelete={handleDelete}
+          apiBase={API_BASE} onTogglePublish={handleTogglePublish}
+        />
       ) : (
         <div className="cms-editor">
-          {/* Left: Canvas */}
+          {/* Left Sidebar: Unified Layer List */}
+          <div className="cms-editor__sidebar cms-editor__sidebar--left">
+            <LayerList
+              slots={slots}
+              textElements={textElements}
+              decorations={decorations}
+              overlayPreview={overlayPreview}
+              backgroundZIndex={backgroundZIndex}
+              overlayZIndex={overlayZIndex}
+              selectedSlotId={selectedSlotId}
+              selectedTextId={selectedTextId}
+              selectedDecoId={selectedDecoId}
+              onSelectSlot={handleSelectSlot}
+              onSelectText={handleSelectText}
+              onSelectDeco={handleSelectDeco}
+              onDeselectAll={handleDeselectAll}
+              onReorder={handleReorderLayer}
+              onToggleLock={handleToggleLock}
+              onToggleHide={handleToggleHide}
+              onDuplicate={handleDuplicateLayer}
+              onDelete={handleDeleteLayer}
+            />
+          </div>
+
+          {/* Center: Canvas Area */}
           <div className="cms-editor__canvas">
             <div className="cms-canvas-controls">
               <button className="cms-btn cms-btn--sm" onClick={() => setZoom(z => Math.max(0.15, z - 0.05))}>−</button>
@@ -522,9 +805,12 @@ export default function CmsFramesPage() {
               <button className="cms-btn cms-btn--sm" onClick={() => setZoom(z => Math.min(1, z + 0.05))}>+</button>
             </div>
             <FrameCanvas
+              ref={canvasRef}
               canvasWidth={canvasWidth}
               canvasHeight={canvasHeight}
               backgroundColor={backgroundColor}
+              backgroundZIndex={backgroundZIndex}
+              overlayZIndex={overlayZIndex}
               slots={slots}
               textElements={textElements}
               decorations={decorations}
@@ -542,140 +828,66 @@ export default function CmsFramesPage() {
               onDragEnd={handleDragEnd}
               zoom={zoom}
               snapEnabled={snapEnabled}
+              showDummy={showDummy}
             />
           </div>
 
-          {/* Right: Properties Panel */}
-          <div className="cms-editor__panel">
-            <ToolBar
-              templateName={templateName} setTemplateName={setTemplateName}
-              author={author} setAuthor={setAuthor}
-              canvasWidth={canvasWidth} setCanvasWidth={setCanvasWidth}
-              canvasHeight={canvasHeight} setCanvasHeight={setCanvasHeight}
-              orientation={orientation} setOrientation={setOrientation}
-              backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor}
-              frameMode={frameMode} setFrameMode={setFrameMode}
-              isPublished={isPublished} setIsPublished={setIsPublished}
-              onAddSlot={handleAddSlot}
-              onAddText={handleAddText}
-              onAddDeco={handleAddDeco}
-              onOverlayUpload={handleOverlayUpload}
-              overlayPreview={overlayPreview}
-              onRemoveOverlay={() => { setOverlayFile(null); setOverlayPreview(null); }}
-              photoCount={photoCount}
-              maxSlots={MAX_SLOTS}
-            />
-
-            <div className="cms-panel-divider" />
-
-            {/* Photo Slots Layer List */}
-            <div className="cms-panel-section">
-              <div className="cms-panel-section__title">
-                <span>📷 Photo Slots ({slots.length}/{MAX_SLOTS})</span>
-              </div>
-              <div className="cms-slot-list">
-                {[...slots].sort((a, b) => b.zIndex - a.zIndex).map(slot => {
-                  const ownerBadge = frameMode === 'duo'
-                    ? (slot.owner === 'userA' ? '🔵A' : slot.owner === 'userB' ? '🟣B' : '⚪')
-                    : '';
-                  return (
-                    <div key={slot.id} className={`cms-slot-chip ${selectedSlotId === slot.id ? 'active' : ''}`} onClick={() => handleSelectSlot(slot.id)}>
-                      {ownerBadge && <span className="cms-slot-chip__owner">{ownerBadge}</span>}
-                      <span className="cms-slot-chip__label">{slot.label}</span>
-                      <span className="cms-slot-chip__info">z:{slot.zIndex} {slot.aspectRatioLocked ? '🔒' : ''}</span>
-                      <div className="cms-slot-chip__actions">
-                        <button title="Layer Up" onClick={(e) => { e.stopPropagation(); handleReorderSlot(slot.id, 'up'); }}>▲</button>
-                        <button title="Layer Down" onClick={(e) => { e.stopPropagation(); handleReorderSlot(slot.id, 'down'); }}>▼</button>
-                        <button title="Delete" onClick={(e) => { e.stopPropagation(); handleRemoveSlot(slot.id); pushHistory(); }}>✕</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Text Elements Layer List */}
-            <div className="cms-panel-divider" />
-            <div className="cms-panel-section">
-              <div className="cms-panel-section__title">
-                <span>✏️ Text Elements ({textElements.length})</span>
-              </div>
-              <div className="cms-slot-list">
-                {textElements.map(te => (
-                  <div key={te.id} className={`cms-slot-chip ${selectedTextId === te.id ? 'active' : ''}`} onClick={() => handleSelectText(te.id)}>
-                    <span className="cms-slot-chip__label" style={{ fontSize: '12px' }}>{te.content.length > 18 ? te.content.slice(0, 18) + '…' : te.content}</span>
-                    <span className="cms-slot-chip__info">{te.fontSize}px</span>
-                    <div className="cms-slot-chip__actions">
-                      <button title="Delete" onClick={(e) => { e.stopPropagation(); handleRemoveText(te.id); pushHistory(); }}>✕</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Decorations Layer List */}
-            {decorations.length > 0 && (
+          {/* Right Sidebar: Properties/Toolbar Panel */}
+          <div className="cms-editor__sidebar cms-editor__sidebar--right">
+            {hasSelection ? (
               <>
-                <div className="cms-panel-divider" />
-                <div className="cms-panel-section">
-                  <div className="cms-panel-section__title">
-                    <span>🎨 Decorations ({decorations.length})</span>
-                  </div>
-                  <div className="cms-slot-list">
-                    {decorations.map(d => (
-                      <div key={d.id} className={`cms-slot-chip ${selectedDecoId === d.id ? 'active' : ''}`} onClick={() => handleSelectDeco(d.id)}>
-                        <img src={d.src} alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: 3 }} />
-                        <span className="cms-slot-chip__label">Sticker</span>
-                        <span className="cms-slot-chip__info">{d.width}×{d.height}</span>
-                        <div className="cms-slot-chip__actions">
-                          <button title="Delete" onClick={(e) => { e.stopPropagation(); handleRemoveDeco(d.id); pushHistory(); }}>✕</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {selectedSlot && (
+                  <SlotEditor
+                    slot={selectedSlot}
+                    onUpdate={(updates) => handleUpdateSlot(selectedSlotId, updates)}
+                    onDragEnd={handleDragEnd}
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    frameMode={frameMode}
+                    onDuplicate={handleDuplicateElement}
+                  />
+                )}
+                {selectedText && (
+                  <TextElementEditor
+                    element={selectedText}
+                    onUpdate={(updates) => handleUpdateText(selectedTextId, updates)}
+                    onDragEnd={handleDragEnd}
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    onDuplicate={handleDuplicateElement}
+                  />
+                )}
+                {selectedDeco && (
+                  <DecorationEditor
+                    decoration={selectedDeco}
+                    onUpdate={(updates) => handleUpdateDeco(selectedDecoId, updates)}
+                    onDragEnd={handleDragEnd}
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    onDuplicate={handleDuplicateElement}
+                  />
+                )}
               </>
-            )}
-
-            {/* Property Editors */}
-            {selectedSlot && (
-              <>
-                <div className="cms-panel-divider" />
-                <SlotEditor
-                  slot={selectedSlot}
-                  onUpdate={(updates) => handleUpdateSlot(selectedSlotId, updates)}
-                  onDragEnd={handleDragEnd}
-                  canvasWidth={canvasWidth}
-                  canvasHeight={canvasHeight}
-                  frameMode={frameMode}
-                />
-              </>
-            )}
-
-            {selectedText && (
-              <>
-                <div className="cms-panel-divider" />
-                <TextElementEditor
-                  element={selectedText}
-                  onUpdate={(updates) => handleUpdateText(selectedTextId, updates)}
-                  onDragEnd={handleDragEnd}
-                  canvasWidth={canvasWidth}
-                  canvasHeight={canvasHeight}
-                />
-              </>
-            )}
-
-            {selectedDeco && (
-              <>
-                <div className="cms-panel-divider" />
-                <DecorationEditor
-                  decoration={selectedDeco}
-                  onUpdate={(updates) => handleUpdateDeco(selectedDecoId, updates)}
-                  onDragEnd={handleDragEnd}
-                  canvasWidth={canvasWidth}
-                  canvasHeight={canvasHeight}
-                />
-              </>
+            ) : (
+              <ToolBar
+                templateName={templateName} setTemplateName={setTemplateName}
+                author={author} setAuthor={setAuthor}
+                canvasWidth={canvasWidth} setCanvasWidth={setCanvasWidth}
+                canvasHeight={canvasHeight} setCanvasHeight={setCanvasHeight}
+                orientation={orientation} setOrientation={setOrientation}
+                backgroundColor={backgroundColor} setBackgroundColor={setBackgroundColor}
+                frameMode={frameMode} setFrameMode={setFrameMode}
+                isPublished={isPublished} setIsPublished={setIsPublished}
+                showDummy={showDummy} setShowDummy={setShowDummy}
+                onAddSlot={handleAddSlot}
+                onAddText={handleAddText}
+                onAddDeco={handleAddDeco}
+                onOverlayUpload={handleOverlayUpload}
+                overlayPreview={overlayPreview}
+                onRemoveOverlay={() => { setOverlayFile(null); setOverlayPreview(null); }}
+                photoCount={photoCount}
+                maxSlots={MAX_SLOTS}
+              />
             )}
           </div>
         </div>

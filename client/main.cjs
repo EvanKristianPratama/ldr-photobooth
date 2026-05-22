@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, protocol, net, systemPreferences } = require('electron');
+const { app, BrowserWindow, session, protocol, net, systemPreferences, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 
@@ -52,6 +52,46 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+ipcMain.handle('print-image', async (event, imageUrl, options = {}) => {
+  const workerWindow = new BrowserWindow({
+    show: false, // Hidden window
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  // Load simple HTML document containing the full-size printable image strip
+  workerWindow.loadURL(`data:text/html;charset=utf-8,
+    <html>
+      <body style="margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background:%23fff;">
+        <img src="${imageUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+      </body>
+    </html>
+  `);
+
+  return new Promise((resolve) => {
+    workerWindow.webContents.once('did-finish-load', () => {
+      // Direct silent print commands
+      workerWindow.webContents.print({
+        silent: options.silent ?? true,
+        printBackground: true,
+        margins: { marginType: 'none' },
+        pageSize: options.pageSize || 'A4', // default A6 maps well to standard 4R prints
+        ...options
+      }, (success, errorType) => {
+        workerWindow.close(); // Tear down the hidden window
+        if (success) {
+          resolve({ success: true });
+        } else {
+          console.error('Electron silent print failed:', errorType);
+          resolve({ success: false, error: errorType });
+        }
+      });
+    });
+  });
+});
 
 app.whenReady().then(async () => {
   // Di mode produksi, daftarkan handler untuk custom protocol 'app://'

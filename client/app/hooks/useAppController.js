@@ -12,6 +12,7 @@ import useDebouncedValue from './useDebouncedValue';
 import usePhotoTransfer from './usePhotoTransfer';
 import { LAYOUTS, CHUNK_SIZE } from '../constants/layout';
 import { convertToPaperSize } from '../services/paperService';
+import { saveSessionToIndexedDb, loadSessionFromIndexedDb, clearSessionFromIndexedDb } from '../utils/indexedDb';
 
 const SERVER_URL = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
@@ -22,14 +23,17 @@ const SOCKET_ONLY = process.env.NEXT_PUBLIC_SOCKET_ONLY === 'true';
  * Decouples presentation logic from business routing.
  */
 export default function useAppController() {
-  const [step, setStep] = useState('mode-select');
+  const [step, setStep] = useState('loading');
+  const [invoiceData, setInvoiceData] = useState(null);
   const stepRef = useRef(step);
+  const isMountedRef = useRef(false);
 
   // --- Lifecycle: Persisted Step state
   useEffect(() => {
+    if (!isMountedRef.current) return;
     stepRef.current = step;
     if (typeof window !== 'undefined') {
-      if (['frame-select', 'result', 'layout-select', 'room', 'join'].includes(step)) {
+      if (['frame-select', 'result', 'layout-select', 'room', 'join', 'checkout', 'invoice'].includes(step)) {
         sessionStorage.setItem('ldr_step', step);
       } else if (step === 'mode-select') {
         sessionStorage.removeItem('ldr_step');
@@ -41,6 +45,7 @@ export default function useAppController() {
 
   // --- Lifecycle: Persisted Mode
   useEffect(() => {
+    if (!isMountedRef.current) return;
     if (typeof window !== 'undefined') {
       if (sessionMode) sessionStorage.setItem('ldr_session_mode', sessionMode);
       else sessionStorage.removeItem('ldr_session_mode');
@@ -49,6 +54,19 @@ export default function useAppController() {
 
   const [groupSize, setGroupSize] = useState(2);
   const [capturedParticipants, setCapturedParticipants] = useState([]);
+
+  // --- Lifecycle: Persist Captured Participants
+  useEffect(() => {
+    if (!isMountedRef.current) return;
+    if (typeof window !== 'undefined') {
+      if (capturedParticipants.length > 0) {
+        sessionStorage.setItem('ldr_captured_participants', JSON.stringify(capturedParticipants));
+      } else {
+        sessionStorage.removeItem('ldr_captured_participants');
+      }
+    }
+  }, [capturedParticipants]);
+
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [progress, setProgress] = useState(0);
   const pausedRef = useRef(false);
@@ -148,9 +166,12 @@ export default function useAppController() {
   const capture = useCapture({
     sendPhotoToPeer: webRTC.sendPhotoToPeer,
     sendLiveFramesToPeer: webRTC.sendLiveFramesToPeer,
-    onProcessingComplete: ({ localBlobs, remoteBlobsByPeer }) => {
+    onProcessingComplete: ({ localBlobs, remoteBlobsByPeer, liveFrames, remoteLiveFrames }) => {
       setCapturedParticipants(participantsWithSelf);
       setStep('frame-select');
+      const remoteEntries = remoteBlobsByPeer ? Array.from(remoteBlobsByPeer.entries()) : [];
+      const remoteLiveEntries = remoteLiveFrames ? Array.from(remoteLiveFrames.entries()).map(([k, v]) => [k, Array.from(v.entries())]) : [];
+      saveSessionToIndexedDb({ localBlobs, remoteBlobs: remoteEntries, liveFrames, remoteLiveFrames: remoteLiveEntries });
       frame.mergePhotos({
         count: capture.totalShots,
         participants: participantsWithSelf,
@@ -217,42 +238,188 @@ export default function useAppController() {
     });
   }, [debouncedMergeDeps, step, frame.lastMergeCount, frame.mergePhotos, capturedParticipants, participantsWithSelf, locationsById]);
 
+  // ── DRY HELPERS FOR INVOICE LOADING ──
+  const loadInvoiceData = (orderId) => {
+    Swal.fire({
+      title: 'Memuat Bukti Pembayaran... ⏳',
+      text: 'Harap tunggu sebentar, kami sedang menyiapkan invoice Anda.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+      customClass: { popup: 'swal-doodle' }
+    });
+
+    return fetch(`${SERVER_URL}/api/orders/${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        Swal.close();
+        if (data.error) {
+          Swal.fire('Error ❌', 'Detail pesanan tidak ditemukan di database.', 'error');
+          navigateToHome();
+          return null;
+        } else {
+          setInvoiceData(data);
+          setStep('invoice');
+          return data;
+        }
+      })
+      .catch(err => {
+        Swal.close();
+        Swal.fire('Error ❌', 'Gagal memuat invoice dari server.', 'error');
+        navigateToHome();
+        return null;
+      });
+  };
+
+  // ── URL SYNCING EFFECTS ──
   // ── URL SYNCING EFFECTS ──
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const params = new URLSearchParams(window.location.search);
+    
+    // ── MIDTRANS REDIRECT RETURN CALLBACK INTERCEPTOR ──
+    const txStatus = params.get('transaction_status');
+    const statusCode = params.get('status_code');
+    const orderIdParam = params.get('order_id');
+    const savedStep = params.get('step');
+    
+    if (orderIdParam && (txStatus || statusCode)) {
+      setStep('loading');
+      // Clear session data to prevent accidental restoring of old step
+      sessionStorage.removeItem('ldr_step');
+      sessionStorage.removeItem('ldr_session_mode');
+      sessionStorage.removeItem('ldr_captured_participants');
+      clearSessionFromIndexedDb();
+
+      // If settlement/capture/success, fetch the order data and direct to invoice!
+      if (txStatus === 'settlement' || txStatus === 'capture' || statusCode === '200') {
+        loadInvoiceData(orderIdParam).then(data => {
+          if (data) {
+            const cleanUrl = `${window.location.origin}${window.location.pathname}?step=invoice&order_id=${orderIdParam}`;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+          }
+        });
+      } else if (txStatus === 'pending') {
+        Swal.fire({
+          title: 'Pembayaran Menunggu 💳',
+          text: 'Transaksi Anda sedang menunggu pembayaran. Silakan selesaikan pembayaran sesuai petunjuk dari Midtrans.',
+          icon: 'info',
+          confirmButtonColor: '#8b5cf6',
+          customClass: { popup: 'swal-doodle', title: 'swal2-title', htmlContainer: 'swal2-html-container' }
+        });
+        navigateToHome();
+      } else {
+        Swal.fire({
+          title: 'Pembayaran Gagal/Batal ❌',
+          text: 'Transaksi Anda gagal, ditolak, atau dibatalkan. Silakan coba kembali.',
+          icon: 'error',
+          confirmButtonColor: '#e11d48',
+          customClass: { popup: 'swal-doodle', title: 'swal2-title', htmlContainer: 'swal2-html-container' }
+        });
+        navigateToHome();
+      }
+      
+      setTimeout(() => {
+        isMountedRef.current = true;
+      }, 50);
+      return;
+    }
+
     const view = params.get('view');
     const mode = params.get('mode');
-    const savedStep = params.get('step');
     const sharedRoom = params.get('room');
-    const sessionStep = typeof window !== 'undefined' ? sessionStorage.getItem('ldr_step') : null;
-    const sessionModeStored = typeof window !== 'undefined' ? sessionStorage.getItem('ldr_session_mode') : null;
+    const sessionStep = sessionStorage.getItem('ldr_step');
+    const sessionModeStored = sessionStorage.getItem('ldr_session_mode');
+
+    let restoredStep = 'mode-select';
+    let restoredMode = null;
 
     if (view === 'community') {
-      setStep('community');
+      restoredStep = 'community';
+    } else if (savedStep === 'invoice') {
+      restoredStep = 'loading';
+      const orderId = params.get('order_id');
+      if (orderId) {
+        loadInvoiceData(orderId);
+      } else {
+        restoredStep = 'mode-select';
+      }
     } else if (sharedRoom) {
-      setSessionMode('duo');
+      restoredMode = 'duo';
       room.setRoomCode(sharedRoom.toUpperCase());
       const sharedSize = params.get('size');
       if (sharedSize) setGroupSize(parseInt(sharedSize, 10));
+      
       const stepToRestore = savedStep || sessionStep;
-      if (stepToRestore && ['frame-select', 'result'].includes(stepToRestore)) {
-        setStep(stepToRestore);
+      if (stepToRestore && ['frame-select', 'result', 'checkout'].includes(stepToRestore)) {
+        restoredStep = stepToRestore;
       } else {
-        setStep('join');
+        restoredStep = 'join';
       }
-    } else if (sessionStep && ['frame-select', 'result'].includes(sessionStep)) {
-      const modeToUse = mode || sessionModeStored || 'solo';
-      setSessionMode(modeToUse);
-      setStep(sessionStep);
+    } else if (sessionStep && ['frame-select', 'result', 'checkout', 'invoice'].includes(sessionStep)) {
+      restoredMode = mode || sessionModeStored || 'solo';
+      restoredStep = sessionStep;
+      if (sessionStep === 'invoice') {
+        const orderId = params.get('order_id');
+        if (orderId) {
+          loadInvoiceData(orderId);
+        } else {
+          restoredStep = 'mode-select';
+        }
+      }
     } else if (mode === 'solo') {
-      setSessionMode('solo');
-      if (savedStep && ['layout-select', 'join', 'frame-select', 'result'].includes(savedStep)) {
-        setStep(savedStep);
+      restoredMode = 'solo';
+      if (savedStep && ['layout-select', 'join', 'frame-select', 'result', 'checkout'].includes(savedStep)) {
+        restoredStep = savedStep;
       }
     }
+
+    if (restoredMode) setSessionMode(restoredMode);
+    setStep(restoredStep);
+
+    if (['frame-select', 'result', 'checkout'].includes(restoredStep)) {
+      const savedParticipants = sessionStorage.getItem('ldr_captured_participants');
+      if (savedParticipants) {
+        try {
+          const parsed = JSON.parse(savedParticipants);
+          setCapturedParticipants(parsed);
+        } catch (e) {
+          console.error('Failed to parse captured participants:', e);
+        }
+      }
+
+      loadSessionFromIndexedDb().then(({ mergedImage, localBlobs, remoteBlobs, liveFrames, remoteLiveFrames }) => {
+        if (localBlobs && localBlobs.length > 0) {
+          captureRef.current.localBlobsRef.current = localBlobs;
+          captureRef.current.setLocalBlobs(localBlobs);
+          captureRef.current.setTotalShots(localBlobs.length);
+        }
+        if (remoteBlobs) {
+          captureRef.current.remoteBlobsRef.current = new Map(remoteBlobs);
+        }
+        if (liveFrames && liveFrames.length > 0) {
+          captureRef.current.liveFramesRef.current = new Map(liveFrames);
+          captureRef.current.setLiveFrames(liveFrames);
+        }
+        if (remoteLiveFrames && remoteLiveFrames.length > 0) {
+          const restoredMap = new Map(remoteLiveFrames.map(([k, v]) => [k, new Map(v)]));
+          captureRef.current.remoteLiveFramesRef.current = restoredMap;
+          captureRef.current.setRemoteLiveFrames(restoredMap);
+        }
+        if (mergedImage) {
+          frameRef.current.setMergedImage(mergedImage);
+        }
+      });
+    }
+
+    // Mark as mounted AFTER restoring the states!
+    setTimeout(() => {
+      isMountedRef.current = true;
+    }, 50);
   }, []);
 
   useEffect(() => {
+    if (step === 'loading') return;
     if (!['countdown', 'processing'].includes(step)) {
       const params = new URLSearchParams(window.location.search);
       if (sessionMode === 'solo') {
@@ -266,15 +433,21 @@ export default function useAppController() {
         }
         params.delete('mode');
       }
-      if (['frame-select', 'result', 'layout-select', 'room', 'join'].includes(step)) {
+      if (['frame-select', 'result', 'layout-select', 'room', 'join', 'checkout', 'invoice'].includes(step)) {
         params.set('step', step);
+        if (step === 'invoice' && invoiceData) {
+          params.set('order_id', invoiceData.id);
+        } else {
+          params.delete('order_id');
+        }
       } else {
         params.delete('step');
+        params.delete('order_id');
       }
       const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
       window.history.replaceState({ path: newUrl }, '', newUrl);
     }
-  }, [step, sessionMode, room.roomCode, groupSize]);
+  }, [step, sessionMode, room.roomCode, groupSize, invoiceData]);
 
   // ── ORCHESTRATION LOGIC ──
   const handleFinishCapture = async (shots) => {
@@ -306,7 +479,7 @@ export default function useAppController() {
     setStep('countdown');
     await new Promise(r => setTimeout(r, 300));
     captureRef.current.attachStream();
-    captureRef.current.startSessionTimer(60, () => handleFinishCapture(shots));
+    captureRef.current.startSessionTimer(60); // Tidak otomatis finish saat waktu habis
     await captureRef.current.startCaptureSequence(shots, CHUNK_SIZE);
   };
 
@@ -392,7 +565,7 @@ export default function useAppController() {
       const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
       window.history.pushState({ path: newUrl }, '', newUrl);
       capture.startCamera();
-      room.setParticipants([{ id: room.selfId || 'solo-user', displayName: 'You', isYou: true }]);
+      room.setParticipants([{ id: room.selfId || 'solo-user', displayName: '', isYou: true }]);
       setStep('layout-select');
     } else {
       setStep('join');
@@ -442,6 +615,8 @@ export default function useAppController() {
     setCapturedParticipants([]);
     sessionStorage.removeItem('ldr_step');
     sessionStorage.removeItem('ldr_session_mode');
+    sessionStorage.removeItem('ldr_captured_participants');
+    clearSessionFromIndexedDb();
   };
 
   const handleDownload = async (format = 'AUTO') => {
@@ -509,6 +684,8 @@ export default function useAppController() {
 
   return {
     step, setStep,
+    invoiceData, setInvoiceData,
+    SERVER_URL,
     sessionMode, setSessionMode,
     groupSize, setGroupSize,
     capturedParticipants,

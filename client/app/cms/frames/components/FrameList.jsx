@@ -1,9 +1,9 @@
 import React from 'react';
 
 /**
- * FrameList — Grid list of existing frame templates with edit/delete actions.
+ * FrameList — Grid list of existing frame templates with edit/delete/live-toggle actions.
  */
-export default function FrameList({ templates, loading, onNew, onEdit, onDelete, apiBase }) {
+export default function FrameList({ templates, loading, onNew, onEdit, onDelete, apiBase, onTogglePublish }) {
   if (loading) {
     return (
       <div className="cms-list">
@@ -75,8 +75,27 @@ export default function FrameList({ templates, loading, onNew, onEdit, onDelete,
                     <span>{t.frame_mode === 'duo' ? '👫 Duo' : '🧑 Solo'}</span>
                   </div>
                   <div className="cms-card__actions">
-                    <button className="cms-btn cms-btn--sm" onClick={() => onEdit(t)}>Edit</button>
-                    <button className="cms-btn cms-btn--sm cms-btn--danger" onClick={() => onDelete(t.id)}>Delete</button>
+                    <div className="cms-card__actions-left">
+                      <button className="cms-btn cms-btn--sm" onClick={() => onEdit(t)}>Edit</button>
+                      <button className="cms-btn cms-btn--sm cms-btn--danger" onClick={() => onDelete(t.id)}>Delete</button>
+                    </div>
+                    <label
+                      className="cms-live-toggle"
+                      title={t.is_published ? 'Set to Draft' : 'Set to Live'}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!t.is_published}
+                        onChange={() => onTogglePublish && onTogglePublish(t)}
+                      />
+                      <span className="cms-live-toggle__track">
+                        <span className="cms-live-toggle__thumb" />
+                      </span>
+                      <span className="cms-live-toggle__label">
+                        {t.is_published ? 'Live' : 'Draft'}
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>

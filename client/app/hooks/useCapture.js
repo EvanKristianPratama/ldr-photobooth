@@ -160,9 +160,9 @@ export default function useCapture({
       waitAttempts++;
     }
     if (!videoRef.current) {
-      console.error('[Capture] Video element not found after waiting');
+      console.warn('[Capture] Video element not found after waiting. Likely unmounted or timed out.');
       if (typeof onFlash === 'function') onFlash(false);
-      return;
+      return false;
     }
 
     // Re-attach stream if needed and wait for readyState
@@ -187,8 +187,7 @@ export default function useCapture({
       captureLiveBurst(videoRef.current, index);
     }
     
-    // DEFERRED: Wait for user review phase or timer expiration before sending
-    // await sendPhotoToPeer(blob, index, chunkSize, participantsCount - 1);
+    return true;
   };
 
   const startCaptureSequence = async (shots, chunkSize) => {
@@ -199,7 +198,8 @@ export default function useCapture({
       setCurrentShotIndex(idx);
       if (typeof onShotIndex === 'function') onShotIndex(idx);
       await runCountdown(COUNTDOWN_SECONDS);
-      await triggerCaptureAndSend(i, chunkSize);
+      const success = await triggerCaptureAndSend(i, chunkSize);
+      if (!success) break; // abort loop if capture failed (like unmount)
       await new Promise(r => setTimeout(r, SHOT_DELAY_MS));
     }
   };
@@ -264,7 +264,9 @@ export default function useCapture({
     if (typeof onProcessingComplete === 'function') {
       onProcessingComplete({
         localBlobs: localBlobsRef.current,
-        remoteBlobsByPeer: remoteBlobsRef.current
+        remoteBlobsByPeer: remoteBlobsRef.current,
+        liveFrames: Array.from(liveFramesRef.current.entries()),
+        remoteLiveFrames: remoteLiveFramesRef.current
       });
     }
   };
@@ -374,8 +376,11 @@ export default function useCapture({
     currentShotIndex,
     totalShots,
     localBlobs,
+    setLocalBlobs,
     liveFrames,
+    setLiveFrames,
     remoteLiveFrames,
+    setRemoteLiveFrames,
     livePhotoEnabled,
     setLivePhotoEnabled,
     sessionTimeLeft,

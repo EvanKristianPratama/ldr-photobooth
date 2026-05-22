@@ -79,27 +79,13 @@ export default function CaptureScreen({
           {/* Session Timer Display (Pro Style) */}
           {sessionTimeLeft !== null && (
             <div
+              className="session-timer-badge"
               style={{
-                position: 'absolute',
-                top: '15px',
-                left: '15px',
-                zIndex: 20,
                 background: sessionTimeLeft <= 10 ? 'rgba(255, 82, 82, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                color: '#1a1a2e',
-                border: '2px solid #1a1a2e',
-                borderRadius: '10px',
-                padding: '8px 12px',
-                fontFamily: "'Gaegu', cursive",
-                fontSize: '20px',
-                fontWeight: 'bold',
-                boxShadow: '4px 4px 0 #1a1a2e',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
                 animation: sessionTimeLeft <= 10 ? 'pulse 1s infinite' : 'none'
               }}
             >
-              ⏱️ {sessionTimeLeft}s left
+              {sessionTimeLeft}s
             </div>
           )}
 
@@ -107,26 +93,10 @@ export default function CaptureScreen({
           <button
             onClick={() => setLivePhotoEnabled(prev => !prev)}
             disabled={isFinishedAllShots} // Lock options after finishing unless they retake
+            className={`live-toggle-btn ${livePhotoEnabled ? 'active' : ''}`}
             style={{
-              position: 'absolute',
-              top: '15px',
-              right: '15px',
-              zIndex: 20,
-              background: livePhotoEnabled ? 'rgba(255, 217, 61, 0.95)' : 'rgba(0, 0, 0, 0.65)',
-              color: livePhotoEnabled ? '#1a1a2e' : '#fff',
-              border: livePhotoEnabled ? '2px solid #1a1a2e' : '2px solid rgba(255,255,255,0.4)',
-              borderRadius: '25px',
-              padding: '6px 14px',
-              fontFamily: "'Gaegu', cursive",
-              fontSize: '16px',
-              fontWeight: 'bold',
               cursor: isFinishedAllShots ? 'default' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               opacity: isFinishedAllShots ? 0.5 : 1,
-              transition: 'all 0.2s ease-in-out'
             }}
           >
             <div
@@ -178,73 +148,40 @@ export default function CaptureScreen({
 
           {/* ACTION OVERLAY (Appears when all photos captured but timer is still running) */}
           {isFinishedAllShots && countdown === null && (
-             <div 
-               style={{
-                 position: 'absolute',
-                 inset: 0,
-                 background: 'rgba(0,0,0,0.6)',
-                 zIndex: 30,
-                 display: 'flex',
-                 flexDirection: 'column',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 borderRadius: '10px',
-                 gap: '20px',
-                 backdropFilter: 'blur(4px)',
-                 animation: 'fadeIn 0.3s ease'
-               }}
-             >
-               <div style={{ color: '#fff', fontSize: '28px', fontFamily: "'Gaegu', cursive", textAlign: 'center', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-                 ✨ Nice Shots! ✨<br/>
-                 <span style={{ fontSize: '18px', opacity: 0.9 }}>
-                   {selectedRetakeIdx !== null 
-                     ? `You selected Photo #${selectedRetakeIdx + 1}.` 
-                     : 'Would you like to use these or retake?'}
+             <div className="capture-action-overlay">
+               <div className="capture-action-text">
+                 {t('capture.niceShots')}<br/>
+                 <span>
+                   {sessionTimeLeft <= 0 
+                     ? "⏳ Waktu habis, kamu sudah tidak bisa retake lagi."
+                     : selectedRetakeIdx !== null 
+                       ? t('capture.selectedPhoto', { num: selectedRetakeIdx + 1 }) 
+                       : t('capture.useOrRetake')}
                  </span>
                </div>
 
-               <div style={{ display: 'flex', gap: '16px', width: '80%', maxWidth: '380px' }}>
+               <div className="capture-action-buttons">
                  {/* Retake Button - disabled if no time left or actively captures */}
                  <button
                    onClick={handleRetakeClick}
                    disabled={sessionTimeLeft <= 0}
-                   className="btn-share"
+                   className="btn-share retake-btn"
                    style={{
-                     flex: 1,
-                     background: '#fff',
-                     color: '#1a1a2e',
-                     border: '3px solid #1a1a2e',
                      boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 #1a1a2e',
                      borderColor: selectedRetakeIdx !== null ? '#FF5252' : '#1a1a2e',
                      opacity: sessionTimeLeft <= 0 ? 0.5 : 1,
                      cursor: sessionTimeLeft <= 0 ? 'not-allowed' : 'pointer',
-                     fontSize: '18px',
-                     padding: '14px',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     gap: '6px',
-                     transition: 'all 0.2s ease',
                      transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none'
                    }}
                  >
-                   🔄 {selectedRetakeIdx !== null ? `Retake #${selectedRetakeIdx + 1}` : t('action.retake') || 'Retake All'}
+                   {selectedRetakeIdx !== null ? `RETAKE #${selectedRetakeIdx + 1}` : (t('action.retake') || 'RETAKE ALL').toUpperCase()}
                  </button>
 
                  <button
                    onClick={onFinish}
-                   className="btn-dl"
-                   style={{
-                     flex: 1,
-                     fontSize: '18px',
-                     padding: '14px',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     gap: '6px'
-                   }}
+                   className="btn-dl finish-btn"
                  >
-                   ✅ {t('action.done') || 'Done & Send'}
+                   {(t('action.done') || 'Done & Send').toUpperCase()}
                  </button>
                </div>
              </div>
@@ -252,9 +189,9 @@ export default function CaptureScreen({
 
         </div>
 
-        {/* ── Progress strip (Tanpa tombol bulat kiri) ── */}
-        <div className="capture-strip-bar" style={{ justifyContent: 'center' }}>
-          <div className="strip-bar-slots" style={{ justifyContent: 'center', flex: 'none' }}>
+        {/* ── Progress strip ── */}
+        <div className="capture-strip-bar">
+          <div className="strip-bar-slots">
             {Array.from({ length: totalShots }).map((_, i) => {
               const isPhotoTaken = !!photoPreviews[i];
               const canRetakeThis = isFinishedAllShots && isPhotoTaken && countdown === null && sessionTimeLeft > 0;
@@ -265,20 +202,20 @@ export default function CaptureScreen({
                   key={i}
                   className={`strip-thumb ${i < currentShotIndex ? 'taken' : i === currentShotIndex ? 'current' : ''}`}
                   style={{ 
-                    width: '100px', 
-                    height: '75px', 
+                    width: '160px', 
+                    height: '120px', 
                     overflow: 'hidden', 
                     background: '#000',
                     position: 'relative',
                     cursor: canRetakeThis ? 'pointer' : 'default',
                     border: isThisSelected 
-                      ? '4px dashed #FFD700' // Cute yellow dashed line for selected
+                      ? '4px solid #FFD700'
                       : canRetakeThis 
                         ? '2px solid rgba(255, 255, 255, 0.5)' 
                         : 'none',
                     transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    transform: isThisSelected ? 'scale(1.1)' : 'scale(1)',
-                    boxShadow: isThisSelected ? '0 0 15px rgba(255, 215, 0, 0.6)' : 'none',
+                    transform: isThisSelected ? 'scale(1.05)' : 'scale(1)',
+                    boxShadow: isThisSelected ? '0 4px 12px rgba(255, 215, 0, 0.4)' : 'none',
                     zIndex: isThisSelected ? 10 : 1
                   }}
                   onClick={() => {
@@ -296,21 +233,13 @@ export default function CaptureScreen({
                         style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: canRetakeThis ? 0.8 : 1 }} 
                       />
                       {canRetakeThis && (
-                        <div style={{
-                          position: 'absolute',
-                          inset: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: isThisSelected ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0,0,0,0.3)',
-                          color: '#fff',
-                          fontFamily: "'Gaegu', cursive",
-                          fontSize: '14px',
-                          fontWeight: 'bold',
-                          textAlign: 'center',
-                          textShadow: '0 1px 2px rgba(0,0,0,0.8)'
-                        }}>
-                          {isThisSelected ? '⭐ Selected' : '🔄 Select'}
+                        <div 
+                          className="strip-thumb-retake-overlay"
+                          style={{
+                            background: isThisSelected ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0,0,0,0.3)',
+                          }}
+                        >
+                          {isThisSelected ? 'Selected' : 'Select'}
                         </div>
                       )}
                     </>

@@ -72,7 +72,13 @@ export default function WaitRoomScreen({
               {participants.map((p, i) => (
                 <div key={i} className="wr__participant" style={{ margin: 0, padding: '8px 16px', fontSize: '18px' }}>
                   <div className="wr__participant-dot" />
-                  {p.displayName} {p.isYou ? `(${t('common.you') || 'You'})` : ''}
+                  {p.displayName ? (
+                    <>
+                      {p.displayName}{p.isYou ? ` (${t('common.you') || 'You'})` : ''}
+                    </>
+                  ) : (
+                    null
+                  )}
                 </div>
               ))}
               {participants.length < groupSize && (

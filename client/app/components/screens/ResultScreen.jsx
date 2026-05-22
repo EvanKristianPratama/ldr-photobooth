@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import LivePhotoViewer from '../ui/LivePhotoViewer';
+import { convertToPaperSize } from '../../services/paperService';
 
 export default function ResultScreen({
   mergedImage,
@@ -21,7 +22,8 @@ export default function ResultScreen({
   mergePhotos,
   participants,
   frameLayout,
-  orientation
+  orientation,
+  onCheckout
 }) {
   const { t } = useLanguage();
   const [showPostModal, setShowPostModal] = useState(false);
@@ -31,6 +33,133 @@ export default function ResultScreen({
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [gifProgress, setGifProgress] = useState(0);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  // Print system states
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStatus, setPrintStatus] = useState('idle');
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
+  const autoPrintAttemptedRef = useRef(false);
+
+  // Initialize auto-print setting from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ldr_auto_print');
+      if (saved === 'false') {
+        setAutoPrintEnabled(false);
+      }
+    }
+  }, []);
+
+  const handlePrint = async (format = 'AUTO') => {
+    if (isPrinting || !mergedImage) return;
+    setIsPrinting(true);
+    setPrintStatus('printing');
+
+    try {
+      // 1. Process image to correct size/paper format
+      const processedImage = await convertToPaperSize(mergedImage, {
+        targetPaper: format,
+        sessionMode: sessionMode,
+        layout: frameLayout,
+        count: localBlobs?.length || 1,
+        frameColor: '#ffffff'
+      });
+
+      // 2. Determine execution context (Electron App vs standard Web Browser)
+      if (typeof window !== 'undefined' && window.electronAPI?.printImage) {
+        // Native Electron Print (Silent / Instant)
+        const res = await window.electronAPI.printImage(processedImage, {
+          silent: true,
+          deviceName: '' // default printer
+        });
+        if (res?.success) {
+          setPrintStatus('success');
+        } else {
+          console.error('Electron silent print failed:', res?.error);
+          setPrintStatus('error');
+          alert(t('result.printFailed') || 'Print failed, please try again.');
+        }
+      } else {
+        // Web Browser Print via hidden iframe (standard fallback)
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <html>
+            <head>
+              <title>Print Photobooth</title>
+              <style>
+                @page {
+                  size: auto;
+                  margin: 0mm;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  height: 100vh;
+                  background: #fff;
+                }
+                img {
+                  max-width: 100%;
+                  max-height: 100%;
+                  object-fit: contain;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${processedImage}" onload="window.print();" />
+            </body>
+          </html>
+        `);
+        doc.close();
+
+        iframe.contentWindow.onafterprint = () => {
+          document.body.removeChild(iframe);
+          setPrintStatus('success');
+        };
+
+        // Fallback cleanup in case onafterprint does not fire
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+          setPrintStatus('success');
+        }, 5000);
+      }
+    } catch (err) {
+      console.error('Print error:', err);
+      setPrintStatus('error');
+      alert(t('result.printFailed') || 'Print failed, please try again.');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  // Auto print trigger on mount
+  useEffect(() => {
+    if (mergedImage && !isMerging && !autoPrintAttemptedRef.current) {
+      autoPrintAttemptedRef.current = true;
+      const saved = localStorage.getItem('ldr_auto_print');
+      if (saved !== 'false') {
+        const timer = setTimeout(() => {
+          handlePrint('AUTO');
+        }, 1500); // 1.5s delay for a beautiful visual transition
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [mergedImage, isMerging]);
 
   const downloadAnimatedGif = async () => {
     if (isGeneratingGif) return;
@@ -190,6 +319,82 @@ export default function ResultScreen({
     }
   };
 
+  const downloadAsStory = async () => {
+    if (!mergedImage) return;
+    try {
+      const img = new Image();
+      img.src = mergedImage;
+      await new Promise(r => img.onload = r);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+
+      // 1. Draw blurred background to truly follow the image colors
+      ctx.filter = 'blur(80px) saturate(1.8) brightness(0.9)';
+      const scaleToCover = Math.max(1080 / img.width, 1920 / img.height);
+      const bgW = img.width * scaleToCover;
+      const bgH = img.height * scaleToCover;
+      const bgX = (1080 - bgW) / 2;
+      const bgY = (1920 - bgH) / 2;
+      ctx.drawImage(img, bgX, bgY, bgW, bgH);
+      ctx.filter = 'none';
+
+      // 2. Glassmorphism overlay gradient
+      const grad = ctx.createLinearGradient(0, 0, 1080, 1920);
+      grad.addColorStop(0, 'rgba(255,255,255,0.2)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.05)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      // Dimensions for the main photostrip
+      const maxW = 850;
+      const maxH = 1350;
+      const scaleToFit = Math.min(maxW / img.width, maxH / img.height);
+      const fgW = img.width * scaleToFit;
+      const fgH = img.height * scaleToFit;
+      const fgX = (1080 - fgW) / 2;
+      const fgY = (1920 - fgH) / 2 - 50; // Shifted up for logo space
+
+      // 3. Draw the main image on top
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 20;
+      ctx.drawImage(img, fgX, fgY, fgW, fgH);
+      ctx.shadowColor = 'transparent';
+
+      // 4. Draw Logo
+      const logo = new Image();
+      logo.src = '/Ldr_photobooth.png';
+      await new Promise(r => {
+        logo.onload = r;
+        logo.onerror = r;
+      });
+      
+      if (logo.width) {
+        const logoTargetW = 350;
+        const logoTargetH = logo.height * (logoTargetW / logo.width);
+        const logoX = (1080 - logoTargetW) / 2;
+        const logoY = 1920 - logoTargetH - 80;
+        ctx.drawImage(logo, logoX, logoY, logoTargetW, logoTargetH);
+      }
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = downloadName ? downloadName.replace(/\.[^/.]+$/, '') + '-story.jpg' : `ldr-photo-story-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (err) {
+      console.error('Failed to create story format:', err);
+      alert('Error creating story format.');
+    }
+  };
+
   return (
     <section className="page active result-page-container" id="page-download">
       <div className="result-layout-wrapper">
@@ -245,21 +450,42 @@ export default function ResultScreen({
             </button>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <button 
-                className="btn-dl" 
-                onClick={() => setShowDownloadModal(true)} 
-                style={{ 
-                  width: '100%', 
-                  fontSize: '18px', 
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px'
-                }}
-              >
-                <span>📥</span> {t('result.download')}
-              </button>
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button 
+                  className="btn-dl" 
+                  onClick={() => setShowDownloadModal(true)} 
+                  style={{ 
+                    flex: 1, 
+                    fontSize: '18px', 
+                    padding: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>📥</span> {t('result.download')}
+                </button>
+                <button 
+                  className="btn-share" 
+                  onClick={() => {
+                    if (onCheckout) onCheckout();
+                  }}
+                  style={{ 
+                    flex: 1, 
+                    fontSize: '18px', 
+                    padding: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: 'var(--teal)',
+                    boxShadow: '4px 4px 0 var(--ink)'
+                  }}
+                >
+                  <span>📦</span> {t('result.print') || 'Order Print'}
+                </button>
+              </div>
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.share')}
               </button>
@@ -366,16 +592,15 @@ export default function ResultScreen({
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Option 1: Classic Strip */}
+              {/* Option 1: Story Format */}
               <button 
                 className="mode-option-card"
-                style={{ boxShadow: '4px 4px 0 var(--ink)', width: '100%', padding: '14px' }}
-                onClick={() => { onDownload('ORIGINAL'); setShowDownloadModal(false); }}
+                style={{ boxShadow: '4px 4px 0 #9b51e0', background: 'rgba(155, 81, 224, 0.1)', width: '100%', padding: '14px', borderColor: '#9b51e0' }}
+                onClick={() => { downloadAsStory(); setShowDownloadModal(false); }}
               >
-                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px' }}>✂️</div>
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#9b51e0', color: 'white' }}>📱</div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download Standard Strip</div>
-                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Raw length vertical strip</div>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.story')}</div>
                 </div>
               </button>
 
@@ -387,12 +612,23 @@ export default function ResultScreen({
               >
                 <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--yellow)' }}>🖨️</div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download as 4R</div>
-                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Printable size (6" x 4" format)</div>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.4r')}</div>
                 </div>
               </button>
 
-              {/* Option 3: Duplicated 4R Strip (Classic Double) - ONLY show if layout is Strip! */}
+              {/* Option 3: Classic Strip */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--ink)', width: '100%', padding: '14px' }}
+                onClick={() => { onDownload('ORIGINAL'); setShowDownloadModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px' }}>✂️</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.strip')}</div>
+                </div>
+              </button>
+
+              {/* Option 4: Duplicated 4R Strip (Classic Double) - ONLY show if layout is Strip! */}
               {frameLayout === 'strip' && (
                 <button 
                   className="mode-option-card"
@@ -401,13 +637,12 @@ export default function ResultScreen({
                 >
                   <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--pink)', color: 'white' }}>👥</div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Download 2R Duo Strip</div>
-                    <div style={{ fontSize: '12px', opacity: 0.6 }}>2 Lembar 2R digabung dalam 1 Kertas 4R (Classic)</div>
+                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.duoStrip')}</div>
                   </div>
                 </button>
               )}
 
-              {/* Option 4: Animated GIF */}
+              {/* Option 5: Animated GIF */}
               {localLiveFrames?.length > 0 && (
                 <button 
                   className="mode-option-card"
@@ -425,9 +660,8 @@ export default function ResultScreen({
                   <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--teal)', color: 'white' }}>🎞️</div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>
-                      {isGeneratingGif ? `Generating...` : `Download Animated GIF`}
+                      {isGeneratingGif ? t('result.format.generating') : t('result.format.gif')}
                     </div>
-                    <div style={{ fontSize: '12px', opacity: 0.6 }}>Interactive motion photos</div>
                   </div>
                 </button>
               )}
@@ -435,6 +669,123 @@ export default function ResultScreen({
           </div>
         </div>
       )}
+
+      {/* ── PRINT OPTIONS MODAL ── */}
+      {showPrintModal && (
+        <div className="comm-modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="comm-modal" style={{ maxWidth: '420px', border: '3px solid var(--ink)', boxShadow: '8px 8px 0 var(--ink)' }}>
+            <button className="comm-modal-close" onClick={() => setShowPrintModal(false)}>×</button>
+            
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h2 className="comm-modal-title" style={{ marginBottom: '4px' }}>Select <span className="outline">Print Format</span></h2>
+              <p style={{ fontFamily: "'Gaegu', cursive", opacity: 0.7, fontSize: '16px' }}>Choose how to print your photobooth strip! 🖨️✨</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Option 1: Classic Strip */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--ink)', width: '100%', padding: '14px' }}
+                onClick={() => { handlePrint('ORIGINAL'); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px' }}>✂️</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print Standard Strip</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Raw length vertical strip</div>
+                </div>
+              </button>
+
+              {/* Option 2: 4R Printable */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--yellow)', background: 'var(--yellow-lt, #fffbea)', width: '100%', padding: '14px', borderColor: 'var(--yellow)' }}
+                onClick={() => { handlePrint('4R'); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--yellow)' }}>🖨️</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print as 4R Page</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Printable size (6" x 4" format)</div>
+                </div>
+              </button>
+
+              {/* Option 3: Duplicated 4R Strip (Classic Double) - ONLY show if layout is Strip! */}
+              {frameLayout === 'strip' && (
+                <button 
+                  className="mode-option-card"
+                  style={{ boxShadow: '4px 4px 0 var(--pink)', background: 'var(--pink-lt, #fff0f5)', width: '100%', padding: '14px', borderColor: 'var(--pink)' }}
+                  onClick={() => { handlePrint('4R_DUPLICATED_STRIP'); setShowPrintModal(false); }}
+                >
+                  <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--pink)', color: 'white' }}>👥</div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print 2R Duo Strip (4R Kertas)</div>
+                    <div style={{ fontSize: '12px', opacity: 0.6 }}>2 Lembar 2R digabung dalam 1 Kertas 4R (Classic)</div>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Auto-print Toggle Setting */}
+            <div style={{ 
+              marginTop: '20px', 
+              paddingTop: '15px', 
+              borderTop: '2px dashed var(--ink)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontFamily: "'Gaegu', cursive",
+              fontSize: '18px'
+            }}>
+              <span>⚙️ Auto-print next session?</span>
+              <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={autoPrintEnabled}
+                  onChange={(e) => {
+                    setAutoPrintEnabled(e.target.checked);
+                    localStorage.setItem('ldr_auto_print', e.target.checked ? 'true' : 'false');
+                  }}
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: 'bold' }}>{autoPrintEnabled ? 'ON' : 'OFF'}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PRINTING STATUS NOTIFICATION ── */}
+      {isPrinting && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: 'var(--teal-lt, #e8fff8)',
+          border: '3px solid var(--ink)',
+          boxShadow: '4px 4px 0 var(--ink)',
+          borderRadius: '16px',
+          padding: '16px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          fontFamily: "'Gaegu', cursive",
+          fontSize: '22px',
+          fontWeight: 'bold',
+          color: 'var(--ink)',
+          animation: 'printBounce 1s infinite alternate'
+        }}>
+          <span style={{ fontSize: '26px' }}>🖨️</span>
+          <span>{t('result.printing') || 'Printing your photo strip...'}</span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes printBounce {
+          0% { transform: translate(-50%, 0); }
+          100% { transform: translate(-50%, -6px); }
+        }
+      `}</style>
     </section>
   );
 }

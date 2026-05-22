@@ -21,3 +21,8 @@ database_id = "10c4ff4c-1b7f-4e43-9ff8-ac4bc0468eac"
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "ldr-photobooth-frames"
+
+[vars]
+MIDTRANS_CLIENT_KEY = "SB-Mid-client-owXNSzDK0hPZ8vRZ"
+MIDTRANS_SERVER_KEY = "SB-Mid-server-BWUE1Wzf_X6lBLEWqGHSpvah"
+
