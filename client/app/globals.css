@@ -2935,8 +2935,7 @@ body::before {
 
 @media (max-width: 768px) {
   .guide-box {
-    height: 75%;
-    /* More compact on mobile */
+    height: 100% !important;
   }
 }
 
