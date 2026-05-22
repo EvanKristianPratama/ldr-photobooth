@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import LivePhotoViewer from '../ui/LivePhotoViewer';
 import { 
@@ -10,6 +10,27 @@ import {
   FRAME_GLARES,
   STICKER_PACK 
 } from '../../configs/frameAssets';
+
+const WEATHER_CODES = {
+  0: { label: 'Cerah', emoji: '☀️' },
+  1: { label: 'Cerah Berawan', emoji: '🌤️' },
+  2: { label: 'Berawan', emoji: '⛅' },
+  3: { label: 'Mendung', emoji: '☁️' },
+  45: { label: 'Kabut', emoji: '🌫️' },
+  48: { label: 'Kabut Rime', emoji: '🌫️' },
+  51: { label: 'Gerimis Ringan', emoji: '🌦️' },
+  53: { label: 'Gerimis Sedang', emoji: '🌦️' },
+  55: { label: 'Gerimis Lebat', emoji: '🌧️' },
+  61: { label: 'Hujan Ringan', emoji: '🌧️' },
+  63: { label: 'Hujan Sedang', emoji: '🌧️' },
+  65: { label: 'Hujan Lebat', emoji: '🌧️' },
+  80: { label: 'Hujan Shower Ringan', emoji: '🌦️' },
+  81: { label: 'Hujan Shower Sedang', emoji: '🌧️' },
+  82: { label: 'Hujan Shower Deras', emoji: '⛈️' },
+  95: { label: 'Badai Guntur', emoji: '⛈️' },
+  96: { label: 'Badai dengan Hujan Es', emoji: '⛈️' },
+  99: { label: 'Badai Guntur Hebat', emoji: '⛈️' },
+};
 
 /**
  * LocationInput – smart text input with auto-detected location suggestions.
@@ -151,6 +172,82 @@ export default function FrameSelectScreen({
   const { t } = useLanguage();
   const [showPresetsModal, setShowPresetsModal] = useState(false);
   const [livePhotoPlayback, setLivePhotoPlayback] = useState(true);
+
+  // 🌤️ Weather Geolocation & Fetch States
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState('');
+
+  const fetchWeather = () => {
+    setWeatherLoading(true);
+    setWeatherError('');
+
+    const handleSuccess = async (lat, lon, cityName = '') => {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        if (!res.ok) throw new Error('Gagal mengambil data cuaca');
+        const data = await res.json();
+        const current = data.current_weather;
+        if (current) {
+          const wInfo = WEATHER_CODES[current.weathercode] || { label: 'Berawan', emoji: '⛅' };
+          setWeather({
+            temp: Math.round(current.temperature),
+            label: wInfo.label,
+            emoji: wInfo.emoji,
+            city: cityName || 'Lokasi Anda'
+          });
+        }
+      } catch (err) {
+        setWeatherError('Gagal memuat cuaca');
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          let city = '';
+          try {
+            // High-priority OpenStreetMap Nominatim reverse geocoder
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              city = geoData.address.city || geoData.address.town || geoData.address.municipality || geoData.address.state || '';
+            }
+          } catch (e) {
+            console.log('Reverse geocoding failed, falling back.');
+          }
+          if (!city && participants[0]?.id && locationsById[participants[0].id]) {
+            city = locationsById[participants[0].id].city;
+          }
+          handleSuccess(latitude, longitude, city);
+        },
+        () => {
+          // Geolocation permission denied or unavailable, use IP location
+          const pLoc = participants[0]?.id ? locationsById[participants[0].id] : null;
+          if (pLoc && pLoc.latitude && pLoc.longitude) {
+            handleSuccess(pLoc.latitude, pLoc.longitude, pLoc.city);
+          } else {
+            // Default Bandung
+            handleSuccess(-6.9175, 107.6191, 'Bandung');
+          }
+        }
+      );
+    } else {
+      const pLoc = participants[0]?.id ? locationsById[participants[0].id] : null;
+      if (pLoc && pLoc.latitude && pLoc.longitude) {
+        handleSuccess(pLoc.latitude, pLoc.longitude, pLoc.city);
+      } else {
+        handleSuccess(-6.9175, 107.6191, 'Bandung');
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
 
   return (
     <section className="page active" id="page-frame">
@@ -498,6 +595,117 @@ export default function FrameSelectScreen({
             value={frameDate}
             onChange={e => { setFrameDate(e.target.value); onReapply(); }}
           />
+        </div>
+
+        {/* ── WEATHER INFO SECTION ── */}
+        <div className="ctrl-section" style={{
+          background: 'rgba(255, 255, 255, 0.45)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          border: '2px solid var(--ink)',
+          borderRadius: '16px',
+          padding: '12px',
+          boxShadow: 'none',
+          marginTop: '8px'
+        }}>
+          <div className="ctrl-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink)' }}>
+            <span>🌤️</span>
+            <span>Cuaca Hari Ini</span>
+          </div>
+
+          {weatherLoading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Gaegu', cursive", fontSize: '15px' }}>
+              <div style={{
+                width: '14px',
+                height: '14px',
+                border: '2px solid var(--ink)',
+                borderTopColor: 'transparent',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite'
+              }} />
+              <span>Memuat cuaca...</span>
+            </div>
+          )}
+
+          {weatherError && (
+            <div style={{ fontFamily: "'Gaegu', cursive", fontSize: '15px', color: '#ff6b9d' }}>
+              ⚠️ {weatherError}
+            </div>
+          )}
+
+          {weather && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '32px' }}>{weather.emoji}</span>
+                  <div>
+                    <div style={{ fontFamily: "'Gaegu', cursive", fontSize: '18px', fontWeight: 'bold', color: 'var(--ink)' }}>
+                      {weather.city}
+                    </div>
+                    <div style={{ fontSize: '13px', opacity: 0.7, fontFamily: "'Nunito', sans-serif" }}>
+                      {weather.label}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontFamily: "'Gaegu', cursive", fontSize: '28px', fontWeight: '700', color: 'var(--ink)' }}>
+                  {weather.temp}°C
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{
+                    flex: 1,
+                    fontSize: '12px',
+                    padding: '4px 8px',
+                    minHeight: '26px',
+                    borderRadius: '8px',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    fontFamily: "'Gaegu', cursive",
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    const text = `${weather.emoji} ${weather.temp}°C`;
+                    if (sessionMode === 'solo') {
+                      if (!locTextLeft.includes(text)) {
+                        setLocTextLeft(prev => prev ? `${prev} • ${text}` : `${weather.city} • ${text}`);
+                        setLocTextEdited(true);
+                      }
+                    } else {
+                      // Append to Date
+                      if (!frameDate.includes(text)) {
+                        setFrameDate(prev => prev ? `${prev} (${text})` : text);
+                        onReapply();
+                      }
+                    }
+                  }}
+                >
+                  ➕ Pasang di Foto
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{
+                    fontSize: '12px',
+                    padding: '4px 8px',
+                    minHeight: '26px',
+                    borderRadius: '8px',
+                    background: '#fff',
+                    cursor: 'pointer'
+                  }}
+                  onClick={fetchWeather}
+                >
+                  🔄
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="ctrl-section">
