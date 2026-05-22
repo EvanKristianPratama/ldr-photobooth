@@ -29,6 +29,8 @@ export default function useFrame({ participants, locationsById = {} }) {
     frameNoise, setFrameNoise,
     frameGlare, setFrameGlare,
     activeTemplate, setActiveTemplate,
+    showWeather, setShowWeather,
+    weatherText, setWeatherText,
     addSticker, removeSticker, updateSticker, clearStickers
   } = frameState;
 
@@ -183,6 +185,8 @@ export default function useFrame({ participants, locationsById = {} }) {
     frameNoise, setFrameNoise,
     frameGlare, setFrameGlare,
     activeTemplate,
+    showWeather, setShowWeather,
+    weatherText, setWeatherText,
     cmsTemplates,
     framePresets,
     communityPresets,

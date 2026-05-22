@@ -167,7 +167,11 @@ export default function FrameSelectScreen({
   frameNoise,
   setFrameNoise,
   frameGlare,
-  setFrameGlare
+  setFrameGlare,
+  showWeather,
+  setShowWeather,
+  weatherText,
+  setWeatherText
 }) {
   const { t } = useLanguage();
   const [showPresetsModal, setShowPresetsModal] = useState(false);
@@ -190,12 +194,14 @@ export default function FrameSelectScreen({
         const current = data.current_weather;
         if (current) {
           const wInfo = WEATHER_CODES[current.weathercode] || { label: 'Berawan', emoji: '⛅' };
+          const roundedTemp = Math.round(current.temperature);
           setWeather({
-            temp: Math.round(current.temperature),
+            temp: roundedTemp,
             label: wInfo.label,
             emoji: wInfo.emoji,
             city: cityName || 'Lokasi Anda'
           });
+          setWeatherText(`${wInfo.emoji} ${roundedTemp}°C`);
         }
       } catch (err) {
         setWeatherError('Gagal memuat cuaca');
@@ -608,7 +614,7 @@ export default function FrameSelectScreen({
           boxShadow: 'none',
           marginTop: '8px'
         }}>
-          <div className="ctrl-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink)' }}>
+          <div className="ctrl-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink)', marginBottom: '8px' }}>
             <span>🌤️</span>
             <span>Cuaca Hari Ini</span>
           </div>
@@ -652,6 +658,32 @@ export default function FrameSelectScreen({
                 </div>
               </div>
 
+              {/* ── ATTACH / DETACH TOGGLE SWITCH ── */}
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontFamily: "'Gaegu', cursive",
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: 'var(--ink)',
+                cursor: 'pointer',
+                background: 'white',
+                border: '1.5px solid var(--ink)',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                marginTop: '4px',
+                boxShadow: '2px 2px 0 var(--ink)'
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={showWeather} 
+                  onChange={e => { setShowWeather(e.target.checked); onReapply(); }} 
+                  style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: 'var(--pink)' }}
+                />
+                Pasang cuaca di cetakan (kecil)
+              </label>
+
               <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                 <button
                   type="button"
@@ -686,7 +718,7 @@ export default function FrameSelectScreen({
                     }
                   }}
                 >
-                  ➕ Pasang di Foto
+                  ➕ Salin ke Text/Date
                 </button>
                 <button
                   type="button"

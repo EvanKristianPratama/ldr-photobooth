@@ -272,6 +272,10 @@ export default function Page() {
             setFrameNoise={frame.setFrameNoise}
             frameGlare={frame.frameGlare}
             setFrameGlare={frame.setFrameGlare}
+            showWeather={frame.showWeather}
+            setShowWeather={frame.setShowWeather}
+            weatherText={frame.weatherText}
+            setWeatherText={frame.setWeatherText}
           />
         )}
 

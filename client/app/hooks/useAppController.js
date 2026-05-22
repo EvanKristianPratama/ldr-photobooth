@@ -208,12 +208,12 @@ export default function useAppController() {
     frame.frameMode, frame.framePresetId, frame.frameSrc, frame.showFrameText,
     frame.frameColor, frame.frameTextColor, frame.locTextLeft, frame.locTextRight,
     frame.photoFilter, frame.frameFont, frame.frameLayout, frame.frameDate,
-    frame.orientation, frame.frameNoise, frame.frameGlare
+    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText
   ].join('|'), [
     frame.frameMode, frame.framePresetId, frame.frameSrc, frame.showFrameText,
     frame.frameColor, frame.frameTextColor, frame.locTextLeft, frame.locTextRight,
     frame.photoFilter, frame.frameFont, frame.frameLayout, frame.frameDate,
-    frame.orientation, frame.frameNoise, frame.frameGlare
+    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText
   ]);
 
   const debouncedMergeDeps = useDebouncedValue(mergeDeps, 400);

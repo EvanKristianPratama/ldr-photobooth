@@ -23,6 +23,8 @@ export function useFrameState() {
   const [frameNoise, setFrameNoise] = useState(0); // 0 to 100
   const [frameGlare, setFrameGlare] = useState('none'); // 'none', 'warm', 'retro'
   const [activeTemplate, setActiveTemplate] = useState(null); // CMS template mode
+  const [showWeather, setShowWeather] = useState(true);
+  const [weatherText, setWeatherText] = useState('');
 
   const addSticker = useCallback((emoji) => {
     setStickers(prev => [...prev, { id: crypto.randomUUID(), emoji, x: 200, y: 200, scale: 2, rotation: 0 }]);
@@ -60,6 +62,8 @@ export function useFrameState() {
     frameNoise, setFrameNoise,
     frameGlare, setFrameGlare,
     activeTemplate, setActiveTemplate,
+    showWeather, setShowWeather,
+    weatherText, setWeatherText,
     addSticker, removeSticker, updateSticker, clearStickers
   };
 }

@@ -18,7 +18,7 @@ export function useFrameRenderer({
     sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, 
     frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, 
     stickers, orientation, frameFont, frameLayout, frameDate, 
-    frameNoise, frameGlare, activeTemplate,
+    frameNoise, frameGlare, activeTemplate, showWeather, weatherText,
     locTextEdited, setLocTextLeft, setLocTextRight, setFrameError
   } = frameState;
 
@@ -97,9 +97,11 @@ export function useFrameRenderer({
       frameDate,
       frameNoise,
       frameGlare,
-      activeTemplate?.id || 'none'
+      activeTemplate?.id || 'none',
+      showWeather,
+      weatherText
     ].join('|');
-  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate]);
+  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate, showWeather, weatherText]);
 
   const mergePhotos = useCallback(async ({
     count,
@@ -300,7 +302,8 @@ export function useFrameRenderer({
 
               let content = te.content || '';
               content = content.replace('{{name}}', locTextLeft || sorted[0]?.displayName || '');
-              content = content.replace('{{date}}', frameDate);
+              const dateStr = showWeather && weatherText ? `${frameDate} (${weatherText})` : frameDate;
+              content = content.replace('{{date}}', dateStr);
               content = content.replace('{{location}}', locTextLeft || '');
 
               const textY = te.y >= 0 ? te.y : canvas.height + te.y;
@@ -516,8 +519,14 @@ export function useFrameRenderer({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(frameDate, totalW / 2, totalH - Math.round(footerH * 0.55));
+        if (showWeather && weatherText) {
+          ctx.save();
+          ctx.font = `700 24px ${frameFont}`;
+          ctx.fillText(weatherText, totalW / 2, totalH - Math.round(footerH * 0.42));
+          ctx.restore();
+        }
         ctx.font = `700 32px ${frameFont}`;
-        ctx.fillText('LDRPhotobooth', totalW / 2, totalH - Math.round(footerH * 0.3));
+        ctx.fillText('LDRPhotobooth', totalW / 2, totalH - Math.round(footerH * 0.28));
       };
 
       if (isCustomFrame && frameSrc) {
