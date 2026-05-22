@@ -441,6 +441,8 @@ export default function Page() {
           >
             evan kristian
           </a>
+          <span style={{ color: 'var(--ink)', opacity: 0.4, margin: '0 2px' }}>•</span>
+          <span style={{ fontWeight: '700', color: 'var(--ink)', opacity: 0.7 }}>v1.2.1</span>
         </div>
       )}
       </div>
