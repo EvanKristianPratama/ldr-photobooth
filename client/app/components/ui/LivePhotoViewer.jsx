@@ -16,7 +16,8 @@ export default function LivePhotoViewer({
   localLiveFrames,
   remoteLiveFrames,
   mergePhotos,
-  livePhotoPlayback = true
+  livePhotoPlayback = true,
+  sessionMode
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFrameIdx, setCurrentFrameIdx] = useState(0);
@@ -41,7 +42,8 @@ export default function LivePhotoViewer({
               locationsById,
               frameIndex: f,
               localLiveFrames,
-              remoteLiveFrames
+              remoteLiveFrames,
+              sessionMode
             });
             if (dataUrl) {
               urls.push(dataUrl);

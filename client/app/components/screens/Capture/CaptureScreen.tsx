@@ -278,31 +278,31 @@ export default function CaptureScreen({
         </div>
 
         {/* ── LIVE VIDEO CALL & AI SEGMENTATION CONTROL PANEL ── */}
-        <div style={styles.vcControlPanel}>
-          {/* AI Background removal toggle */}
-          <div style={styles.controlRow}>
-            <label style={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                checked={backgroundRemovalEnabled}
-                onChange={(e) => setBackgroundRemovalEnabled && setBackgroundRemovalEnabled(e.target.checked)}
-                style={styles.checkboxInput}
-              />
-              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>✨ Live Background Removal</span>
-            </label>
-            {backgroundRemovalEnabled && !selfieModelLoaded && (
-              <span style={styles.loadingSpinner}>
-                <div style={styles.spinner} />
-                Memuat AI...
-              </span>
-            )}
-            {backgroundRemovalEnabled && selfieModelLoaded && (
-              <span style={styles.modelLoadedBadge}>✓ AI Active</span>
-            )}
-          </div>
+        {sessionMode === 'live' && (
+          <div style={styles.vcControlPanel}>
+            {/* AI Background removal toggle */}
+            <div style={styles.controlRow}>
+              <label style={styles.toggleLabel}>
+                <input
+                  type="checkbox"
+                  checked={backgroundRemovalEnabled}
+                  onChange={(e) => setBackgroundRemovalEnabled && setBackgroundRemovalEnabled(e.target.checked)}
+                  style={styles.checkboxInput}
+                />
+                <span style={{ fontSize: '15px', fontWeight: 'bold' }}>✨ Live Background Removal</span>
+              </label>
+              {backgroundRemovalEnabled && !selfieModelLoaded && (
+                <span style={styles.loadingSpinner}>
+                  <div style={styles.spinner} />
+                  Memuat AI...
+                </span>
+              )}
+              {backgroundRemovalEnabled && selfieModelLoaded && (
+                <span style={styles.modelLoadedBadge}>✓ AI Active</span>
+              )}
+            </div>
 
-          {/* WebRTC Video Call limits */}
-          {sessionMode === 'duo' && (
+            {/* WebRTC Video Call limits */}
             <div style={styles.vcRow}>
               {isLiveVCActive ? (
                 <>
@@ -338,8 +338,8 @@ export default function CaptureScreen({
                 </>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Thumbnail Preview Strip */}
         <div className="capture-strip-bar">

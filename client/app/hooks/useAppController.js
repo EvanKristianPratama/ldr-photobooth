@@ -350,7 +350,8 @@ export default function useAppController() {
         restoredStep = 'mode-select';
       }
     } else if (sharedRoom) {
-      restoredMode = 'duo';
+      const modeParam = params.get('mode');
+      restoredMode = modeParam === 'live' ? 'live' : 'duo';
       room.setRoomCode(sharedRoom.toUpperCase());
       const sharedSize = params.get('size');
       if (sharedSize) setGroupSize(parseInt(sharedSize, 10));
@@ -372,8 +373,8 @@ export default function useAppController() {
           restoredStep = 'mode-select';
         }
       }
-    } else if (mode === 'solo') {
-      restoredMode = 'solo';
+    } else if (mode === 'solo' || mode === 'live') {
+      restoredMode = mode;
       if (savedStep && ['layout-select', 'join', 'frame-select', 'result', 'checkout'].includes(savedStep)) {
         restoredStep = savedStep;
       }
@@ -431,12 +432,16 @@ export default function useAppController() {
         params.set('mode', 'solo');
         params.delete('room');
         params.delete('size');
-      } else if (sessionMode === 'duo') {
+      } else if (sessionMode === 'duo' || sessionMode === 'live') {
         if (room.roomCode) {
           params.set('room', room.roomCode);
           params.set('size', groupSize);
+          if (sessionMode === 'live') {
+            params.set('mode', 'live');
+          } else {
+            params.delete('mode');
+          }
         }
-        params.delete('mode');
       }
       if (['frame-select', 'result', 'layout-select', 'room', 'join', 'checkout', 'invoice'].includes(step)) {
         params.set('step', step);

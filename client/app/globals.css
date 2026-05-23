@@ -2745,6 +2745,12 @@ body::before {
   box-shadow: 10px 10px 0 var(--pink);
 }
 
+.mode-option-card.live:hover {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+  box-shadow: 10px 10px 0 var(--ink) !important;
+  transform: translate(-4px, -4px) scale(1.02);
+}
+
 .mode-icon {
   font-size: 42px;
   width: 70px;

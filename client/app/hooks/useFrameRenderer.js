@@ -111,7 +111,8 @@ export function useFrameRenderer({
     locationsById,
     frameIndex = null,
     localLiveFrames = null,
-    remoteLiveFrames = null
+    remoteLiveFrames = null,
+    sessionMode = 'duo'
   }) => {
     const isLiveRender = frameIndex !== null;
     const key = isLiveRender ? `${mergeKey(count)}|live|${frameIndex}` : mergeKey(count);
@@ -385,9 +386,11 @@ export function useFrameRenderer({
       // Sort participants by ID to ensure consistent order across all peers
       const sorted = [...participants].sort((a, b) => a.id.localeCompare(b.id));
       const participantCount = sorted.length;
-      const isStack = participantCount === 3;
-      const isQuad2x2 = participantCount === 4;
-      const isGrid = frameLayout === 'grid' && count > 1 && (participantCount === 1 || participantCount === 2);
+      const isLiveMode = sessionMode === 'live';
+      const photoColumns = isLiveMode ? 1 : participantCount;
+      const isStack = photoColumns === 3;
+      const isQuad2x2 = photoColumns === 4;
+      const isGrid = frameLayout === 'grid' && count > 1 && (photoColumns === 1 || photoColumns === 2);
       
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -403,11 +406,11 @@ export function useFrameRenderer({
         totalW = (cellW * 2) + (gap * 3);
         totalRows = count * 2;
       } else if (isGrid) {
-        const cols = participantCount * 2;
+        const cols = photoColumns * 2;
         totalW = (cellW * cols) + (gap * (cols + 1));
         totalRows = Math.ceil(count / 2);
       } else {
-        totalW = (cellW * participantCount) + (gap * (participantCount + 1));
+        totalW = (cellW * photoColumns) + (gap * (photoColumns + 1));
         totalRows = count;
       }
 
@@ -614,7 +617,7 @@ export function useFrameRenderer({
       };
 
       for (let i = 0; i < count; i++) {
-        for (let j = 0; j < participantCount; j++) {
+        for (let j = 0; j < photoColumns; j++) {
           const participant = sorted[j];
           
           let colX, rowY;
@@ -629,7 +632,7 @@ export function useFrameRenderer({
           } else if (isGrid) {
             const shotCol = i % 2;
             const shotRow = Math.floor(i / 2);
-            const colIdx = (shotCol * participantCount) + j;
+            const colIdx = (shotCol * photoColumns) + j;
             const rowIdx = shotRow;
             colX = gap + colIdx * (cellW + gap);
             rowY = headerH + gap + rowIdx * (cellH + gap);
@@ -639,20 +642,29 @@ export function useFrameRenderer({
           }
           
           let blob;
-          if (isLiveRender) {
-            if (participant.isYou) {
+          if (isLiveMode) {
+            if (isLiveRender) {
               const liveBurst = localLiveFrames?.find(entry => entry[0] === i)?.[1];
               blob = liveBurst?.[frameIndex];
-            } else {
-              const peerLiveMap = remoteLiveFrames?.get(participant.id);
-              const liveBurst = peerLiveMap?.get(i);
-              blob = liveBurst?.[frameIndex];
             }
-          }
-
-          if (!blob) {
-            const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
-            blob = blobs[i];
+            if (!blob) {
+              blob = localBlobs[i];
+            }
+          } else {
+            if (isLiveRender) {
+              if (participant.isYou) {
+                const liveBurst = localLiveFrames?.find(entry => entry[0] === i)?.[1];
+                blob = liveBurst?.[frameIndex];
+              } else {
+                const peerLiveMap = remoteLiveFrames?.get(participant.id);
+                const liveBurst = peerLiveMap?.get(i);
+                blob = liveBurst?.[frameIndex];
+              }
+            }
+            if (!blob) {
+              const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
+              blob = blobs[i];
+            }
           }
 
           if (blob) {

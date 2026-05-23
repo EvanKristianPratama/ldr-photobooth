@@ -182,6 +182,7 @@ export default function FrameSelectScreen({
             remoteLiveFrames={remoteLiveFrames}
             mergePhotos={mergePhotos}
             livePhotoPlayback={livePhotoPlayback}
+            sessionMode={sessionMode}
           />
         </div>
       </div>
@@ -203,7 +204,7 @@ export default function FrameSelectScreen({
         </div>
 
         {/* ── PRINT LAYOUT (SOLO / DUO) ── */}
-        {(sessionMode === 'solo' || sessionMode === 'duo') && (
+        {(sessionMode === 'solo' || sessionMode === 'duo' || sessionMode === 'live') && (
           <div className="ctrl-section">
             <div className="ctrl-label">{t('frame.printStyle')}</div>
             <div style={styles.flexGap10}>

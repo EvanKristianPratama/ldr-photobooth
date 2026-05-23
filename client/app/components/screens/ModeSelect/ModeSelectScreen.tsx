@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../../../context/LanguageContext';
 
 interface ModeSelectProps {
-  onSelectMode: (mode: 'solo' | 'duo' | 'community', sizeId?: number) => void;
+  onSelectMode: (mode: 'solo' | 'duo' | 'live' | 'community', sizeId?: number) => void;
   onShowHelp: () => void;
 }
 
@@ -156,6 +156,28 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
           <div className="mode-icon">👥</div>
           <div className="mode-details">
             <div className="mode-title">{t('mode.group')}</div>
+          </div>
+        </div>
+
+        <div 
+          className="mode-option-card live" 
+          onClick={() => onSelectMode('live', 2)}
+          style={{
+            background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
+            color: 'white',
+            border: '2px solid var(--ink)',
+            boxShadow: '4px 4px 0 var(--ink)',
+            marginBottom: '20px',
+          }}
+        >
+          <div className="mode-icon" style={{ fontSize: '32px' }}>⚡</div>
+          <div className="mode-details">
+            <div className="mode-title" style={{ color: 'white', fontWeight: 'bold' }}>
+              {t('mode.live') || 'Duo Live (Foto Bareng)'}
+            </div>
+            <div className="mode-desc" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '13px', marginTop: '4px', fontFamily: "'Gaegu', cursive" }}>
+              {t('mode.liveDesc') || 'Pose bersama langsung dalam satu canvas (seperti Zoom)'}
+            </div>
           </div>
         </div>
 

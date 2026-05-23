@@ -181,7 +181,8 @@ export default function ResultScreen({
           locationsById,
           frameIndex: f,
           localLiveFrames,
-          remoteLiveFrames
+          remoteLiveFrames,
+          sessionMode
         });
         if (dataUrl) {
           frameUrls.push(dataUrl);
@@ -194,8 +195,8 @@ export default function ResultScreen({
       gifshot.createGIF({
         images: frameUrls,
         interval: 0.15,
-        gifWidth: sessionMode === 'solo' ? 280 : 600,
-        gifHeight: sessionMode === 'solo' ? 840 : 450,
+        gifWidth: (sessionMode === 'solo' || sessionMode === 'live') ? 280 : 600,
+        gifHeight: (sessionMode === 'solo' || sessionMode === 'live') ? 840 : 450,
         numFrames: 10,
         sampleInterval: 10
       }, function (obj) {
@@ -398,7 +399,7 @@ export default function ResultScreen({
           <div 
             className="fs__preview-box" 
             style={{ 
-              maxWidth: sessionMode === 'solo' ? '280px' : '500px',
+              maxWidth: (sessionMode === 'solo' || sessionMode === 'live') ? '280px' : '500px',
               height: '55vh', // Force exact max bounding reference
               display: 'flex',
               alignItems: 'center',

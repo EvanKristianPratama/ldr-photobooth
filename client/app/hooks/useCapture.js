@@ -42,7 +42,7 @@ export default function useCapture({
   const [isLiveVCActive, setIsLiveVCActive] = useState(false);
   const [liveVCTimeLeft, setLiveVCTimeLeft] = useState(60);
   const [remoteStream, setRemoteStream] = useState(null);
-  const [backgroundRemovalEnabled, setBackgroundRemovalEnabled] = useState(true);
+  const [backgroundRemovalEnabled, setBackgroundRemovalEnabled] = useState(sessionMode === 'live');
   const vcTimerRef = useRef(null);
   const localSegmentedStreamRef = useRef(null);
 
@@ -184,7 +184,7 @@ export default function useCapture({
 
       const hasRemoteStream = remoteStream && remoteVideoRef.current;
 
-      if (sessionMode === 'duo' && hasRemoteStream) {
+      if (sessionMode === 'live' && hasRemoteStream) {
         // --- DUO side-by-side composite photo posing ---
 
         // Left Half: Local User
