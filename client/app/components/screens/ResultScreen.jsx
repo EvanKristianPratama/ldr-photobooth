@@ -147,20 +147,6 @@ export default function ResultScreen({
     }
   };
 
-  // Auto print trigger on mount
-  useEffect(() => {
-    if (mergedImage && !isMerging && !autoPrintAttemptedRef.current) {
-      autoPrintAttemptedRef.current = true;
-      const saved = localStorage.getItem('ldr_auto_print');
-      if (saved !== 'false') {
-        const timer = setTimeout(() => {
-          handlePrint('AUTO');
-        }, 1500); // 1.5s delay for a beautiful visual transition
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [mergedImage, isMerging]);
-
   const downloadAnimatedGif = async () => {
     if (isGeneratingGif) return;
     setIsGeneratingGif(true);
@@ -464,7 +450,7 @@ export default function ResultScreen({
                     gap: '8px'
                   }}
                 >
-                  <span>📥</span> {t('result.download')}
+                  {t('result.download')}
                 </button>
                 <button 
                   className="btn-share" 
@@ -483,7 +469,7 @@ export default function ResultScreen({
                     boxShadow: '4px 4px 0 var(--ink)'
                   }}
                 >
-                  <span>📦</span> {t('result.print') || 'Order Print'}
+                  {t('result.print') || 'Order Print'}
                 </button>
               </div>
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
