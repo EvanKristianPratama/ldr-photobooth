@@ -85,7 +85,7 @@ interface FrameSelectScreenProps {
   frameLayout: string;
   setFrameLayout: (layout: string) => void;
   frameDate: string;
-  setFrameDate: (date: string) => void;
+  setFrameDate: React.Dispatch<React.SetStateAction<string>> | ((date: string | ((prev: string) => string)) => void);
   frameNoise: number;
   setFrameNoise: (noise: number) => void;
   frameGlare: string;
