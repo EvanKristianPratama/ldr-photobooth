@@ -3,7 +3,7 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import FrameSelectScreen from './components/screens/FrameSelectScreen';
+import FrameSelectScreen from './components/screens/FrameSelect/FrameSelectScreen';
 import JoinRoomScreen from './components/screens/JoinRoom/JoinRoomScreen';
 import WaitRoomScreen from './components/screens/WaitRoomScreen';
 import LayoutSelectScreen from './components/screens/LayoutSelect/LayoutSelectScreen';
