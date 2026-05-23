@@ -41,6 +41,7 @@ export default function Page() {
     room,
     capture,
     frame,
+    webRTC,
     stepsToDisplay,
     
     // Handlers
