@@ -4,9 +4,9 @@ import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import FrameSelectScreen from './components/screens/FrameSelectScreen';
-import JoinRoomScreen from './components/screens/JoinRoomScreen';
+import JoinRoomScreen from './components/screens/JoinRoom/JoinRoomScreen';
 import WaitRoomScreen from './components/screens/WaitRoomScreen';
-import LayoutSelectScreen from './components/screens/LayoutSelectScreen';
+import LayoutSelectScreen from './components/screens/LayoutSelect/LayoutSelectScreen';
 import CaptureScreen from './components/screens/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import CheckoutScreen from './components/screens/CheckoutScreen';
@@ -14,7 +14,7 @@ import InvoiceScreen from './components/screens/InvoiceScreen';
 import StepIndicator from './components/ui/StepIndicator';
 import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
-import ModeSelectScreen from './components/screens/ModeSelectScreen';
+import ModeSelectScreen from './components/screens/ModeSelect/ModeSelectScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
 
 import useAppController from './hooks/useAppController';

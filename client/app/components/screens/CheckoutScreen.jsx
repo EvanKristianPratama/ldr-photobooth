@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import InvoiceScreen from './InvoiceScreen';
-
+import { rajaOngkirApi } from '../../services/api/endpoints/rajaongkir';
+import { ordersApi } from '../../services/api/endpoints/orders';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
 const ADMIN_FEE = 1000;
@@ -48,7 +49,7 @@ const getCheckoutSchema = (isSolo) => {
   });
 };
 
-function useAddressForm(apiBase, { provinces, setValue, watch, prefix, onProvinceChange, onCityChange }) {
+function useAddressForm({ provinces, setValue, watch, prefix, onProvinceChange, onCityChange }) {
   const addr = watch(prefix) || emptyAddr();
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,12 +60,11 @@ function useAddressForm(apiBase, { provinces, setValue, watch, prefix, onProvinc
       return;
     }
     setLoading(true);
-    fetch(`${apiBase}/api/rajaongkir/cities?provinceId=${addr.provinceId}`)
-      .then(r => r.json())
+    rajaOngkirApi.getCities(addr.provinceId)
       .then(d => setCities(d.cities || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [addr.provinceId, apiBase]);
+  }, [addr.provinceId]);
 
   const handleChange = (field, value) => {
     setValue(`${prefix}.${field}`, value, { shouldValidate: true });
@@ -161,7 +161,7 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   // useAddressForm hooks
-  const { addr: addr1, cities: cities1, loading: loadingCity1, handleChange: handleChange1 } = useAddressForm(API_BASE, {
+  const { addr: addr1, cities: cities1, loading: loadingCity1, handleChange: handleChange1 } = useAddressForm({
     provinces,
     setValue,
     watch,
@@ -170,7 +170,7 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
     onCityChange: (val) => setShippingCost1(val ? '?' : null),
   });
 
-  const { addr: addr2, cities: cities2, loading: loadingCity2, handleChange: handleChange2 } = useAddressForm(API_BASE, {
+  const { addr: addr2, cities: cities2, loading: loadingCity2, handleChange: handleChange2 } = useAddressForm({
     provinces,
     setValue,
     watch,
@@ -182,8 +182,7 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
   // Load provinces once
   useEffect(() => {
     setLoadingProv(true);
-    fetch(`${API_BASE}/api/rajaongkir/provinces`)
-      .then(r => r.json())
+    rajaOngkirApi.getProvinces()
       .then(d => setProvinces(d.provinces || []))
       .catch(() => setError('Gagal memuat data provinsi.'))
       .finally(() => setLoadingProv(false));
@@ -214,8 +213,7 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
         form.append('finishUrl', window.location.origin);
       }
 
-      const resp = await fetch(`${API_BASE}/api/orders`, { method: 'POST', body: form });
-      const respData = await resp.json();
+      const respData = await ordersApi.createOrder(form);
 
       if (!respData.success) throw new Error(respData.error || 'Gagal membuat order');
 
@@ -263,12 +261,7 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
   const confirmCancelOrder = async () => {
     setIsCancelling(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'CANCELLED' })
-      });
-      const data = await resp.json();
+      const data = await ordersApi.cancelOrder(orderId);
       if (!data.success) throw new Error(data.error || 'Gagal membatalkan pesanan');
       
       setShowCancelModal(false);
