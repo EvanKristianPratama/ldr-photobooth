@@ -593,6 +593,7 @@ export default function useCapture({
     compositeCanvasRef,
     remoteVideoRef,
     startLiveVC,
-    stopLiveVC
+    stopLiveVC,
+    selfieCanvasRef
   };
 }

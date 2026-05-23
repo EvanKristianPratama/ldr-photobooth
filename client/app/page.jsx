@@ -7,7 +7,9 @@ import FrameSelectScreen from './components/screens/FrameSelect/FrameSelectScree
 import JoinRoomScreen from './components/screens/JoinRoom/JoinRoomScreen';
 import WaitRoomScreen from './components/screens/WaitRoomScreen';
 import LayoutSelectScreen from './components/screens/LayoutSelect/LayoutSelectScreen';
+import LiveLayoutSelectScreen from './components/screens/LayoutSelect/LiveLayoutSelectScreen';
 import CaptureScreen from './components/screens/Capture/CaptureScreen';
+import LiveCaptureScreen from './components/screens/Capture/LiveCaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import CheckoutScreen from './components/screens/CheckoutScreen';
 import InvoiceScreen from './components/screens/InvoiceScreen';
@@ -181,50 +183,81 @@ export default function Page() {
         )}
 
         {step === 'layout-select' && (
-          <LayoutSelectScreen
-            selectedLayout={selectedLayout}
-            onSelectLayout={handleLayoutSelect}
-            onStart={handleStartBooth}
-            groupSize={groupSize}
-            onBack={() => {
-              if (sessionMode === 'solo') {
-                setStep('mode-select');
-                setSessionMode(null);
-              } else {
+          sessionMode === 'live' ? (
+            <LiveLayoutSelectScreen
+              selectedLayout={selectedLayout}
+              onSelectLayout={handleLayoutSelect}
+              onStart={handleStartBooth}
+              onBack={() => {
                 setStep('room');
-              }
-            }}
-          />
+              }}
+            />
+          ) : (
+            <LayoutSelectScreen
+              selectedLayout={selectedLayout}
+              onSelectLayout={handleLayoutSelect}
+              onStart={handleStartBooth}
+              groupSize={groupSize}
+              onBack={() => {
+                if (sessionMode === 'solo') {
+                  setStep('mode-select');
+                  setSessionMode(null);
+                } else {
+                  setStep('room');
+                }
+              }}
+            />
+          )
         )}
 
         {(step === 'countdown' || step === 'processing') && (
-          <CaptureScreen
-            videoRef={capture.videoRef}
-            countdown={capture.countdown}
-            totalShots={capture.totalShots}
-            currentShotIndex={capture.currentShotIndex}
-            progress={progress}
-            isProcessing={step === 'processing'}
-            localBlobs={capture.localBlobs}
-            livePhotoEnabled={capture.livePhotoEnabled}
-            setLivePhotoEnabled={capture.setLivePhotoEnabled}
-            sessionTimeLeft={capture.sessionTimeLeft}
-            onRetake={handleRetakeSession}
-            onRetakeSingle={handleRetakeSingle}
-            onFinish={() => handleFinishCapture(capture.totalShots)}
-            isTransmitting={capture.isTransmitting}
-            sessionMode={sessionMode}
-            isLiveVCActive={capture.isLiveVCActive}
-            liveVCTimeLeft={capture.liveVCTimeLeft}
-            backgroundRemovalEnabled={capture.backgroundRemovalEnabled}
-            setBackgroundRemovalEnabled={capture.setBackgroundRemovalEnabled}
-            selfieModelLoaded={capture.selfieModelLoaded}
-            compositeCanvasRef={capture.compositeCanvasRef}
-            remoteVideoRef={capture.remoteVideoRef}
-            startLiveVC={capture.startLiveVC}
-            stopLiveVC={capture.stopLiveVC}
-            addLocalStream={webRTC.addLocalStream}
-          />
+          sessionMode === 'live' ? (
+            <LiveCaptureScreen
+              videoRef={capture.videoRef}
+              countdown={capture.countdown}
+              totalShots={capture.totalShots}
+              currentShotIndex={capture.currentShotIndex}
+              progress={progress}
+              isProcessing={step === 'processing'}
+              localBlobs={capture.localBlobs}
+              livePhotoEnabled={capture.livePhotoEnabled}
+              setLivePhotoEnabled={capture.setLivePhotoEnabled}
+              sessionTimeLeft={capture.sessionTimeLeft}
+              onRetake={handleRetakeSession}
+              onRetakeSingle={handleRetakeSingle}
+              onFinish={() => handleFinishCapture(capture.totalShots)}
+              sessionMode={sessionMode}
+              participants={participantsWithSelf}
+              isLiveVCActive={capture.isLiveVCActive}
+              liveVCTimeLeft={capture.liveVCTimeLeft}
+              backgroundRemovalEnabled={capture.backgroundRemovalEnabled}
+              setBackgroundRemovalEnabled={capture.setBackgroundRemovalEnabled}
+              selfieModelLoaded={capture.selfieModelLoaded}
+              compositeCanvasRef={capture.compositeCanvasRef}
+              remoteVideoRef={capture.remoteVideoRef}
+              startLiveVC={capture.startLiveVC}
+              stopLiveVC={capture.stopLiveVC}
+              addLocalStream={webRTC.addLocalStream}
+              selfieCanvasRef={capture.selfieCanvasRef}
+            />
+          ) : (
+            <CaptureScreen
+              videoRef={capture.videoRef}
+              countdown={capture.countdown}
+              totalShots={capture.totalShots}
+              currentShotIndex={capture.currentShotIndex}
+              progress={progress}
+              isProcessing={step === 'processing'}
+              localBlobs={capture.localBlobs}
+              livePhotoEnabled={capture.livePhotoEnabled}
+              setLivePhotoEnabled={capture.setLivePhotoEnabled}
+              sessionTimeLeft={capture.sessionTimeLeft}
+              onRetake={handleRetakeSession}
+              onRetakeSingle={handleRetakeSingle}
+              onFinish={() => handleFinishCapture(capture.totalShots)}
+              sessionMode={sessionMode}
+            />
+          )
         )}
 
         {step === 'frame-select' && frame.mergedImage && (
