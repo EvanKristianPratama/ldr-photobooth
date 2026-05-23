@@ -5,6 +5,7 @@ import {
   PROCESSING_RETRY_DELAY_MS,
   PROCESSING_RETRY_LIMIT
 } from '../constants/layout';
+import { useSelfieSegmentation } from './useSelfieSegmentation';
 
 export default function useCapture({
   sendPhotoToPeer,
@@ -14,7 +15,8 @@ export default function useCapture({
   onFlash,
   onShotIndex,
   pauseRef,
-  participantsCount = 1
+  participantsCount = 1,
+  sessionMode = 'duo'
 }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -22,6 +24,7 @@ export default function useCapture({
   const remoteBlobsRef = useRef(new Map()); // Map<peerId, blob[]>
   const liveFramesRef = useRef(new Map()); // Map<shotIndex, blob[]>
   const remoteLiveFramesRef = useRef(new Map()); // Map<peerId, Map<shotIndex, blob[]>>
+  
   const [countdown, setCountdown] = useState(null);
   const [currentShotIndex, setCurrentShotIndex] = useState(0);
   const [totalShots, setTotalShots] = useState(0);
@@ -34,6 +37,24 @@ export default function useCapture({
   const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   const sessionTimerRef = useRef(null);
   const [isTransmitting, setIsTransmitting] = useState(false);
+
+  // ── LIVE VIDEO CALL (VC) STATES ──
+  const [isLiveVCActive, setIsLiveVCActive] = useState(false);
+  const [liveVCTimeLeft, setLiveVCTimeLeft] = useState(60);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const [backgroundRemovalEnabled, setBackgroundRemovalEnabled] = useState(true);
+  const vcTimerRef = useRef(null);
+  const localSegmentedStreamRef = useRef(null);
+
+  // Composite canvas refs
+  const compositeCanvasRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+
+  // ── INTEGRATE LIVE BACKGROUND REMOVAL HOOK ──
+  const { canvasRef: selfieCanvasRef, modelLoaded: selfieModelLoaded } = useSelfieSegmentation({
+    enabled: backgroundRemovalEnabled,
+    videoRef
+  });
 
   const attachStream = useCallback(() => {
     if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
@@ -49,14 +70,20 @@ export default function useCapture({
       if (sessionTimerRef.current) {
         clearInterval(sessionTimerRef.current);
       }
+      if (vcTimerRef.current) {
+        clearInterval(vcTimerRef.current);
+      }
+      if (localSegmentedStreamRef.current) {
+        localSegmentedStreamRef.current.getTracks().forEach(t => t.stop());
+      }
     };
   }, []);
 
   const startCamera = () => {
     navigator.mediaDevices.getUserMedia({
       video: {
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
         facingMode: 'user'
       },
       audio: false
@@ -71,6 +98,153 @@ export default function useCapture({
         alert('Cannot access camera: ' + err.message);
       });
   };
+
+  // ── LIVE VIDEO CALL STREAM START & STOP CONTROLS ──
+  const startLiveVC = useCallback((addLocalStreamCallback) => {
+    if (isLiveVCActive) return;
+    console.log('[Capture] Starting live Video Call session (60s limit)');
+    setIsLiveVCActive(true);
+    setLiveVCTimeLeft(60);
+
+    // Capture transparent background-removed stream from selfie canvas
+    const canvas = selfieCanvasRef.current;
+    if (canvas) {
+      const stream = canvas.captureStream(30); // 30 FPS
+      localSegmentedStreamRef.current = stream;
+      if (typeof addLocalStreamCallback === 'function') {
+        addLocalStreamCallback(stream);
+      }
+    }
+
+    if (vcTimerRef.current) clearInterval(vcTimerRef.current);
+    vcTimerRef.current = setInterval(() => {
+      setLiveVCTimeLeft(prev => {
+        if (prev <= 1) {
+          stopLiveVC(addLocalStreamCallback);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [isLiveVCActive, selfieCanvasRef]);
+
+  const stopLiveVC = useCallback((addLocalStreamCallback) => {
+    console.log('[Capture] Stopping live Video Call session');
+    setIsLiveVCActive(false);
+    setLiveVCTimeLeft(60);
+    if (vcTimerRef.current) {
+      clearInterval(vcTimerRef.current);
+      vcTimerRef.current = null;
+    }
+
+    // Stop local segmented stream track
+    if (localSegmentedStreamRef.current) {
+      localSegmentedStreamRef.current.getTracks().forEach(t => t.stop());
+      localSegmentedStreamRef.current = null;
+    }
+
+    // Clear tracks from WebRTC Peer Connections
+    if (typeof addLocalStreamCallback === 'function') {
+      addLocalStreamCallback(null);
+    }
+
+    setRemoteStream(null);
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+  }, []);
+
+  // ── DYNAMIC SIDE-BY-SIDE COMPOSITING CANVAS LOOP (KISS) ──
+  useEffect(() => {
+    let animationId;
+
+    const drawComposite = () => {
+      const canvas = compositeCanvasRef.current;
+      if (!canvas) {
+        animationId = requestAnimationFrame(drawComposite);
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        animationId = requestAnimationFrame(drawComposite);
+        return;
+      }
+
+      canvas.width = 1280;
+      canvas.height = 720;
+
+      // Draw cute theme solid background (Cream Vibe #fff9e6)
+      ctx.fillStyle = '#fff9e6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const localSource = backgroundRemovalEnabled && selfieCanvasRef.current 
+        ? selfieCanvasRef.current 
+        : videoRef.current;
+
+      const hasRemoteStream = remoteStream && remoteVideoRef.current;
+
+      if (sessionMode === 'duo' && hasRemoteStream) {
+        // --- DUO side-by-side composite photo posing ---
+
+        // Left Half: Local User
+        if (localSource && (localSource.videoWidth || localSource.width)) {
+          const w = localSource.videoWidth || localSource.width;
+          const h = localSource.videoHeight || localSource.height;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, 640, 720);
+          ctx.clip();
+
+          // Mirror local preview for intuitive control
+          ctx.translate(320, 360);
+          ctx.scale(-1, 1);
+          ctx.translate(-320, -360);
+
+          ctx.drawImage(localSource, 0, 0, w, h, 0, 0, 640, 720);
+          ctx.restore();
+        }
+
+        // Right Half: Remote Partner
+        if (remoteVideoRef.current && remoteVideoRef.current.videoWidth) {
+          const rw = remoteVideoRef.current.videoWidth;
+          const rh = remoteVideoRef.current.videoHeight;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(640, 0, 640, 720);
+          ctx.clip();
+
+          ctx.drawImage(remoteVideoRef.current, 0, 0, rw, rh, 640, 0, 640, 720);
+          ctx.restore();
+        }
+      } else {
+        // --- SOLO/Single active user fullscreen fallback ---
+        if (localSource && (localSource.videoWidth || localSource.width)) {
+          const w = localSource.videoWidth || localSource.width;
+          const h = localSource.videoHeight || localSource.height;
+          ctx.save();
+          ctx.translate(640, 360);
+          ctx.scale(-1, 1);
+          ctx.translate(-640, -360);
+
+          ctx.drawImage(localSource, 0, 0, w, h, 0, 0, 1280, 720);
+          ctx.restore();
+        }
+      }
+
+      animationId = requestAnimationFrame(drawComposite);
+    };
+
+    animationId = requestAnimationFrame(drawComposite);
+    return () => cancelAnimationFrame(animationId);
+  }, [backgroundRemovalEnabled, remoteStream, sessionMode, selfieCanvasRef]);
+
+  // Bind remote stream update to HTMLVideoElement source object
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
 
   const runCountdown = (seconds) => new Promise(resolve => {
     let count = seconds;
@@ -89,28 +263,40 @@ export default function useCapture({
     }, 1000);
   });
 
+  // ── CAPTURE STATIC PHOTO SNAPSHOT (DRY) ──
   const captureFrame = (video) => new Promise(async (resolve, reject) => {
-    // Tunggu sebentar jika videoWidth belum tersedia (maksimal 3 detik)
+    const canvasSource = compositeCanvasRef.current || video;
+    
+    let sourceWidth = canvasSource.videoWidth || canvasSource.width;
+    let sourceHeight = canvasSource.videoHeight || canvasSource.height;
+    
     let attempts = 0;
-    while ((!video.videoWidth || !video.videoHeight) && attempts < 30) {
+    while ((!sourceWidth || !sourceHeight) && attempts < 30) {
       await new Promise(r => setTimeout(r, 100));
+      sourceWidth = canvasSource.videoWidth || canvasSource.width;
+      sourceHeight = canvasSource.videoHeight || canvasSource.height;
       attempts++;
     }
 
-    if (!video.videoWidth || !video.videoHeight) {
-      reject(new Error('Video not ready after waiting'));
+    if (!sourceWidth || !sourceHeight) {
+      reject(new Error('Capture source not ready after waiting'));
       return;
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
     const ctx = canvas.getContext('2d');
 
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
+    if (canvasSource === compositeCanvasRef.current) {
+      // Composite canvas is already correctly scaled and mirrored, just draw it directly
+      ctx.drawImage(canvasSource, 0, 0, sourceWidth, sourceHeight);
+    } else {
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(canvasSource, 0, 0, sourceWidth, sourceHeight, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
 
     canvas.toBlob(blob => {
       if (blob) resolve(blob);
@@ -118,22 +304,30 @@ export default function useCapture({
     }, 'image/jpeg', 0.9);
   });
 
+  // ── CAPTURE LIVE PHOTO BURSTS (DRY) ──
   const captureLiveBurst = async (video, shotIndex) => {
     const burstBlobs = [];
     const framesCount = 10; // 10 frames
     const intervalMs = 150; // Every 150ms over 1.5 seconds
 
+    const source = compositeCanvasRef.current || video;
+
     const burstCanvas = document.createElement('canvas');
-    // Set a reasonable small size for live photo preview frames to ensure fast processing and networking
     burstCanvas.width = 480;
     burstCanvas.height = 270;
     const bCtx = burstCanvas.getContext('2d');
 
     for (let f = 0; f < framesCount; f++) {
-      if (!video || video.paused || video.ended) break;
+      if (!source) break;
       bCtx.save();
-      bCtx.scale(-1, 1);
-      bCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, -burstCanvas.width, 0, burstCanvas.width, burstCanvas.height);
+      
+      if (source === compositeCanvasRef.current) {
+        bCtx.drawImage(source, 0, 0, source.width, source.height, 0, 0, burstCanvas.width, burstCanvas.height);
+      } else {
+        bCtx.scale(-1, 1);
+        bCtx.drawImage(source, 0, 0, source.videoWidth, source.videoHeight, -burstCanvas.width, 0, burstCanvas.width, burstCanvas.height);
+      }
+      
       bCtx.restore();
 
       const blob = await new Promise(resolve => burstCanvas.toBlob(resolve, 'image/jpeg', 0.6));
@@ -145,8 +339,7 @@ export default function useCapture({
 
     liveFramesRef.current.set(shotIndex, burstBlobs);
     setLiveFrames(Array.from(liveFramesRef.current.entries()));
-    console.log(`[LivePhoto] Locally captured ${burstBlobs.length} burst frames for shot index ${shotIndex}`);
-    // NOTE: Transmission logic deferred to transmitAllLocalData()
+    console.log(`[LivePhoto] Composited burst captured for shot ${shotIndex}`);
   };
 
   const triggerCaptureAndSend = async (index, chunkSize) => {
@@ -181,9 +374,8 @@ export default function useCapture({
     localBlobsRef.current[index] = blob;
     setLocalBlobs([...localBlobsRef.current]); // Update state to trigger re-render
 
-    // Start capturing live photo burst frames in parallel (non-blocking) only if enabled
+    // Capture burst frames from composite canvas if enabled
     if (livePhotoEnabled) {
-      // captureLiveBurst returns void immediately as it runs on intervals
       captureLiveBurst(videoRef.current, index);
     }
     
@@ -205,7 +397,6 @@ export default function useCapture({
   };
 
   const startSingleShotRetake = async (targetIndex, chunkSize) => {
-    // Highlight the active slot being retaken in UI
     const prevIndex = currentShotIndex;
     setCurrentShotIndex(targetIndex); 
     if (typeof onShotIndex === 'function') onShotIndex(targetIndex + 1);
@@ -213,7 +404,6 @@ export default function useCapture({
     await runCountdown(COUNTDOWN_SECONDS);
     await triggerCaptureAndSend(targetIndex, chunkSize);
     
-    // Reset highlight to indicate all done
     setCurrentShotIndex(totalShots);
   };
 
@@ -222,7 +412,6 @@ export default function useCapture({
     const isSolo = sessionMode === 'solo';
 
     if (!isSolo) {
-      // Tunggu sampai semua remote participant mengirim semua fotonya
       const expectedRemotePeers = participantsCount - 1;
       
       const isComplete = () => {
@@ -277,7 +466,6 @@ export default function useCapture({
     }
     const peerBlobs = remoteBlobsRef.current.get(peerId);
     const idx = (index != null) ? index : 0;
-    // Deduplicate: if we already have this photo (e.g. from WebRTC), skip socket duplicate
     if (peerBlobs[idx]) return;
     peerBlobs[idx] = blob;
   };
@@ -293,7 +481,6 @@ export default function useCapture({
     const frames = peerMap.get(shotIndex);
     frames[frameIndex] = blob;
     setRemoteLiveFrames(new Map(remoteLiveFramesRef.current));
-    console.log(`[LivePhoto] Stored remote live frame index ${frameIndex} for shot ${shotIndex} from ${peerId.slice(0,8)}`);
   };
 
   const startSessionTimer = (seconds, onTimeoutCallback) => {
@@ -324,19 +511,15 @@ export default function useCapture({
     const expectedPeers = participantsCount - 1;
 
     try {
-      // 1. Transmit static photos in order
       for (let i = 0; i < localBlobsRef.current.length; i++) {
         const blob = localBlobsRef.current[i];
         if (blob && typeof sendPhotoToPeer === 'function') {
-          console.log(`[Transmit] Batch sending static photo ${i}`);
           await sendPhotoToPeer(blob, i, chunkSize, expectedPeers);
         }
       }
 
-      // 2. Transmit Live Photo Bursts
       if (livePhotoEnabled && typeof sendLiveFramesToPeer === 'function') {
         for (const [shotIndex, burstBlobs] of liveFramesRef.current.entries()) {
-           console.log(`[Transmit] Batch sending live burst for shot index ${shotIndex}`);
            await sendLiveFramesToPeer(shotIndex, burstBlobs, expectedPeers);
         }
       }
@@ -363,6 +546,7 @@ export default function useCapture({
     setCurrentShotIndex(0);
     setTotalShots(0);
     setCountdown(null);
+    stopLiveVC(null);
   };
 
   return {
@@ -396,6 +580,19 @@ export default function useCapture({
     checkProcessingComplete,
     storeRemoteBlob,
     storeRemoteLiveFrame,
-    resetCapture
+    resetCapture,
+    
+    // EXPOSE LIVE VC API
+    isLiveVCActive,
+    liveVCTimeLeft,
+    remoteStream,
+    setRemoteStream,
+    backgroundRemovalEnabled,
+    setBackgroundRemovalEnabled,
+    selfieModelLoaded,
+    compositeCanvasRef,
+    remoteVideoRef,
+    startLiveVC,
+    stopLiveVC
   };
 }

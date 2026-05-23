@@ -212,6 +212,17 @@ export default function Page() {
             onRetakeSingle={handleRetakeSingle}
             onFinish={() => handleFinishCapture(capture.totalShots)}
             isTransmitting={capture.isTransmitting}
+            sessionMode={sessionMode}
+            isLiveVCActive={capture.isLiveVCActive}
+            liveVCTimeLeft={capture.liveVCTimeLeft}
+            backgroundRemovalEnabled={capture.backgroundRemovalEnabled}
+            setBackgroundRemovalEnabled={capture.setBackgroundRemovalEnabled}
+            selfieModelLoaded={capture.selfieModelLoaded}
+            compositeCanvasRef={capture.compositeCanvasRef}
+            remoteVideoRef={capture.remoteVideoRef}
+            startLiveVC={capture.startLiveVC}
+            stopLiveVC={capture.stopLiveVC}
+            addLocalStream={webRTC.addLocalStream}
           />
         )}
 

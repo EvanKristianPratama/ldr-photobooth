@@ -5,7 +5,8 @@ export default function useWebRTC({
   setStatus,
   onDataChannelMessage,
   onSocketPhotoReceive,
-  onEnableSocketFallback
+  onEnableSocketFallback,
+  onRemoteStream
 }) {
   const pcsRef = useRef(new Map()); // Map<peerId, RTCPeerConnection>
   const dcsRef = useRef(new Map()); // Map<peerId, RTCDataChannel>
@@ -21,12 +22,14 @@ export default function useWebRTC({
   const onDataChannelMessageRef = useRef(onDataChannelMessage);
   const onSocketPhotoReceiveRef = useRef(onSocketPhotoReceive);
   const onEnableSocketFallbackRef = useRef(onEnableSocketFallback);
+  const onRemoteStreamRef = useRef(onRemoteStream);
 
   useEffect(() => {
     onDataChannelMessageRef.current = onDataChannelMessage;
     onSocketPhotoReceiveRef.current = onSocketPhotoReceive;
     onEnableSocketFallbackRef.current = onEnableSocketFallback;
-  }, [onDataChannelMessage, onSocketPhotoReceive, onEnableSocketFallback]);
+    onRemoteStreamRef.current = onRemoteStream;
+  }, [onDataChannelMessage, onSocketPhotoReceive, onEnableSocketFallback, onRemoteStream]);
 
   useEffect(() => {
     return () => {
@@ -94,6 +97,28 @@ export default function useWebRTC({
     };
 
     pc.ondatachannel = e => setupDataChannel(remoteId, e.channel);
+
+    pc.ontrack = e => {
+      console.log(`[WebRTC] Received remote stream track from ${remoteId}`);
+      const [remoteStream] = e.streams;
+      if (typeof onRemoteStreamRef.current === 'function') {
+        onRemoteStreamRef.current({ from: remoteId, stream: remoteStream });
+      }
+    };
+
+    pc.onnegotiationneeded = async () => {
+      try {
+        console.log(`[WebRTC] Negotiation needed for ${remoteId}`);
+        makingOffersRef.current.set(remoteId, true);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        makingOffersRef.current.set(remoteId, false);
+        socketRef.current.emit('webrtc:offer', { to: remoteId, sdp: offer });
+      } catch (err) {
+        makingOffersRef.current.set(remoteId, false);
+        console.error(`[WebRTC] Renegotiation error for peer ${remoteId}:`, err);
+      }
+    };
 
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'connected') {
@@ -329,6 +354,26 @@ export default function useWebRTC({
     }
   }, [enableSocketFallback, getOrCreatePC, setupDataChannel, socketRef]);
 
+  const addLocalStream = useCallback((stream) => {
+    console.log('[WebRTC] addLocalStream: adding video track to active peers');
+    pcsRef.current.forEach((pc, peerId) => {
+      // Clear previous senders first to avoid duplicate track exceptions
+      pc.getSenders().forEach(sender => {
+        if (sender.track && sender.track.kind === 'video') {
+          try { pc.removeTrack(sender); } catch (e) {}
+        }
+      });
+      
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          try { pc.addTrack(track, stream); } catch (e) {
+            console.error(`[WebRTC] Failed to add track to peer ${peerId}:`, e);
+          }
+        });
+      }
+    });
+  }, []);
+
   return {
     pcsRef,
     dcsRef,
@@ -339,6 +384,7 @@ export default function useWebRTC({
     connectPeers,
     sendPhotoToPeer,
     sendLiveFramesToPeer,
-    enableSocketFallback
+    enableSocketFallback,
+    addLocalStream
   };
 }

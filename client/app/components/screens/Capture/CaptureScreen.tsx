@@ -18,10 +18,23 @@ interface CaptureScreenProps {
   onRetakeSingle: (index: number) => void;
   onFinish: () => void;
   isTransmitting?: boolean;
+  sessionMode?: string;
+
+  // New Video Call & Background Removal props
+  isLiveVCActive?: boolean;
+  liveVCTimeLeft?: number;
+  backgroundRemovalEnabled?: boolean;
+  setBackgroundRemovalEnabled?: (val: boolean) => void;
+  selfieModelLoaded?: boolean;
+  compositeCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  remoteVideoRef?: React.RefObject<HTMLVideoElement | null>;
+  startLiveVC?: (addLocalStreamCallback: any) => void;
+  stopLiveVC?: (addLocalStreamCallback: any) => void;
+  addLocalStream?: (stream: any) => void;
 }
 
 /* ──────────────────────────────────────────────────────────
-   SUB-COMPONENT: PROCESSING / DEVELOPING SCREEN (KISS & DRY)
+   SUB-COMPONENT: PROCESSING / DEVELOPING SCREEN
    ────────────────────────────────────────────────────────── */
 interface ProcessingScreenProps {
   progress: number;
@@ -79,13 +92,26 @@ export default function CaptureScreen({
   sessionTimeLeft,
   onRetake,
   onRetakeSingle,
-  onFinish
+  onFinish,
+  sessionMode = 'duo',
+
+  // Destructure new Video Call & Background removal APIs
+  isLiveVCActive = false,
+  liveVCTimeLeft = 60,
+  backgroundRemovalEnabled = true,
+  setBackgroundRemovalEnabled,
+  selfieModelLoaded = false,
+  compositeCanvasRef,
+  remoteVideoRef,
+  startLiveVC,
+  stopLiveVC,
+  addLocalStream
 }: CaptureScreenProps) {
   const { t } = useLanguage();
   const [selectedRetakeIdx, setSelectedRetakeIdx] = useState<number | null>(null);
   const [photoPreviews, setPhotoPreviews] = useState<(string | null)[]>([]);
 
-  // SAFE PREVIEW URL LIFECYCLE: Prevents Memory Leaks
+  // Safe object URL preview management
   useEffect(() => {
     const urls = Array.from({ length: totalShots }).map((_, i) => {
       const blob = localBlobs[i];
@@ -94,7 +120,6 @@ export default function CaptureScreen({
 
     setPhotoPreviews(urls);
 
-    // Cleanup: Revoke all generated object URLs on dependency change or unmount!
     return () => {
       urls.forEach(url => {
         if (url) URL.revokeObjectURL(url);
@@ -105,9 +130,9 @@ export default function CaptureScreen({
   const handleRetakeClick = () => {
     if (selectedRetakeIdx !== null) {
       onRetakeSingle(selectedRetakeIdx);
-      setSelectedRetakeIdx(null); // Reset Selection
+      setSelectedRetakeIdx(null);
     } else {
-      onRetake(); // Retake ALL
+      onRetake();
     }
   };
 
@@ -141,7 +166,7 @@ export default function CaptureScreen({
             </div>
           )}
 
-          {/* LIVE Toggle */}
+          {/* LIVE Photo Toggle */}
           <button
             type="button"
             onClick={() => setLivePhotoEnabled(prev => !prev)}
@@ -164,16 +189,31 @@ export default function CaptureScreen({
             {livePhotoEnabled ? 'LIVE: ON' : 'LIVE: OFF'}
           </button>
 
-          {/* Video element */}
+          {/* ── HIGH PERFORMANCE RENDER-TO-CANVAS (KISS) ── */}
+          <canvas
+            ref={compositeCanvasRef}
+            style={styles.video}
+          />
+
+          {/* Hidden Local Video Input Stream */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            style={styles.video}
+            style={styles.hiddenVideo}
           />
 
-          {/* Guide Grid */}
+          {/* Hidden Remote Partner Video Input Stream */}
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            muted
+            style={styles.hiddenVideo}
+          />
+
+          {/* Guide Grid overlay */}
           <div className="cam-guide-overlay">
             <div className="guide-box">
               <div className="guide-corner tl" />
@@ -234,6 +274,70 @@ export default function CaptureScreen({
                  </button>
                </div>
              </div>
+          )}
+        </div>
+
+        {/* ── LIVE VIDEO CALL & AI SEGMENTATION CONTROL PANEL ── */}
+        <div style={styles.vcControlPanel}>
+          {/* AI Background removal toggle */}
+          <div style={styles.controlRow}>
+            <label style={styles.toggleLabel}>
+              <input
+                type="checkbox"
+                checked={backgroundRemovalEnabled}
+                onChange={(e) => setBackgroundRemovalEnabled && setBackgroundRemovalEnabled(e.target.checked)}
+                style={styles.checkboxInput}
+              />
+              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>✨ Live Background Removal</span>
+            </label>
+            {backgroundRemovalEnabled && !selfieModelLoaded && (
+              <span style={styles.loadingSpinner}>
+                <div style={styles.spinner} />
+                Memuat AI...
+              </span>
+            )}
+            {backgroundRemovalEnabled && selfieModelLoaded && (
+              <span style={styles.modelLoadedBadge}>✓ AI Active</span>
+            )}
+          </div>
+
+          {/* WebRTC Video Call limits */}
+          {sessionMode === 'duo' && (
+            <div style={styles.vcRow}>
+              {isLiveVCActive ? (
+                <>
+                  <div style={styles.activeVCTime}>
+                    <span style={styles.liveIndicator} />
+                    🟢 VC AKTIF: <strong>{liveVCTimeLeft}s</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => stopLiveVC && stopLiveVC(addLocalStream)}
+                    style={styles.stopVCBtn}
+                  >
+                    🔴 Matikan VC
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={styles.inactiveVCText}>
+                    🎥 Sesi Live Video Call (P2P stream • Batas 60s)
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isFinishedAllShots}
+                    onClick={() => startLiveVC && startLiveVC(addLocalStream)}
+                    style={{
+                      ...styles.startVCBtn,
+                      opacity: isFinishedAllShots ? 0.5 : 1,
+                      cursor: isFinishedAllShots ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    ⚡ Mulai VC Live
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -328,9 +432,12 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover' as const,
-    transform: 'scaleX(-1)',
     borderRadius: '10px',
     display: 'block',
+    background: '#000',
+  },
+  hiddenVideo: {
+    display: 'none',
   },
   thumbnail: {
     width: '160px', 
@@ -339,5 +446,107 @@ const styles = {
     background: '#000',
     position: 'relative' as const,
     transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  },
+  vcControlPanel: {
+    margin: '16px auto',
+    maxWidth: '560px',
+    background: 'rgba(255, 255, 255, 0.45)',
+    backdropFilter: 'blur(8px)',
+    border: '2px solid var(--ink)',
+    borderRadius: '16px',
+    padding: '12px 18px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  controlRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    fontFamily: "'Gaegu', cursive",
+  },
+  toggleLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    color: 'var(--ink)',
+  },
+  checkboxInput: {
+    cursor: 'pointer',
+    width: '16px',
+    height: '16px',
+    accentColor: 'var(--pink)',
+  },
+  loadingSpinner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '14px',
+    color: '#888',
+  },
+  spinner: {
+    width: '12px',
+    height: '12px',
+    border: '2px solid var(--ink)',
+    borderTopColor: 'transparent',
+    borderRadius: '50%',
+    animation: 'spin 0.8s linear infinite',
+  },
+  modelLoadedBadge: {
+    background: 'var(--ink)',
+    color: 'var(--yellow)',
+    fontSize: '12px',
+    fontWeight: 'bold' as const,
+    padding: '2px 8px',
+    borderRadius: '10px',
+  },
+  vcRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    fontFamily: "'Gaegu', cursive",
+    borderTop: '1px dashed rgba(0,0,0,0.1)',
+    paddingTop: '10px',
+  },
+  activeVCTime: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '15px',
+    color: 'var(--ink)',
+  },
+  liveIndicator: {
+    width: '8px',
+    height: '8px',
+    background: '#ff5252',
+    borderRadius: '50%',
+    animation: 'pulse 1s infinite',
+  },
+  stopVCBtn: {
+    background: '#ff5252',
+    color: 'white',
+    border: '2px solid var(--ink)',
+    borderRadius: '10px',
+    padding: '4px 12px',
+    fontSize: '14px',
+    fontWeight: 'bold' as const,
+    cursor: 'pointer',
+    boxShadow: '2px 2px 0 var(--ink)',
+  },
+  inactiveVCText: {
+    fontSize: '15px',
+    opacity: 0.8,
+    color: 'var(--ink)',
+  },
+  startVCBtn: {
+    background: 'var(--yellow)',
+    color: 'var(--ink)',
+    border: '2px solid var(--ink)',
+    borderRadius: '10px',
+    padding: '4px 12px',
+    fontSize: '14px',
+    fontWeight: 'bold' as const,
+    boxShadow: '2px 2px 0 var(--ink)',
   },
 };

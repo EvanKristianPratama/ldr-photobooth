@@ -160,12 +160,17 @@ export default function useAppController() {
         capture.storeRemoteBlob(from, index, blob);
       }
     },
-    onSocketPhotoReceive: (blob, index) => photoTransfer.sendPhotoViaSocket(blob, index)
+    onSocketPhotoReceive: (blob, index) => photoTransfer.sendPhotoViaSocket(blob, index),
+    onRemoteStream: ({ from, stream }) => {
+      console.log(`[AppController] Storing remote live video stream from peer ${from}`);
+      capture.setRemoteStream(stream);
+    }
   });
 
   const capture = useCapture({
     sendPhotoToPeer: webRTC.sendPhotoToPeer,
     sendLiveFramesToPeer: webRTC.sendLiveFramesToPeer,
+    sessionMode,
     onProcessingComplete: ({ localBlobs, remoteBlobsByPeer, liveFrames, remoteLiveFrames }) => {
       setCapturedParticipants(participantsWithSelf);
       setStep('frame-select');
