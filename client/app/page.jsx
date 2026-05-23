@@ -7,7 +7,7 @@ import FrameSelectScreen from './components/screens/FrameSelectScreen';
 import JoinRoomScreen from './components/screens/JoinRoom/JoinRoomScreen';
 import WaitRoomScreen from './components/screens/WaitRoomScreen';
 import LayoutSelectScreen from './components/screens/LayoutSelect/LayoutSelectScreen';
-import CaptureScreen from './components/screens/CaptureScreen';
+import CaptureScreen from './components/screens/Capture/CaptureScreen';
 import ResultScreen from './components/screens/ResultScreen';
 import CheckoutScreen from './components/screens/CheckoutScreen';
 import InvoiceScreen from './components/screens/InvoiceScreen';
