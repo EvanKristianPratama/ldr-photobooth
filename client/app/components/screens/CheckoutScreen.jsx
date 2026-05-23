@@ -301,6 +301,24 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
   return (
     <div style={styles.container}>
       <main style={styles.main}>
+        {step === 'form' && onBack && (
+          <button 
+            type="button" 
+            onClick={onBack} 
+            style={styles.backBtn}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translate(-2px, -2px)';
+              e.currentTarget.style.boxShadow = '5px 5px 0 var(--ink)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '3px 3px 0 var(--ink)';
+            }}
+          >
+            ← Kembali ke Hasil Foto
+          </button>
+        )}
+
         {step === 'success' || step === 'summary' ? (
           /* ── SUCCESS / SUMMARY STATE ── */
           <div style={styles.stateContainer}>
@@ -675,6 +693,23 @@ export default function CheckoutScreen({ photoData, frameId, sessionMode, onBack
 }
 
 const styles = {
+  backBtn: {
+    background: 'white',
+    border: '2px solid var(--ink)',
+    borderRadius: '10px',
+    padding: '8px 16px',
+    fontFamily: "'Gaegu', cursive",
+    fontSize: '18px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    color: 'var(--ink)',
+    boxShadow: '3px 3px 0 var(--ink)',
+    marginBottom: '20px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'transform 0.15s, box-shadow 0.15s',
+  },
   container: {
     minHeight: '100vh',
     width: '100%',
