@@ -95,6 +95,15 @@ export default function LayoutSelectScreen({
         ))}
       </div>
 
+      {selectedLayout === 'layout1' && (
+        <div style={styles.warningBanner}>
+          <span style={{ fontSize: '24px' }}>📱</span>
+          <div style={{ textAlign: 'left' }}>
+            <strong>Rekomendasi Orientasi:</strong> Jika memilih <strong>1 Foto Bareng</strong>, disarankan menggunakan HP posisi tegak (<strong>Portrait</strong>) agar badan & wajah pas dan tidak terpotong ekstrem di frame!
+          </div>
+        </div>
+      )}
+
       <div className="layout-start-container" style={styles.startContainer}>
         <button 
           type="button"
@@ -138,6 +147,22 @@ const styles = {
   },
   preview: {
     display: 'flex',
+  },
+  warningBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    maxWidth: '540px',
+    margin: '24px auto -12px auto',
+    padding: '12px 18px',
+    background: '#fffbeb',
+    border: '2.5px solid var(--ink)',
+    borderRadius: '12px',
+    boxShadow: '4px 4px 0 var(--ink)',
+    color: '#854d0e',
+    fontFamily: "'Gaegu', cursive",
+    fontSize: '16px',
+    lineHeight: '1.4',
   },
   startContainer: {
     marginTop: '60px',

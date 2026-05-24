@@ -20,7 +20,9 @@ export const EVENTS = {
   SESSION: {
     START: 'session:start',
     LAYOUT: 'session:layout',
-    RESET: 'session:reset'
+    RESET: 'session:reset',
+    LIVE_VC: 'session:live-vc',
+    LIVE_CAPTURE: 'session:live-capture'
   },
   WEBRTC: {
     OFFER: 'webrtc:offer',

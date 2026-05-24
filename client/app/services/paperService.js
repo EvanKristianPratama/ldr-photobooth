@@ -39,10 +39,75 @@ export const convertToPaperSize = async (imgSrc, config = {}) => {
     return drawDuplicatedStripTo4R(img, frameColor);
   } else if (finalPaper === '4R') {
     return drawToFixedPaper(img, PAPER_SIZES.FOUR_R, frameColor);
+  } else if (finalPaper === 'RECEIPT_80MM') {
+    return drawToReceipt80mm(img);
   }
 
   // Jika tidak ada modifikasi, kembalikan aslinya
   return imgSrc;
+};
+
+/**
+ * Memproses gambar menjadi format struk (receipt) lebar 80mm (800px) 
+ * dengan konversi seluruh elemen ke hitam putih kontras tinggi (thermal style).
+ */
+const drawToReceipt80mm = (img) => {
+  const canvas = document.createElement('canvas');
+  
+  // Lebar standar 80mm di-render pada 800px agar tajam.
+  const targetW = 800;
+  // Tinggi menyesuaikan rasio asli agar tidak terpotong atau terdistorsi.
+  const targetH = Math.round(img.height * (targetW / img.width));
+  
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  
+  // Gambar image asli ke canvas baru
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+  
+  // Ambil data pixel untuk diproses menjadi hitam putih thermal kontras tinggi
+  try {
+    const imageData = ctx.getImageData(0, 0, targetW, targetH);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      
+      // Hitung luminance standar (grayscale)
+      let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      
+      // Terapkan kurva kontras tinggi untuk simulasi cetakan kertas thermal.
+      // Warna yang sangat terang dijadikan putih mutlak (kertas struk).
+      // Warna yang gelap dijadikan hitam pekat (tinta thermal).
+      // Midtones disesuaikan agar tetap terlihat tajam.
+      if (gray > 185) {
+        gray = 255;
+      } else if (gray < 55) {
+        gray = 0;
+      } else {
+        // Kontras peregangan untuk sisa rentang abu-abu
+        gray = ((gray - 55) / 130) * 255;
+        // Clamp nilai
+        gray = Math.max(0, Math.min(255, gray));
+      }
+      
+      data[i] = gray;
+      data[i + 1] = gray;
+      data[i + 2] = gray;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  } catch (e) {
+    console.error('LDR Receipt B&W processing failed, fallback to filter:', e);
+    // Fallback menggunakan filter CSS jika getImageData gagal/akses lintas asal
+    ctx.clearRect(0, 0, targetW, targetH);
+    ctx.filter = 'grayscale(100%) contrast(150%) brightness(100%)';
+    ctx.drawImage(img, 0, 0, targetW, targetH);
+    ctx.filter = 'none';
+  }
+  
+  return canvas.toDataURL('image/jpeg', 0.9);
 };
 
 /**

@@ -133,7 +133,8 @@ export default function CaptureScreen({
             <div
               className="session-timer-badge"
               style={{
-                background: sessionTimeLeft <= 10 ? 'rgba(255, 82, 82, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                background: sessionTimeLeft <= 10 ? '#ff5252' : '#ffffff',
+                color: sessionTimeLeft <= 10 ? '#ffffff' : 'var(--ink)',
                 animation: sessionTimeLeft <= 10 ? 'pulse 1s infinite' : 'none'
               }}
             >

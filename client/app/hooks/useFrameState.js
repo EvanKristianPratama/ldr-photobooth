@@ -23,7 +23,7 @@ export function useFrameState() {
   const [frameNoise, setFrameNoise] = useState(0); // 0 to 100
   const [frameGlare, setFrameGlare] = useState('none'); // 'none', 'warm', 'retro'
   const [activeTemplate, setActiveTemplate] = useState(null); // CMS template mode
-  const [showWeather, setShowWeather] = useState(true);
+  const [showWeather, setShowWeather] = useState(false);
   const [weatherText, setWeatherText] = useState('');
 
   const addSticker = useCallback((emoji) => {

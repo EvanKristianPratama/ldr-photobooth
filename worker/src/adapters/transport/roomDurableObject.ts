@@ -88,6 +88,12 @@ export class RoomDurableObject {
         case EVENTS.SESSION.RESET:
           this.handleSessionReset();
           break;
+        case EVENTS.SESSION.LIVE_VC:
+          this.handleLiveVC(payload);
+          break;
+        case EVENTS.SESSION.LIVE_CAPTURE:
+          this.handleLiveCapture();
+          break;
         case EVENTS.WEBRTC.OFFER:
         case EVENTS.WEBRTC.ANSWER:
         case EVENTS.WEBRTC.CANDIDATE:
@@ -187,6 +193,18 @@ export class RoomDurableObject {
     this.roomService.resetSession();
     this.broadcast(EVENTS.SESSION.RESET, {});
     this.broadcastRoomState();
+  }
+
+  private handleLiveVC(payload?: { action?: 'start' | 'stop' }): void {
+    const action = payload?.action;
+    if (action !== 'start' && action !== 'stop') return;
+    this.broadcast(EVENTS.SESSION.LIVE_VC, { action });
+  }
+
+  private handleLiveCapture(): void {
+    this.broadcast(EVENTS.SESSION.LIVE_CAPTURE, {
+      startTime: Date.now() + 400
+    });
   }
 
   private handleWebRTC(sessionId: string, type: string, payload?: any): void {

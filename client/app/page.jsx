@@ -43,7 +43,6 @@ export default function Page() {
     room,
     capture,
     frame,
-    webRTC,
     stepsToDisplay,
     
     // Handlers
@@ -52,6 +51,9 @@ export default function Page() {
     handleGoLayout,
     handleLayoutSelect,
     handleStartBooth,
+    handleStartLiveVC,
+    handleStopLiveVC,
+    handleCaptureNextShot,
     handleFinishCapture,
     handleRetakeSession,
     handleRetakeSingle,
@@ -225,20 +227,17 @@ export default function Page() {
               sessionTimeLeft={capture.sessionTimeLeft}
               onRetake={handleRetakeSession}
               onRetakeSingle={handleRetakeSingle}
+              onCaptureNextShot={handleCaptureNextShot}
               onFinish={() => handleFinishCapture(capture.totalShots)}
               sessionMode={sessionMode}
               participants={participantsWithSelf}
               isLiveVCActive={capture.isLiveVCActive}
               liveVCTimeLeft={capture.liveVCTimeLeft}
-              backgroundRemovalEnabled={capture.backgroundRemovalEnabled}
-              setBackgroundRemovalEnabled={capture.setBackgroundRemovalEnabled}
-              selfieModelLoaded={capture.selfieModelLoaded}
+              hasRemoteStream={Boolean(capture.remoteStream)}
               compositeCanvasRef={capture.compositeCanvasRef}
               remoteVideoRef={capture.remoteVideoRef}
-              startLiveVC={capture.startLiveVC}
-              stopLiveVC={capture.stopLiveVC}
-              addLocalStream={webRTC.addLocalStream}
-              selfieCanvasRef={capture.selfieCanvasRef}
+              startLiveVC={handleStartLiveVC}
+              stopLiveVC={handleStopLiveVC}
             />
           ) : (
             <CaptureScreen
@@ -449,7 +448,7 @@ export default function Page() {
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
       
       {/* GLOBAL WATERMARK */}
-      {step !== 'community' && (
+      {step !== 'community' && step !== 'countdown' && step !== 'processing' && (
         <div 
           className="credits" 
           style={{ 

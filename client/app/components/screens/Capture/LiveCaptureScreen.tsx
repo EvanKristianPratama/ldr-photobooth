@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '../../../context/LanguageContext';
 
 interface LiveCaptureScreenProps {
@@ -16,28 +16,18 @@ interface LiveCaptureScreenProps {
   sessionTimeLeft: number | null;
   onRetake: () => void;
   onRetakeSingle: (index: number) => void;
+  onCaptureNextShot: () => void | Promise<void>;
   onFinish: () => void;
-  isTransmitting?: boolean;
-  sessionMode?: string;
   participants?: any[];
-
-  // Video Call & Background removal props
   isLiveVCActive?: boolean;
   liveVCTimeLeft?: number;
-  backgroundRemovalEnabled?: boolean;
-  setBackgroundRemovalEnabled?: (val: boolean) => void;
-  selfieModelLoaded?: boolean;
+  hasRemoteStream?: boolean;
   compositeCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
   remoteVideoRef?: React.RefObject<HTMLVideoElement | null>;
-  startLiveVC?: (addLocalStreamCallback: any) => void;
-  stopLiveVC?: (addLocalStreamCallback: any) => void;
-  addLocalStream?: (stream: any) => void;
-  selfieCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  startLiveVC?: () => void | Promise<void>;
+  stopLiveVC?: () => void | Promise<void>;
 }
 
-/* ──────────────────────────────────────────────────────────
-   SUB-COMPONENT: PROCESSING / DEVELOPING SCREEN
-   ────────────────────────────────────────────────────────── */
 interface ProcessingScreenProps {
   progress: number;
   t: (key: string) => string;
@@ -52,7 +42,7 @@ const ProcessingSubScreen = React.memo(({ progress, t }: ProcessingScreenProps) 
 
     <div style={styles.processingBarContainer}>
       <div className="progress-track" style={styles.w100}>
-        <div className="progress-fill" id="p-fill" style={{ width: `${progress}%` }}></div>
+        <div className="progress-fill" id="p-fill" style={{ width: `${progress}%` }} />
       </div>
       <p className="progress-label" id="p-pct">{progress}%</p>
     </div>
@@ -77,10 +67,6 @@ const ProcessingSubScreen = React.memo(({ progress, t }: ProcessingScreenProps) 
 ));
 ProcessingSubScreen.displayName = 'ProcessingSubScreen';
 
-
-/* ──────────────────────────────────────────────────────────
-   MAIN LIVE SCREEN COMPONENT
-   ────────────────────────────────────────────────────────── */
 export default function LiveCaptureScreen({
   videoRef,
   countdown,
@@ -94,28 +80,21 @@ export default function LiveCaptureScreen({
   sessionTimeLeft,
   onRetake,
   onRetakeSingle,
+  onCaptureNextShot,
   onFinish,
-  sessionMode = 'live',
   participants = [],
-
-  // Destructure Video Call & Background removal APIs
   isLiveVCActive = false,
   liveVCTimeLeft = 60,
-  backgroundRemovalEnabled = true,
-  setBackgroundRemovalEnabled,
-  selfieModelLoaded = false,
+  hasRemoteStream = false,
   compositeCanvasRef,
   remoteVideoRef,
   startLiveVC,
-  stopLiveVC,
-  addLocalStream,
-  selfieCanvasRef
+  stopLiveVC
 }: LiveCaptureScreenProps) {
   const { t } = useLanguage();
   const [selectedRetakeIdx, setSelectedRetakeIdx] = useState<number | null>(null);
   const [photoPreviews, setPhotoPreviews] = useState<(string | null)[]>([]);
 
-  // Safe object URL preview management
   useEffect(() => {
     const urls = Array.from({ length: totalShots }).map((_, i) => {
       const blob = localBlobs[i];
@@ -123,9 +102,8 @@ export default function LiveCaptureScreen({
     });
 
     setPhotoPreviews(urls);
-
     return () => {
-      urls.forEach(url => {
+      urls.forEach((url) => {
         if (url) URL.revokeObjectURL(url);
       });
     };
@@ -144,10 +122,9 @@ export default function LiveCaptureScreen({
     return totalShots > 0 && localBlobs.filter(Boolean).length === totalShots;
   }, [localBlobs, totalShots]);
 
-  // Extract names for Google Meet-like badges
   const names = useMemo(() => {
-    const local = participants.find(p => p.isYou)?.displayName || 'Anda';
-    const remote = participants.find(p => !p.isYou)?.displayName || 'Partner';
+    const local = participants.find((p) => p.isYou)?.displayName || 'Anda';
+    const remote = participants.find((p) => !p.isYou)?.displayName || 'Partner';
     return { local, remote };
   }, [participants]);
 
@@ -156,232 +133,196 @@ export default function LiveCaptureScreen({
   }
 
   const isTimeOut = sessionTimeLeft !== null && sessionTimeLeft <= 0;
+  const shotsTaken = localBlobs.filter(Boolean).length;
+  const safeTotalShots = Math.max(totalShots, 1);
+  const nextShotNumber = Math.min(shotsTaken + 1, safeTotalShots);
+  const isWaitingPartner = isLiveVCActive && !hasRemoteStream;
+  const captureDisabled = isFinishedAllShots || countdown !== null || !isLiveVCActive || !hasRemoteStream || isTimeOut;
+
+  const activeTimeLeft = sessionTimeLeft !== null ? sessionTimeLeft : (isLiveVCActive && hasRemoteStream ? liveVCTimeLeft : null);
 
   return (
     <section className="page active" id="page-capture">
       <div className="capture-full">
-        
-        {/* Google Meet styled video dashboard container */}
-        <div style={styles.meetLayoutContainer}>
+        <div style={styles.mainContent}>
           
-          {/* Pro Session Timer */}
-          {sessionTimeLeft !== null && (
-            <div
-              className="session-timer-badge"
-              style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                zIndex: 100,
-                background: sessionTimeLeft <= 10 ? 'rgba(255, 82, 82, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                animation: sessionTimeLeft <= 10 ? 'pulse 1s infinite' : 'none'
-              }}
-            >
-              Session: {sessionTimeLeft}s
-            </div>
-          )}
-
-          {/* Central Countdown Overlay (Visible in the center of the video grid) */}
-          {countdown !== null && (
-            <div style={styles.countdownOverlay}>
-              <span style={styles.countdownNumber}>{countdown}</span>
-            </div>
-          )}
-
-          {/* Action Overlay (When finished) */}
-          {isFinishedAllShots && countdown === null && (
-             <div className="capture-action-overlay" style={styles.actionOverlay}>
-               <div className="capture-action-text">
-                 {t('capture.niceShots')}<br/>
-                 <span style={{ fontSize: '18px', opacity: 0.9 }}>
-                   {isTimeOut 
-                     ? "⏳ Waktu habis, kamu sudah tidak bisa retake lagi."
-                     : selectedRetakeIdx !== null 
-                       ? t('capture.selectedPhoto', { num: selectedRetakeIdx + 1 }) 
-                       : t('capture.useOrRetake')}
-                 </span>
+          <div className="live-videos-container">
+             {/* Pro Session Timer */}
+             {activeTimeLeft !== null && (
+               <div
+                 className="session-timer-badge"
+                 style={{
+                   background: activeTimeLeft <= 10 ? '#ff5252' : '#ffffff',
+                   color: activeTimeLeft <= 10 ? '#ffffff' : 'var(--ink)',
+                   animation: activeTimeLeft <= 10 ? 'pulse 1s infinite' : 'none',
+                 }}
+               >
+                 {activeTimeLeft}s
                </div>
+             )}
+             <button
+               type="button"
+               onClick={() => setLivePhotoEnabled((prev) => !prev)}
+               disabled={isFinishedAllShots}
+               className={`live-toggle-btn ${livePhotoEnabled ? 'active' : ''}`}
+               style={{
+                 cursor: isFinishedAllShots ? 'default' : 'pointer',
+                 opacity: isFinishedAllShots ? 0.5 : 1,
+                 position: 'absolute',
+                 top: '18px',
+                 right: '20px',
+                 zIndex: 20,
+               }}
+             >
+               <div
+                 style={{
+                   width: '8px',
+                   height: '8px',
+                   borderRadius: '50%',
+                   background: livePhotoEnabled ? '#ff6b9d' : '#888',
+                   boxShadow: livePhotoEnabled ? '0 0 8px #ff6b9d' : 'none'
+                 }}
+               />
+               {livePhotoEnabled ? 'LIVE: ON' : 'LIVE: OFF'}
+             </button>
 
-               <div className="capture-action-buttons" style={{ marginTop: '20px' }}>
-                 <button
-                   type="button"
-                   onClick={handleRetakeClick}
-                   disabled={isTimeOut}
-                   className="btn-share retake-btn"
-                   style={{
-                     boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 #1a1a2e',
-                     borderColor: selectedRetakeIdx !== null ? '#FF5252' : '#1a1a2e',
-                     opacity: isTimeOut ? 0.5 : 1,
-                     cursor: isTimeOut ? 'not-allowed' : 'pointer',
-                     transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none'
-                   }}
-                 >
-                   {selectedRetakeIdx !== null 
-                     ? `RETAKE #${selectedRetakeIdx + 1}` 
-                     : (t('action.retake') || 'RETAKE ALL').toUpperCase()}
-                 </button>
-
-                 <button
-                   type="button"
-                   onClick={onFinish}
-                   className="btn-dl finish-btn"
-                 >
-                   {(t('action.done') || 'Done & Send').toUpperCase()}
-                 </button>
+             <div style={styles.statusRow}>
+               <div style={styles.statusPill}>{shotsTaken}/{safeTotalShots} terambil</div>
+               <div style={styles.statusPill}>
+                 {!isLiveVCActive ? 'VC Off' : hasRemoteStream ? 'VC On' : 'Menghubungkan VC...'}
                </div>
              </div>
-          )}
 
-          {/* ── GOOGLE MEET STYLE DUAL VIDEO CARDS ── */}
-          <div style={styles.meetGrid}>
-            
-            {/* LEFT CARD: Local User (Kamu) */}
-            <div className="squiggle" style={styles.meetCard}>
-              <div style={styles.meetCardInner}>
-                
-                {/* AI Transparent Selfie Canvas or fallbacks */}
-                {backgroundRemovalEnabled && selfieModelLoaded ? (
-                  <canvas
-                    ref={selfieCanvasRef}
-                    style={styles.meetVideoMirrored}
-                  />
-                ) : (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={styles.meetVideoMirrored}
-                  />
-                )}
+             {/* Local Video Card */}
+             <div className="camera-card live-video-card">
+               <video 
+                 ref={videoRef} 
+                 autoPlay 
+                 playsInline 
+                 muted 
+                 style={{
+                   width: '100%',
+                   height: '100%',
+                   objectFit: 'cover',
+                   transform: 'scaleX(-1)'
+                 }} 
+               />
+               <div className="cam-guide-overlay">
+                 <div className="guide-box">
+                   <div className="guide-corner tl" />
+                   <div className="guide-corner tr" />
+                   <div className="guide-corner bl" />
+                   <div className="guide-corner br" />
+                   <div className="guide-lines-v" />
+                   <div className="guide-lines-h" />
+                 </div>
+               </div>
+               <div style={styles.cardLabel}>{names.local} (Anda)</div>
+             </div>
 
-                {/* Glassmorphic Name Tag */}
-                <div style={styles.nameBadge}>
-                  <span style={styles.badgeName}>{names.local} (Anda)</span>
-                </div>
-
-                {/* AI Active Indicator */}
-                {backgroundRemovalEnabled && selfieModelLoaded && (
-                  <div style={styles.aiBadge}>
-                    <span>✨ AI Active</span>
-                  </div>
-                )}
-              </div>
+             {/* Remote Video Card */}
+             <div className="camera-card live-video-card">
+               {hasRemoteStream ? (
+                 <video 
+                   ref={remoteVideoRef} 
+                   autoPlay 
+                   playsInline 
+                   muted 
+                   style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                   }} 
+                 />
+               ) : (
+                 <div style={styles.videoPlaceholder}>
+                   {!isLiveVCActive ? 'VC belum diaktifkan' : 'Menghubungkan partner...'}
+                 </div>
+               )}
+              
+              <div style={styles.cardLabel}>{names.remote}</div>
             </div>
 
-            {/* RIGHT CARD: Remote Partner */}
-            <div className="squiggle" style={styles.meetCard}>
-              <div style={styles.meetCardInner}>
-                
-                {/* Remote WebRTC video or offline placeholder */}
-                {isLiveVCActive && remoteVideoRef ? (
-                  <video
-                    ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={styles.meetVideo}
-                  />
-                ) : (
-                  <div style={styles.offlinePlaceholder}>
-                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>⏳</div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>Menunggu Panggilan Live...</div>
-                    <div style={{ fontSize: '14px', opacity: 0.6, marginTop: '4px' }}>Klik tombol "Mulai VC Live" di bawah</div>
-                  </div>
-                )}
-
-                {/* Glassmorphic Name Tag */}
-                <div style={styles.nameBadge}>
-                  <span style={styles.badgeName}>{names.remote}</span>
-                </div>
-
-                {/* Connection Live/Offline Indicator */}
-                <div style={{
-                  ...styles.statusBadge,
-                  background: isLiveVCActive ? 'rgba(6, 214, 160, 0.85)' : 'rgba(0,0,0,0.6)'
-                }}>
-                  <div style={{
-                    ...styles.statusDot,
-                    background: isLiveVCActive ? '#06d6a0' : '#888',
-                    animation: isLiveVCActive ? 'blink 1.5s infinite' : 'none'
-                  }} />
-                  <span>{isLiveVCActive ? '🟢 Live' : '⏳ Offline'}</span>
-                </div>
+            {/* Big Countdown Overlay (covers video area) */}
+            {countdown !== null && (
+              <div className="cam-countdown-overlay" style={{ borderRadius: '12px', zIndex: 30 }}>
+                <span className="cam-countdown-num">{countdown}</span>
               </div>
-            </div>
-
-          </div>
-
-          {/* Off-screen / Hidden Composite Canvas for Joint photo captures */}
-          <canvas
-            ref={compositeCanvasRef}
-            style={{ display: 'none' }}
-          />
-        </div>
-
-        {/* ── LIVE VIDEO CALL & AI SEGMENTATION CONTROL PANEL ── */}
-        <div style={styles.vcControlPanel}>
-          {/* AI Background removal toggle */}
-          <div style={styles.controlRow}>
-            <label style={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                checked={backgroundRemovalEnabled}
-                onChange={(e) => setBackgroundRemovalEnabled && setBackgroundRemovalEnabled(e.target.checked)}
-                style={styles.checkboxInput}
-              />
-              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>✨ Live Background Removal</span>
-            </label>
-            {backgroundRemovalEnabled && !selfieModelLoaded && (
-              <span style={styles.loadingSpinner}>
-                <div style={styles.spinner} />
-                Memuat AI...
-              </span>
             )}
-            {backgroundRemovalEnabled && selfieModelLoaded && (
-              <span style={styles.modelLoadedBadge}>✓ AI Active</span>
+
+            {/* Finished / Retake Overlay (covers video area) */}
+            {isFinishedAllShots && countdown === null && (
+              <div className="capture-action-overlay" style={{ borderRadius: '12px', zIndex: 40 }}>
+                <div className="capture-action-text">
+                  {t('capture.niceShots')}<br />
+                  <span>
+                    {isTimeOut
+                      ? '⏳ Waktu habis, kamu sudah tidak bisa retake lagi.'
+                      : selectedRetakeIdx !== null
+                        ? t('capture.selectedPhoto', { num: selectedRetakeIdx + 1 })
+                        : t('capture.useOrRetake')}
+                  </span>
+                </div>
+
+                <div className="capture-action-buttons">
+                  <button
+                    type="button"
+                    onClick={handleRetakeClick}
+                    disabled={isTimeOut}
+                    className="btn-share retake-btn"
+                    style={{
+                      boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 #1a1a2e',
+                      borderColor: selectedRetakeIdx !== null ? '#FF5252' : '#1a1a2e',
+                      opacity: isTimeOut ? 0.5 : 1,
+                      cursor: isTimeOut ? 'not-allowed' : 'pointer',
+                      transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none'
+                    }}
+                  >
+                    {selectedRetakeIdx !== null
+                      ? `RETAKE #${selectedRetakeIdx + 1}`
+                      : (t('action.retake') || 'RETAKE ALL').toUpperCase()}
+                  </button>
+
+                  <button type="button" onClick={onFinish} className="btn-dl finish-btn">
+                    {(t('action.done') || 'Done & Send').toUpperCase()}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* WebRTC Video Call limits */}
-          <div style={styles.vcRow}>
-            {isLiveVCActive ? (
-              <>
-                <div style={styles.activeVCTime}>
-                  <span style={styles.liveIndicator} />
-                  🟢 VC AKTIF: <strong>{liveVCTimeLeft}s</strong>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => stopLiveVC && stopLiveVC(addLocalStream)}
-                  style={styles.stopVCBtn}
-                >
-                  🔴 Matikan VC
-                </button>
-              </>
+          <canvas ref={compositeCanvasRef} style={{ display: 'none' }} />
+
+          <div style={styles.bottomControls}>
+            {!isLiveVCActive ? (
+              <button 
+                type="button" 
+                onClick={() => startLiveVC && startLiveVC()} 
+                style={styles.startVCBtn}
+              >
+                START
+              </button>
             ) : (
-              <>
-                <div style={styles.inactiveVCText}>
-                  🎥 Sesi Live Video Call (P2P stream • Batas 60s)
-                </div>
-                <button
-                  type="button"
-                  disabled={isFinishedAllShots}
-                  onClick={() => startLiveVC && startLiveVC(addLocalStream)}
-                  style={{
-                    ...styles.startVCBtn,
-                    opacity: isFinishedAllShots ? 0.5 : 1,
-                    cursor: isFinishedAllShots ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  ⚡ Mulai VC Live
-                </button>
-              </>
+              <button
+                type="button"
+                disabled={captureDisabled}
+                onClick={() => onCaptureNextShot()}
+                style={{
+                  ...styles.takeBtn,
+                  opacity: captureDisabled ? 0.55 : 1,
+                  cursor: captureDisabled ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {!hasRemoteStream
+                  ? 'Menunggu Partner VC'
+                  : countdown !== null
+                    ? 'Timer Jalan...'
+                    : `Take ${nextShotNumber}/${safeTotalShots}`}
+              </button>
             )}
           </div>
         </div>
 
-        {/* Thumbnail Preview Strip */}
         <div className="capture-strip-bar">
           <div className="strip-bar-slots">
             {Array.from({ length: totalShots }).map((_, i) => {
@@ -393,17 +334,17 @@ export default function LiveCaptureScreen({
                 <div
                   key={i}
                   className={`strip-thumb ${i < currentShotIndex ? 'taken' : i === currentShotIndex ? 'current' : ''}`}
-                  style={{ 
+                  style={{
                     ...styles.thumbnail,
-                    border: isThisSelected 
+                    border: isThisSelected
                       ? '4px solid #FFD700'
-                      : canRetakeThis 
-                        ? '2px solid rgba(255, 255, 255, 0.5)' 
+                      : canRetakeThis
+                        ? '2px solid rgba(255, 255, 255, 0.5)'
                         : 'none',
                     transform: isThisSelected ? 'scale(1.05)' : 'scale(1)',
                     boxShadow: isThisSelected ? '0 4px 12px rgba(255, 215, 0, 0.4)' : 'none',
                     zIndex: isThisSelected ? 10 : 1,
-                    cursor: canRetakeThis ? 'pointer' : 'default',
+                    cursor: canRetakeThis ? 'pointer' : 'default'
                   }}
                   onClick={() => {
                     if (canRetakeThis) {
@@ -413,21 +354,21 @@ export default function LiveCaptureScreen({
                 >
                   {photoPreviews[i] ? (
                     <>
-                      <img 
-                        src={photoPreviews[i]!} 
-                        alt={`Shot ${i+1}`} 
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          objectFit: 'cover', 
-                          opacity: canRetakeThis ? 0.8 : 1 
-                        }} 
+                      <img
+                        src={photoPreviews[i]!}
+                        alt={`Shot ${i + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          opacity: canRetakeThis ? 0.8 : 1
+                        }}
                       />
                       {canRetakeThis && (
-                        <div 
+                        <div
                           className="strip-thumb-retake-overlay"
                           style={{
-                            background: isThisSelected ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0,0,0,0.3)',
+                            background: isThisSelected ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0,0,0,0.3)'
                           }}
                         >
                           {isThisSelected ? 'Selected' : 'Select'}
@@ -445,157 +386,51 @@ export default function LiveCaptureScreen({
             })}
           </div>
         </div>
-
       </div>
     </section>
   );
 }
 
-/* ──────────────────────────────────────────────────────────
-   STYLES FOR MEET DUAL VIDEO GRID
-   ────────────────────────────────────────────────────────── */
 const styles = {
-  meetLayoutContainer: {
-    position: 'relative' as const,
-    width: '100%',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '16px',
-    minHeight: '400px',
+  mainContent: {
     display: 'flex',
     flexDirection: 'column' as const,
-    justifyContent: 'center'
-  },
-  meetGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '24px',
-    width: '100%',
-    aspectRatio: '16/9',
-  },
-  meetCard: {
-    position: 'relative' as const,
-    width: '100%',
+    flex: 1,
     height: '100%',
-    overflow: 'hidden',
-    borderRadius: '16px',
-    background: '#1a1a2e',
-  },
-  meetCardInner: {
+    justifyContent: 'space-between',
+    padding: '20px',
+    boxSizing: 'border-box' as const,
     position: 'relative' as const,
-    width: '100%',
-    height: '100%',
+    minWidth: '0',
+  },
+  videoPlaceholder: {
     display: 'flex',
+    flexDirection: 'column' as const,
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#fff9e6', // Cream Studios matching backplate
-  },
-  meetVideo: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-    display: 'block'
-  },
-  meetVideoMirrored: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-    display: 'block',
-    transform: 'scaleX(-1)', // Mirrored for intuitive local user posing
-  },
-  offlinePlaceholder: {
-    textAlign: 'center' as const,
+    color: 'rgba(255, 255, 255, 0.4)',
     fontFamily: "'Gaegu', cursive",
-    color: 'var(--ink)',
-    zIndex: 1,
-    padding: '24px',
+    fontSize: '20px',
+    textAlign: 'center' as const,
+    padding: '20px',
   },
-  nameBadge: {
+  cardLabel: {
     position: 'absolute' as const,
-    bottom: '16px',
-    left: '16px',
-    zIndex: 10,
-    background: 'rgba(26, 26, 46, 0.65)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1.5px solid rgba(255, 255, 255, 0.15)',
-    borderRadius: '12px',
+    bottom: '12px',
+    left: '12px',
+    background: 'rgba(26, 26, 46, 0.75)',
+    color: '#fff',
+    borderRadius: '999px',
     padding: '6px 14px',
-  },
-  badgeName: {
-    color: '#ffffff',
     fontSize: '14px',
     fontWeight: 'bold' as const,
     fontFamily: "'Gaegu', cursive",
-    letterSpacing: '0.5px'
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    zIndex: 5,
   },
-  aiBadge: {
-    position: 'absolute' as const,
-    top: '16px',
-    right: '16px',
-    zIndex: 10,
-    background: 'var(--ink)',
-    border: '2px solid var(--yellow)',
-    borderRadius: '20px',
-    padding: '4px 10px',
-    fontSize: '12px',
-    fontWeight: 'bold' as const,
-    color: 'var(--yellow)',
-    fontFamily: "'Gaegu', cursive",
-  },
-  statusBadge: {
-    position: 'absolute' as const,
-    top: '16px',
-    right: '16px',
-    zIndex: 10,
-    border: '1.5px solid rgba(255,255,255,0.15)',
-    borderRadius: '20px',
-    padding: '4px 12px',
-    fontSize: '12px',
-    fontWeight: 'bold' as const,
-    color: '#ffffff',
-    fontFamily: "'Gaegu', cursive",
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-  statusDot: {
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-  },
-  countdownOverlay: {
-    position: 'absolute' as const,
-    inset: 0,
-    zIndex: 50,
-    background: 'rgba(26, 26, 46, 0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    pointerEvents: 'none' as const,
-    borderRadius: '16px',
-    animation: 'popIn 0.3s ease'
-  },
-  countdownNumber: {
-    fontSize: '140px',
-    fontWeight: '900' as const,
-    color: '#ffffff',
-    textShadow: '0 8px 32px rgba(0,0,0,0.5)',
-    fontFamily: "'VT323', monospace",
-  },
-  actionOverlay: {
-    position: 'absolute' as const,
-    inset: 0,
-    zIndex: 60,
-    background: 'rgba(26, 26, 46, 0.85)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '16px',
-    padding: '24px',
+  relative: {
+    position: 'relative' as const,
   },
   w100: {
     width: '100%',
@@ -607,115 +442,150 @@ const styles = {
     gap: '12px',
     alignItems: 'center',
   },
-  thumbnail: {
-    width: '160px', 
-    height: '120px', 
-    overflow: 'hidden', 
-    background: '#000',
-    position: 'relative' as const,
-    transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-  },
-  vcControlPanel: {
-    margin: '16px auto',
+  compositeCanvas: {
     width: '100%',
-    maxWidth: '1200px',
-    background: 'rgba(255, 255, 255, 0.45)',
-    backdropFilter: 'blur(8px)',
-    border: '2px solid var(--ink)',
-    borderRadius: '16px',
-    padding: '12px 18px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '10px',
-  },
-  controlRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    fontFamily: "'Gaegu', cursive",
-  },
-  toggleLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    cursor: 'pointer',
-    color: 'var(--ink)',
-  },
-  checkboxInput: {
-    cursor: 'pointer',
-    width: '16px',
-    height: '16px',
-    accentColor: 'var(--pink)',
-  },
-  loadingSpinner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '14px',
-    color: '#888',
-  },
-  spinner: {
-    width: '12px',
-    height: '12px',
-    border: '2px solid var(--ink)',
-    borderTopColor: 'transparent',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
-  modelLoadedBadge: {
-    background: 'var(--ink)',
-    color: 'var(--yellow)',
-    fontSize: '12px',
-    fontWeight: 'bold' as const,
-    padding: '2px 8px',
+    height: '100%',
+    objectFit: 'cover' as const,
     borderRadius: '10px',
+    display: 'block',
+    background: '#000',
   },
-  vcRow: {
+  hiddenMedia: {
+    display: 'none',
+  },
+  statusRow: {
+    position: 'absolute' as const,
+    top: '18px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 16,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flexWrap: 'wrap' as const,
+    justifyContent: 'center',
+  },
+  statusPill: {
+    background: 'rgba(26, 26, 46, 0.88)',
+    color: '#fff',
+    borderRadius: '999px',
+    padding: '7px 14px',
+    fontSize: '13px',
+    fontWeight: 'bold' as const,
+    fontFamily: "'Gaegu', cursive",
+  },
+  nameRow: {
+    position: 'absolute' as const,
+    left: '20px',
+    right: '20px',
+    bottom: '18px',
+    zIndex: 14,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    fontFamily: "'Gaegu', cursive",
-    borderTop: '1px dashed rgba(0,0,0,0.1)',
-    paddingTop: '10px',
+    gap: '12px',
   },
-  activeVCTime: {
+  namePill: {
+    background: 'rgba(26, 26, 46, 0.72)',
+    color: '#fff',
+    borderRadius: '999px',
+    padding: '8px 14px',
+    fontSize: '14px',
+    fontWeight: 'bold' as const,
+    fontFamily: "'Gaegu', cursive",
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+  },
+  helperOverlay: {
+    position: 'absolute' as const,
+    inset: 0,
+    zIndex: 12,
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    fontSize: '15px',
-    color: 'var(--ink)',
+    justifyContent: 'center',
+    pointerEvents: 'none' as const,
+    padding: '28px',
   },
-  liveIndicator: {
-    width: '8px',
-    height: '8px',
-    background: '#ff5252',
-    borderRadius: '50%',
-    animation: 'pulse 1s infinite',
+  helperCard: {
+    maxWidth: '420px',
+    textAlign: 'center' as const,
+    background: 'rgba(255, 249, 230, 0.88)',
+    color: 'var(--ink)',
+    border: '2px solid rgba(26, 26, 46, 0.12)',
+    borderRadius: '18px',
+    padding: '18px 22px',
+    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    fontFamily: "'Gaegu', cursive",
+  },
+  helperTitle: {
+    fontSize: '28px',
+    fontWeight: 'bold' as const,
+    lineHeight: 1.05,
+  },
+  helperText: {
+    marginTop: '8px',
+    fontSize: '18px',
+    lineHeight: 1.25,
+    opacity: 0.85,
+  },
+  bottomControls: {
+    margin: '-25px auto 0', // Overlaps the bottom border elegantly
+    position: 'relative' as const,
+    zIndex: 50,
+    width: 'fit-content',
+    maxWidth: '96%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    flexWrap: 'wrap' as const,
+    fontFamily: "'Gaegu', cursive",
+  },
+  startVCBtn: {
+    background: '#22c55e', // Vibrant green
+    color: 'var(--ink)',
+    border: '3px solid var(--ink)',
+    borderRadius: '14px',
+    padding: '16px 36px',
+    fontSize: '22px',
+    fontWeight: 'bold' as const,
+    boxShadow: '4px 4px 0 var(--ink)',
+    minWidth: '280px',
+    textAlign: 'center' as const,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
   },
   stopVCBtn: {
     background: '#ff5252',
-    color: 'white',
+    color: '#fff',
     border: '2px solid var(--ink)',
     borderRadius: '10px',
-    padding: '4px 12px',
-    fontSize: '14px',
-    fontWeight: 'bold' as const,
-    cursor: 'pointer',
-    boxShadow: '2px 2px 0 var(--ink)',
-  },
-  inactiveVCText: {
-    fontSize: '15px',
-    opacity: 0.8,
-    color: 'var(--ink)',
-  },
-  startVCBtn: {
-    background: 'var(--yellow)',
-    color: 'var(--ink)',
-    border: '2px solid var(--ink)',
-    borderRadius: '10px',
-    padding: '4px 12px',
+    padding: '8px 14px',
     fontSize: '14px',
     fontWeight: 'bold' as const,
     boxShadow: '2px 2px 0 var(--ink)',
+  },
+  takeBtn: {
+    background: 'var(--yellow)', // Simple flat yellow matching 'ULANGI SEMUA'
+    color: 'var(--ink)',
+    border: '3px solid var(--ink)',
+    borderRadius: '14px',
+    padding: '16px 36px',
+    fontSize: '22px',
+    fontWeight: 'bold' as const,
+    boxShadow: '4px 4px 0 var(--ink)',
+    minWidth: '280px',
+    textAlign: 'center' as const,
+    transition: 'all 0.15s ease',
+  },
+  thumbnail: {
+    width: '160px',
+    height: '120px',
+    overflow: 'hidden',
+    background: '#000',
+    position: 'relative' as const,
+    transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   },
 };

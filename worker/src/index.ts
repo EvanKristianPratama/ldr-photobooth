@@ -1,6 +1,44 @@
 import { RoomDurableObject } from './adapters/transport/roomDurableObject';
+import { SignJWT } from 'jose';
 
 export { RoomDurableObject };
+
+const liveKitSecretEncoder = new TextEncoder();
+
+async function createLiveKitToken({
+  apiKey,
+  apiSecret,
+  roomName,
+  participantIdentity,
+  participantName
+}: {
+  apiKey: string;
+  apiSecret: string;
+  roomName: string;
+  participantIdentity: string;
+  participantName: string;
+}): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return new SignJWT({
+    name: participantName,
+    metadata: '',
+    video: {
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishSources: ['camera']
+    }
+  })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuer(apiKey)
+    .setSubject(participantIdentity)
+    .setIssuedAt(now)
+    .setNotBefore(now - 10)
+    .setExpirationTime(now + 60 * 60)
+    .sign(liveKitSecretEncoder.encode(apiSecret));
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -40,6 +78,59 @@ export default {
       });
     }
 
+    if (url.pathname === '/api/livekit/token' && request.method === 'POST') {
+      try {
+        const apiKey = env.LIVEKIT_API_KEY;
+        const apiSecret = env.LIVEKIT_API_SECRET;
+        const liveKitUrl = env.LIVEKIT_URL;
+
+        if (!apiKey || !apiSecret || !liveKitUrl) {
+          return new Response(JSON.stringify({ error: 'LiveKit is not configured on the worker' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+
+        const body = await request.json() as {
+          room_name?: string;
+          participant_identity?: string;
+          participant_name?: string;
+        };
+
+        const roomName = body.room_name?.trim();
+        const participantIdentity = body.participant_identity?.trim();
+        const participantName = body.participant_name?.trim() || participantIdentity;
+
+        if (!roomName || !participantIdentity || !participantName) {
+          return new Response(JSON.stringify({ error: 'room_name and participant_identity are required' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+          });
+        }
+
+        const participantToken = await createLiveKitToken({
+          apiKey,
+          apiSecret,
+          roomName,
+          participantIdentity,
+          participantName
+        });
+
+        return new Response(JSON.stringify({
+          server_url: liveKitUrl,
+          participant_token: participantToken
+        }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Failed to create LiveKit token', details: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
     const calculateHotScore = (points: number, createdAt: string) => {
       const hours = (Date.now() - new Date(createdAt).getTime()) / 36e5;
       return (points + 1) / Math.pow(hours + 2, 1.5);
@@ -66,7 +157,7 @@ export default {
         return new Response(JSON.stringify(sorted), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
-      } catch (err) {
+      } catch (err: any) {
         return new Response(JSON.stringify({ error: 'DB error', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
@@ -85,7 +176,7 @@ export default {
         await env.DB.prepare('INSERT INTO frames (id, title, author, url, created_at) VALUES (?, ?, ?, ?, ?)')
           .bind(id, title, author, publicUrl, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-      } catch (err) {
+      } catch (err: any) {
         return new Response(JSON.stringify({ error: 'Upload failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
@@ -109,7 +200,7 @@ export default {
         return new Response(JSON.stringify(sorted), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
-      } catch (err) {
+      } catch (err: any) {
         return new Response(JSON.stringify({ error: 'DB error', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
@@ -130,7 +221,7 @@ export default {
         await env.DB.prepare('INSERT INTO posts (id, title, author, url, type, frame_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .bind(id, title, author, publicUrl, type, frameId, new Date().toISOString()).run();
         return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-      } catch (err) {
+      } catch (err: any) {
         return new Response(JSON.stringify({ error: 'Post failed', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
@@ -147,7 +238,7 @@ export default {
 
         await env.DB.prepare(`UPDATE ${table} SET ${column} = ${column} + 1 WHERE id = ?`).bind(id).run();
         return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-      } catch (err) {
+      } catch (err: any) {
         return new Response(JSON.stringify({ error: 'Like failed' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
       }
     }
@@ -165,7 +256,7 @@ export default {
           return new Response(JSON.stringify(results), {
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
           });
-        } catch (err) {
+        } catch (err: any) {
           return new Response(JSON.stringify({ error: 'Failed to fetch comments' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
         }
       }
@@ -181,7 +272,7 @@ export default {
             .bind(id, targetId, type, author, content, new Date().toISOString()).run();
             
           return new Response(JSON.stringify({ success: true, id }), { status: 201, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-        } catch (err) {
+        } catch (err: any) {
           return new Response(JSON.stringify({ error: 'Failed to post comment', details: err.message }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
         }
       }
@@ -542,7 +633,7 @@ export default {
         const parsedAddress1 = JSON.parse(address1Json || '{}');
         parsedAddress1.qty = qty1;
 
-        let parsedAddress2 = {};
+        let parsedAddress2: any = {};
         if (!isSolo) {
           parsedAddress2 = JSON.parse(address2Json || '{}');
           parsedAddress2.qty = qty2;
@@ -787,4 +878,9 @@ interface Env {
   ROOM: DurableObjectNamespace;
   DB: D1Database;
   BUCKET: R2Bucket;
+  LIVEKIT_URL?: string;
+  LIVEKIT_API_KEY?: string;
+  LIVEKIT_API_SECRET?: string;
+  MIDTRANS_CLIENT_KEY?: string;
+  MIDTRANS_SERVER_KEY?: string;
 }

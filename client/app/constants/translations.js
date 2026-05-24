@@ -31,10 +31,13 @@ export const TRANSLATIONS = {
     'mode.vibe': 'Vibe! ✨',
     'mode.howToPhoto': 'How would you like to take photos today? ✌️',
     'mode.solo': 'Solo Mode',
-    'mode.group': 'Group Mode (LDR)',
-    'mode.live': 'Live Mode (Foto Bareng)',
+    'mode.soloDesc': 'Capture your own cute moments alone with awesome frames',
+    'mode.group': 'LDR Surprise Mode',
+    'mode.groupDesc': 'Take photos sequentially in real-time with friends',
+    'mode.live': 'Duo Live Mode',
     'mode.liveDesc': 'Pose together in real-time on one canvas (like Zoom)',
     'mode.community': 'Community',
+    'mode.communityDesc': 'Browse and share sweet photo strips with the community',
     'mode.helpHint': 'Click me if you are confused 👉',
     'mode.soonTitle': 'Patience! ✨',
     'mode.soonDesc': 'Trio & Quad features are still in development. Stay tuned!',
@@ -103,6 +106,10 @@ export const TRANSLATIONS = {
     'result.format.duoStrip': 'Download 2R Duo Strip',
     'result.format.gif': 'Download Animated GIF',
     'result.format.generating': 'Generating...',
+    'result.format.receipt': 'Download 80mm PDF (B&W Receipt)',
+    'result.format.escpos': 'Download ESC/POS Binary (.bin)',
+
+
 
     // Community Modal
     'community.shareTo': 'Share to',
@@ -193,10 +200,13 @@ export const TRANSLATIONS = {
     'mode.vibe': 'Gaya! ✨',
     'mode.howToPhoto': 'Mau foto gimana hari ini? ✌️',
     'mode.solo': 'Solo Mode',
-    'mode.group': 'Group Mode (LDR)',
-    'mode.live': 'Duo Live (Foto Bareng)',
+    'mode.soloDesc': 'Abadikan momen lucu sendirian dengan berbagai frame keren',
+    'mode.group': 'LDR Surprise Mode',
+    'mode.groupDesc': 'Ambil foto bersama teman secara bergantian secara real-time',
+    'mode.live': 'Duo Live Mode',
     'mode.liveDesc': 'Pose langsung berdua dalam satu strip (seperti Zoom)',
     'mode.community': 'Komunitas',
+    'mode.communityDesc': 'Lihat dan bagikan hasil foto manis Anda dengan dunia',
     'mode.helpHint': 'kalau bingung klik aku 👉',
     'mode.soonTitle': 'Sabar ya! ✨',
     'mode.soonDesc': 'Fitur Trio & Quad masih dalam tahap pengembangan. Stay tuned!',
@@ -265,6 +275,10 @@ export const TRANSLATIONS = {
     'result.format.duoStrip': 'Unduh 2R Duo Strip',
     'result.format.gif': 'Unduh GIF Animasi',
     'result.format.generating': 'Sedang memproses...',
+    'result.format.receipt': 'Unduh PDF 80mm (Struk Hitam Putih)',
+    'result.format.escpos': 'Unduh Biner ESC/POS (.bin)',
+
+
 
     // Community Modal
     'community.shareTo': 'Bagikan ke',
@@ -355,8 +369,13 @@ export const TRANSLATIONS = {
     'mode.vibe': '취향 선택! ✨',
     'mode.howToPhoto': '오늘 어떻게 사진을 찍고 싶으신가요? ✌️',
     'mode.solo': '솔로 모드',
-    'mode.group': '그룹 모드 (LDR)',
+    'mode.soloDesc': '다양하고 멋진 프레임과 함께 나만의 귀여운 순간을 담아보세요',
+    'mode.group': 'LDR 서프라이즈 모드',
+    'mode.groupDesc': '실시간으로 친구들과 차례대로 사진을 찍어보세요',
+    'mode.live': '듀오 라이브 모드',
+    'mode.liveDesc': '한 캔버스에서 실시간으로 함께 포즈를 취해보세요 (줌처럼)',
     'mode.community': '커뮤니티',
+    'mode.communityDesc': '달콤한 사진 스트립을 탐색하고 커뮤니티와 공유하세요',
     'mode.helpHint': '도움이 필요하면 나를 클릭하세요 👉',
     'mode.soonTitle': '조금만 기다려주세요! ✨',
     'mode.soonDesc': '트리오 및 쿼드 기능은 아직 개발 중입니다. 곧 출시됩니다!',
@@ -425,6 +444,10 @@ export const TRANSLATIONS = {
     'result.format.duoStrip': '2R 듀오 스트립 다운로드',
     'result.format.gif': '움직이는 GIF 다운로드',
     'result.format.generating': '생성 중...',
+    'result.format.receipt': '80mm PDF 다운로드 (흑백 영수증)',
+    'result.format.escpos': 'ESC/POS 바이너리 다운로드 (.bin)',
+
+
 
     // Community Modal
     'community.shareTo': '공유 대상',
@@ -515,8 +538,13 @@ export const TRANSLATIONS = {
     'mode.vibe': 'バイブスを選択！ ✨',
     'mode.howToPhoto': '今日はどのように撮影しますか？ ✌️',
     'mode.solo': 'ソロモード',
-    'mode.group': 'グループモード (LDR)',
+    'mode.soloDesc': '素敵なフレームで自分だけの可愛い瞬間を撮影しましょう',
+    'mode.group': 'LDRサプライズモード',
+    'mode.groupDesc': 'リアルタイムで友達と順番に写真を撮影します',
+    'mode.live': 'デュオライブモード',
+    'mode.liveDesc': '1つのキャンバスでリアルタイムに一緒にポーズ（Zoomのように）',
     'mode.community': 'コミュニティ',
+    'mode.communityDesc': '他の人の写真を見たり、コミュニティでシェアしましょう',
     'mode.helpHint': '困ったときはここをクリック 👉',
     'mode.soonTitle': 'お楽しみに！ ✨',
     'mode.soonDesc': 'トリオ＆クアッド機能は現在開発中です。続報をお待ちください！',
@@ -585,6 +613,10 @@ export const TRANSLATIONS = {
     'result.format.duoStrip': '2Rデュオストリップを保存',
     'result.format.gif': 'GIFアニメーションを保存',
     'result.format.generating': '作成中...',
+    'result.format.receipt': '80mm PDF保存 (白黒レシート)',
+    'result.format.escpos': 'ESC/POS バイナリ保存 (.bin)',
+
+
 
     // Community Modal
     'community.shareTo': 'シェア先',

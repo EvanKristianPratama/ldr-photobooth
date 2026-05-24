@@ -25,4 +25,4 @@ bucket_name = "ldr-photobooth-frames"
 [vars]
 MIDTRANS_CLIENT_KEY = "SB-Mid-client-owXNSzDK0hPZ8vRZ"
 MIDTRANS_SERVER_KEY = "SB-Mid-server-BWUE1Wzf_X6lBLEWqGHSpvah"
-
+LIVEKIT_URL = "wss://ldr-kks6o6du.livekit.cloud"

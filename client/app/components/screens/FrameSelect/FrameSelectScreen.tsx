@@ -491,6 +491,7 @@ export default function FrameSelectScreen({
         </div>
 
         {/* ── WEATHER GEOLOCATION PANEL ── */}
+        {false && (
         <div className="ctrl-section" style={styles.weatherPanel}>
           <div className="ctrl-label" style={styles.weatherHeader}>
             <span>🌤️</span>
@@ -575,6 +576,7 @@ export default function FrameSelectScreen({
             </div>
           )}
         </div>
+        )}
 
         {/* ── STICKERS ── */}
         <div className="ctrl-section">

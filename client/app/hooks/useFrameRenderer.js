@@ -115,6 +115,7 @@ export function useFrameRenderer({
     sessionMode = 'duo'
   }) => {
     const isLiveRender = frameIndex !== null;
+    const isLiveMode = sessionMode === 'live';
     const key = isLiveRender ? `${mergeKey(count)}|live|${frameIndex}` : mergeKey(count);
 
     if (mergeCacheRef.current.has(key)) {
@@ -386,8 +387,7 @@ export function useFrameRenderer({
       // Sort participants by ID to ensure consistent order across all peers
       const sorted = [...participants].sort((a, b) => a.id.localeCompare(b.id));
       const participantCount = sorted.length;
-      const isLiveMode = sessionMode === 'live';
-      const photoColumns = isLiveMode ? 1 : participantCount;
+      const photoColumns = participantCount;
       const isStack = photoColumns === 3;
       const isQuad2x2 = photoColumns === 4;
       const isGrid = frameLayout === 'grid' && count > 1 && (photoColumns === 1 || photoColumns === 2);
@@ -642,29 +642,19 @@ export function useFrameRenderer({
           }
           
           let blob;
-          if (isLiveMode) {
-            if (isLiveRender) {
+          if (isLiveRender) {
+            if (participant.isYou) {
               const liveBurst = localLiveFrames?.find(entry => entry[0] === i)?.[1];
               blob = liveBurst?.[frameIndex];
+            } else {
+              const peerLiveMap = remoteLiveFrames?.get(participant.id);
+              const liveBurst = peerLiveMap?.get(i);
+              blob = liveBurst?.[frameIndex];
             }
-            if (!blob) {
-              blob = localBlobs[i];
-            }
-          } else {
-            if (isLiveRender) {
-              if (participant.isYou) {
-                const liveBurst = localLiveFrames?.find(entry => entry[0] === i)?.[1];
-                blob = liveBurst?.[frameIndex];
-              } else {
-                const peerLiveMap = remoteLiveFrames?.get(participant.id);
-                const liveBurst = peerLiveMap?.get(i);
-                blob = liveBurst?.[frameIndex];
-              }
-            }
-            if (!blob) {
-              const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
-              blob = blobs[i];
-            }
+          }
+          if (!blob) {
+            const blobs = participant.isYou ? localBlobs : (remoteBlobsByPeer.get(participant.id) || []);
+            blob = blobs[i];
           }
 
           if (blob) {

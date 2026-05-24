@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+const descriptionHasMediaSections = (description) => {
+  const sdp = description?.sdp || '';
+  return /\nm=(audio|video)\s/.test(sdp);
+};
+
 export default function useWebRTC({
   socketRef,
   setStatus,
   onDataChannelMessage,
   onSocketPhotoReceive,
-  onEnableSocketFallback,
-  onRemoteStream
+  onEnableSocketFallback
 }) {
   const pcsRef = useRef(new Map()); // Map<peerId, RTCPeerConnection>
   const dcsRef = useRef(new Map()); // Map<peerId, RTCDataChannel>
@@ -22,22 +26,27 @@ export default function useWebRTC({
   const onDataChannelMessageRef = useRef(onDataChannelMessage);
   const onSocketPhotoReceiveRef = useRef(onSocketPhotoReceive);
   const onEnableSocketFallbackRef = useRef(onEnableSocketFallback);
-  const onRemoteStreamRef = useRef(onRemoteStream);
 
   useEffect(() => {
     onDataChannelMessageRef.current = onDataChannelMessage;
     onSocketPhotoReceiveRef.current = onSocketPhotoReceive;
     onEnableSocketFallbackRef.current = onEnableSocketFallback;
-    onRemoteStreamRef.current = onRemoteStream;
-  }, [onDataChannelMessage, onSocketPhotoReceive, onEnableSocketFallback, onRemoteStream]);
+  }, [onDataChannelMessage, onSocketPhotoReceive, onEnableSocketFallback]);
 
   useEffect(() => {
+    const pcs = pcsRef.current;
+    const dcs = dcsRef.current;
+
     return () => {
-      pcsRef.current.forEach(pc => {
-        try { pc.close(); } catch (e) {}
+      pcs.forEach(pc => {
+        try {
+          pc.close();
+        } catch {
+          // Ignore cleanup close errors.
+        }
       });
-      pcsRef.current.clear();
-      dcsRef.current.clear();
+      pcs.clear();
+      dcs.clear();
     };
   }, []);
 
@@ -76,7 +85,7 @@ export default function useWebRTC({
         fileData.chunks.push(data);
       }
     }
-  }, [onDataChannelMessage]);
+  }, []);
 
   const setupDataChannel = useCallback((peerId, dc) => {
     dcsRef.current.set(peerId, dc);
@@ -84,6 +93,39 @@ export default function useWebRTC({
     dc.onmessage = (e) => handleDataChannelMessage(peerId, e);
     dc.onclose = () => dcsRef.current.delete(peerId);
   }, [handleDataChannelMessage]);
+
+  const closePeerConnection = useCallback((peerId) => {
+    const pc = pcsRef.current.get(peerId);
+    if (pc) {
+      try {
+        pc.close();
+      } catch {
+        // Ignore close errors during cleanup/recreate.
+      }
+    }
+
+    pcsRef.current.delete(peerId);
+    dcsRef.current.delete(peerId);
+    candidatesQueuesRef.current.delete(peerId);
+    ignoreOffersRef.current.delete(peerId);
+    makingOffersRef.current.delete(peerId);
+  }, []);
+
+  const resetPeerConnectionIfMediaShapeMismatches = useCallback((peerId, { dataOnly = false, remoteDescription } = {}) => {
+    const pc = pcsRef.current.get(peerId);
+    if (!pc) return;
+
+    const incomingHasMedia = remoteDescription ? descriptionHasMediaSections(remoteDescription) : false;
+    const existingHasMedia =
+      pc.getTransceivers().some(transceiver => !transceiver.stopped) ||
+      descriptionHasMediaSections(pc.localDescription) ||
+      descriptionHasMediaSections(pc.remoteDescription);
+
+    if ((dataOnly || !incomingHasMedia) && existingHasMedia) {
+      console.log(`[WebRTC] Resetting stale media peer connection for ${peerId}`);
+      closePeerConnection(peerId);
+    }
+  }, [closePeerConnection]);
 
   const getOrCreatePC = useCallback((remoteId) => {
     if (pcsRef.current.has(remoteId)) return pcsRef.current.get(remoteId);
@@ -98,19 +140,21 @@ export default function useWebRTC({
 
     pc.ondatachannel = e => setupDataChannel(remoteId, e.channel);
 
-    pc.ontrack = e => {
-      console.log(`[WebRTC] Received remote stream track from ${remoteId}`);
-      const [remoteStream] = e.streams;
-      if (typeof onRemoteStreamRef.current === 'function') {
-        onRemoteStreamRef.current({ from: remoteId, stream: remoteStream });
-      }
-    };
-
     pc.onnegotiationneeded = async () => {
+      // Only renegotiate when the signaling state is stable to avoid m-line order conflicts
+      if (pc.signalingState !== 'stable' || makingOffersRef.current.get(remoteId)) {
+        console.log(`[WebRTC] Skipping negotiation for ${remoteId} (state: ${pc.signalingState})`);
+        return;
+      }
       try {
         console.log(`[WebRTC] Negotiation needed for ${remoteId}`);
         makingOffersRef.current.set(remoteId, true);
         const offer = await pc.createOffer();
+        if (pc.signalingState !== 'stable') {
+          // State changed while we were creating the offer — abort
+          makingOffersRef.current.set(remoteId, false);
+          return;
+        }
         await pc.setLocalDescription(offer);
         makingOffersRef.current.set(remoteId, false);
         socketRef.current.emit('webrtc:offer', { to: remoteId, sdp: offer });
@@ -195,9 +239,9 @@ export default function useWebRTC({
     }
 
     return true;
-  }, [onSocketPhotoReceive]);
+  }, []);
 
-  const sendLiveFramesToPeer = useCallback(async (shotIndex, blobs, expectedPeersCount = 1) => {
+  const sendLiveFramesToPeer = useCallback(async (shotIndex, blobs) => {
     if (!blobs || blobs.length === 0) return;
     
     if (socketOnlyRef.current) {
@@ -252,7 +296,7 @@ export default function useWebRTC({
     if (typeof onEnableSocketFallbackRef.current === 'function') {
       onEnableSocketFallbackRef.current(reason);
     }
-  }, [onEnableSocketFallback, setStatus]);
+  }, [setStatus]);
 
   const processCandidatesQueue = useCallback(async (peerId) => {
     const pc = pcsRef.current.get(peerId);
@@ -271,6 +315,13 @@ export default function useWebRTC({
 
   const handleOffer = useCallback(async ({ sdp, from }) => {
     try {
+      if (descriptionHasMediaSections(sdp)) {
+        console.warn(`[WebRTC] Ignoring legacy media offer from ${from}; media now uses LiveKit only.`);
+        closePeerConnection(from);
+        return;
+      }
+
+      resetPeerConnectionIfMediaShapeMismatches(from, { remoteDescription: sdp });
       const pc = getOrCreatePC(from);
       const isPolite = socketRef.current.id > from;
       const offerCollision = pc.signalingState !== 'stable' || makingOffersRef.current.get(from);
@@ -286,10 +337,16 @@ export default function useWebRTC({
     } catch (err) {
       console.error(`Error handling offer from ${from}:`, err);
     }
-  }, [getOrCreatePC, socketRef, processCandidatesQueue]);
+  }, [closePeerConnection, getOrCreatePC, socketRef, processCandidatesQueue, resetPeerConnectionIfMediaShapeMismatches]);
 
   const handleAnswer = useCallback(async ({ sdp, from }) => {
     try {
+      if (descriptionHasMediaSections(sdp)) {
+        console.warn(`[WebRTC] Ignoring legacy media answer from ${from}; media now uses LiveKit only.`);
+        closePeerConnection(from);
+        return;
+      }
+
       const pc = pcsRef.current.get(from);
       if (pc && !ignoreOffersRef.current.get(from)) {
         if (pc.signalingState === 'stable') return;
@@ -299,7 +356,7 @@ export default function useWebRTC({
     } catch (err) {
       console.error(`Error handling answer from ${from}:`, err);
     }
-  }, [processCandidatesQueue]);
+  }, [closePeerConnection, processCandidatesQueue]);
 
   const handleCandidate = useCallback(async ({ candidate, from }) => {
     const pc = pcsRef.current.get(from);
@@ -333,10 +390,12 @@ export default function useWebRTC({
     console.log(`[WebRTC] connectPeers: myId=${myId}, total=${participants.length}, others=${others.length}`);
     
     for (const peer of others) {
+      resetPeerConnectionIfMediaShapeMismatches(peer.id, { dataOnly: true });
       if (pcsRef.current.has(peer.id)) continue;
 
       try {
         const pc = getOrCreatePC(peer.id);
+
         const dc = pc.createDataChannel('ldr-channel');
         setupDataChannel(peer.id, dc);
 
@@ -354,26 +413,6 @@ export default function useWebRTC({
     }
   }, [enableSocketFallback, getOrCreatePC, setupDataChannel, socketRef]);
 
-  const addLocalStream = useCallback((stream) => {
-    console.log('[WebRTC] addLocalStream: adding video track to active peers');
-    pcsRef.current.forEach((pc, peerId) => {
-      // Clear previous senders first to avoid duplicate track exceptions
-      pc.getSenders().forEach(sender => {
-        if (sender.track && sender.track.kind === 'video') {
-          try { pc.removeTrack(sender); } catch (e) {}
-        }
-      });
-      
-      if (stream) {
-        stream.getTracks().forEach(track => {
-          try { pc.addTrack(track, stream); } catch (e) {
-            console.error(`[WebRTC] Failed to add track to peer ${peerId}:`, e);
-          }
-        });
-      }
-    });
-  }, []);
-
   return {
     pcsRef,
     dcsRef,
@@ -384,7 +423,6 @@ export default function useWebRTC({
     connectPeers,
     sendPhotoToPeer,
     sendLiveFramesToPeer,
-    enableSocketFallback,
-    addLocalStream
+    enableSocketFallback
   };
 }

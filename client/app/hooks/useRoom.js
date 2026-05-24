@@ -169,6 +169,14 @@ export default function useRoom({
     socketRef.current.emit('session:start', { layout });
   };
 
+  const emitLiveVC = (action) => {
+    socketRef.current.emit('session:live-vc', { action });
+  };
+
+  const emitLiveCapture = () => {
+    socketRef.current.emit('session:live-capture');
+  };
+
   const generateRoomCode = (uuidv4) => {
     const code = uuidv4().split('-')[0].toUpperCase();
     setRoomCode(code);
@@ -182,7 +190,13 @@ export default function useRoom({
   const copyRoomCode = async (groupSize = 2) => {
     if (!roomCode) return;
     try {
-      const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}&size=${groupSize}`;
+      // Preserve the current mode (live/duo) so the invite link carries the correct session type
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentMode = currentParams.get('mode');
+      let url = `${window.location.origin}${window.location.pathname}?room=${roomCode}&size=${groupSize}`;
+      if (currentMode === 'live') {
+        url += `&mode=live`;
+      }
       await navigator.clipboard.writeText(url);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
@@ -276,6 +290,8 @@ export default function useRoom({
     leaveRoom,
     emitLayout,
     emitSessionStart,
+    emitLiveVC,
+    emitLiveCapture,
     generateRoomCode,
     copyRoomCode,
     requestAndSendLocation,

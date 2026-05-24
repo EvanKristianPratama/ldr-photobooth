@@ -10,6 +10,7 @@ import { useSelfieSegmentation } from './useSelfieSegmentation';
 export default function useCapture({
   sendPhotoToPeer,
   sendLiveFramesToPeer,
+  syncLiveVideoStream,
   onProcessingComplete,
   onProgress,
   onFlash,
@@ -37,6 +38,7 @@ export default function useCapture({
   const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   const sessionTimerRef = useRef(null);
   const [isTransmitting, setIsTransmitting] = useState(false);
+  const captureLockRef = useRef(false);
 
   // ── LIVE VIDEO CALL (VC) STATES ──
   const [isLiveVCActive, setIsLiveVCActive] = useState(false);
@@ -99,36 +101,7 @@ export default function useCapture({
       });
   };
 
-  // ── LIVE VIDEO CALL STREAM START & STOP CONTROLS ──
-  const startLiveVC = useCallback((addLocalStreamCallback) => {
-    if (isLiveVCActive) return;
-    console.log('[Capture] Starting live Video Call session (60s limit)');
-    setIsLiveVCActive(true);
-    setLiveVCTimeLeft(60);
-
-    // Capture transparent background-removed stream from selfie canvas
-    const canvas = selfieCanvasRef.current;
-    if (canvas) {
-      const stream = canvas.captureStream(30); // 30 FPS
-      localSegmentedStreamRef.current = stream;
-      if (typeof addLocalStreamCallback === 'function') {
-        addLocalStreamCallback(stream);
-      }
-    }
-
-    if (vcTimerRef.current) clearInterval(vcTimerRef.current);
-    vcTimerRef.current = setInterval(() => {
-      setLiveVCTimeLeft(prev => {
-        if (prev <= 1) {
-          stopLiveVC(addLocalStreamCallback);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [isLiveVCActive, selfieCanvasRef]);
-
-  const stopLiveVC = useCallback((addLocalStreamCallback) => {
+  const stopLiveVC = useCallback(async () => {
     console.log('[Capture] Stopping live Video Call session');
     setIsLiveVCActive(false);
     setLiveVCTimeLeft(60);
@@ -143,16 +116,71 @@ export default function useCapture({
       localSegmentedStreamRef.current = null;
     }
 
-    // Clear tracks from WebRTC Peer Connections
-    if (typeof addLocalStreamCallback === 'function') {
-      addLocalStreamCallback(null);
+    try {
+      await Promise.resolve(syncLiveVideoStream?.(null));
+    } catch (err) {
+      console.warn('[Capture] Failed to stop LiveKit VC cleanly:', err);
     }
 
     setRemoteStream(null);
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
-  }, []);
+  }, [syncLiveVideoStream]);
+
+  // ── LIVE VIDEO CALL STREAM START & STOP CONTROLS ──
+  const startLiveVC = useCallback(async () => {
+    if (isLiveVCActive) return;
+    console.log('[Capture] Starting live Video Call session (60s limit)');
+    setIsLiveVCActive(true);
+    setLiveVCTimeLeft(60);
+
+    let stream = null;
+
+    if (backgroundRemovalEnabled) {
+      const canvas = selfieCanvasRef.current;
+      if (canvas?.captureStream) {
+        stream = canvas.captureStream(30);
+      }
+    }
+
+    if (!stream) {
+      const cameraTrack = streamRef.current?.getVideoTracks?.()[0] || null;
+      if (cameraTrack) {
+        stream = new MediaStream([cameraTrack.clone()]);
+      }
+    }
+
+    if (!stream) {
+      setIsLiveVCActive(false);
+      alert('Cannot start live VC: camera stream is not ready yet.');
+      return;
+    }
+
+    localSegmentedStreamRef.current = stream;
+
+    try {
+      await Promise.resolve(syncLiveVideoStream?.(stream));
+    } catch (err) {
+      console.error('[Capture] Failed to start LiveKit VC:', err);
+      stream.getTracks().forEach(track => track.stop());
+      localSegmentedStreamRef.current = null;
+      setIsLiveVCActive(false);
+      alert(`Cannot start live VC: ${err?.message || 'unknown error'}`);
+      return;
+    }
+
+    if (vcTimerRef.current) clearInterval(vcTimerRef.current);
+    vcTimerRef.current = setInterval(() => {
+      setLiveVCTimeLeft(prev => {
+        if (prev <= 1) {
+          void stopLiveVC();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [backgroundRemovalEnabled, isLiveVCActive, selfieCanvasRef, stopLiveVC, syncLiveVideoStream]);
 
   // ── DYNAMIC SIDE-BY-SIDE COMPOSITING CANVAS LOOP (KISS) ──
   useEffect(() => {
@@ -174,8 +202,8 @@ export default function useCapture({
       canvas.width = 1280;
       canvas.height = 720;
 
-      // Draw cute theme solid background (Cream Vibe #fff9e6)
-      ctx.fillStyle = '#fff9e6';
+      // Draw elegant dark background (#121212) matching professional studios
+      ctx.fillStyle = '#121212';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const localSource = backgroundRemovalEnabled && selfieCanvasRef.current 
@@ -185,36 +213,79 @@ export default function useCapture({
       const hasRemoteStream = remoteStream && remoteVideoRef.current;
 
       if (sessionMode === 'live' && hasRemoteStream) {
-        // --- DUO side-by-side composite photo posing ---
+        // --- DUO side-by-side composite photo posing: pure adjacent photos with no gap or margin ---
+        const targetW = 640;
+        const targetH = 720;
+        const targetY = 0;
+        const leftX = 0;
+        const rightX = 640;
 
-        // Left Half: Local User
+        // Left Frame: Local User
         if (localSource && (localSource.videoWidth || localSource.width)) {
           const w = localSource.videoWidth || localSource.width;
           const h = localSource.videoHeight || localSource.height;
+
           ctx.save();
+          // Clip to left half
           ctx.beginPath();
-          ctx.rect(0, 0, 640, 720);
+          ctx.rect(leftX, targetY, targetW, targetH);
           ctx.clip();
 
-          // Mirror local preview for intuitive control
-          ctx.translate(320, 360);
-          ctx.scale(-1, 1);
-          ctx.translate(-320, -360);
+          // Calculate "object-fit: cover" source dimensions
+          let sw = w;
+          let sh = h;
+          let sx = 0;
+          let sy = 0;
 
-          ctx.drawImage(localSource, 0, 0, w, h, 0, 0, 640, 720);
+          const sourceRatio = w / h;
+          const targetRatio = targetW / targetH;
+
+          if (sourceRatio > targetRatio) {
+            sw = h * targetRatio;
+            sx = (w - sw) / 2;
+          } else {
+            sh = w / targetRatio;
+            sy = (h - sh) / 2;
+          }
+
+          // Mirror local preview for intuitive posing control
+          ctx.translate(leftX + targetW / 2, targetY + targetH / 2);
+          ctx.scale(-1, 1);
+          ctx.translate(-(leftX + targetW / 2), -(targetY + targetH / 2));
+
+          ctx.drawImage(localSource, sx, sy, sw, sh, leftX, targetY, targetW, targetH);
           ctx.restore();
         }
 
-        // Right Half: Remote Partner
+        // Right Frame: Remote Partner
         if (remoteVideoRef.current && remoteVideoRef.current.videoWidth) {
           const rw = remoteVideoRef.current.videoWidth;
           const rh = remoteVideoRef.current.videoHeight;
+
           ctx.save();
+          // Clip to right half
           ctx.beginPath();
-          ctx.rect(640, 0, 640, 720);
+          ctx.rect(rightX, targetY, targetW, targetH);
           ctx.clip();
 
-          ctx.drawImage(remoteVideoRef.current, 0, 0, rw, rh, 640, 0, 640, 720);
+          // Calculate "object-fit: cover" source dimensions
+          let rsw = rw;
+          let rsh = rh;
+          let rsx = 0;
+          let rsy = 0;
+
+          const rSourceRatio = rw / rh;
+          const rTargetRatio = targetW / targetH;
+
+          if (rSourceRatio > rTargetRatio) {
+            rsw = rh * rTargetRatio;
+            rsx = (rw - rsw) / 2;
+          } else {
+            rsh = rw / rTargetRatio;
+            rsy = (rh - rsh) / 2;
+          }
+
+          ctx.drawImage(remoteVideoRef.current, rsx, rsy, rsw, rsh, rightX, targetY, targetW, targetH);
           ctx.restore();
         }
       } else {
@@ -263,9 +334,8 @@ export default function useCapture({
     }, 1000);
   });
 
-  // ── CAPTURE STATIC PHOTO SNAPSHOT (DRY) ──
   const captureFrame = (video) => new Promise(async (resolve, reject) => {
-    const canvasSource = compositeCanvasRef.current || video;
+    const canvasSource = sessionMode === 'live' ? video : (compositeCanvasRef.current || video);
     
     let sourceWidth = canvasSource.videoWidth || canvasSource.width;
     let sourceHeight = canvasSource.videoHeight || canvasSource.height;
@@ -310,7 +380,7 @@ export default function useCapture({
     const framesCount = 10; // 10 frames
     const intervalMs = 150; // Every 150ms over 1.5 seconds
 
-    const source = compositeCanvasRef.current || video;
+    const source = sessionMode === 'live' ? video : (compositeCanvasRef.current || video);
 
     const burstCanvas = document.createElement('canvas');
     burstCanvas.width = 480;
@@ -382,29 +452,105 @@ export default function useCapture({
     return true;
   };
 
-  const startCaptureSequence = async (shots, chunkSize) => {
-    setTotalShots(shots);
+  const normalizeShots = (shots) => {
+    const parsed = Number(shots);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  };
 
-    for (let i = 0; i < shots; i++) {
-      const idx = i + 1;
-      setCurrentShotIndex(idx);
-      if (typeof onShotIndex === 'function') onShotIndex(idx);
+  const getNextPendingIndex = (shots = totalShots) => {
+    const safeShots = normalizeShots(shots || totalShots || 1);
+    for (let i = 0; i < safeShots; i++) {
+      if (!localBlobsRef.current[i]) return i;
+    }
+    return -1;
+  };
+
+  const syncCurrentShotIndex = (shots = totalShots) => {
+    const safeShots = normalizeShots(shots || totalShots || 1);
+    const nextIndex = getNextPendingIndex(safeShots);
+    setCurrentShotIndex(nextIndex === -1 ? safeShots : nextIndex);
+  };
+
+  const prepareCaptureSession = (shots) => {
+    const safeShots = normalizeShots(shots || totalShots || 1);
+    setTotalShots(safeShots);
+    setCountdown(null);
+    syncCurrentShotIndex(safeShots);
+    return safeShots;
+  };
+
+  const captureNextShot = async (shots, chunkSize) => {
+    if (captureLockRef.current) return false;
+    captureLockRef.current = true;
+
+    try {
+      const safeShots = prepareCaptureSession(shots);
+      const nextIndex = getNextPendingIndex(safeShots);
+      if (nextIndex === -1) return false;
+
+      setCurrentShotIndex(nextIndex);
+      if (typeof onShotIndex === 'function') onShotIndex(nextIndex + 1);
+
       await runCountdown(COUNTDOWN_SECONDS);
-      const success = await triggerCaptureAndSend(i, chunkSize);
-      if (!success) break; // abort loop if capture failed (like unmount)
-      await new Promise(r => setTimeout(r, SHOT_DELAY_MS));
+      const success = await triggerCaptureAndSend(nextIndex, chunkSize);
+      syncCurrentShotIndex(safeShots);
+      return success;
+    } finally {
+      captureLockRef.current = false;
+    }
+  };
+
+  const startCaptureSequence = async (shots, chunkSize) => {
+    if (captureLockRef.current) return false;
+    captureLockRef.current = true;
+
+    try {
+      const safeShots = prepareCaptureSession(shots);
+
+      for (let i = 0; i < safeShots; i++) {
+        const idx = i + 1;
+        setCurrentShotIndex(idx);
+        if (typeof onShotIndex === 'function') onShotIndex(idx);
+        await runCountdown(COUNTDOWN_SECONDS);
+        const success = await triggerCaptureAndSend(i, chunkSize);
+        if (!success) break; // abort loop if capture failed (like unmount)
+        await new Promise(r => setTimeout(r, SHOT_DELAY_MS));
+      }
+
+      syncCurrentShotIndex(safeShots);
+      return true;
+    } finally {
+      captureLockRef.current = false;
     }
   };
 
   const startSingleShotRetake = async (targetIndex, chunkSize) => {
-    const prevIndex = currentShotIndex;
-    setCurrentShotIndex(targetIndex); 
-    if (typeof onShotIndex === 'function') onShotIndex(targetIndex + 1);
+    if (captureLockRef.current) return false;
+    captureLockRef.current = true;
 
-    await runCountdown(COUNTDOWN_SECONDS);
-    await triggerCaptureAndSend(targetIndex, chunkSize);
-    
-    setCurrentShotIndex(totalShots);
+    try {
+      setCurrentShotIndex(targetIndex);
+      if (typeof onShotIndex === 'function') onShotIndex(targetIndex + 1);
+
+      await runCountdown(COUNTDOWN_SECONDS);
+      const success = await triggerCaptureAndSend(targetIndex, chunkSize);
+      syncCurrentShotIndex(totalShots);
+      return success;
+    } finally {
+      captureLockRef.current = false;
+    }
+  };
+
+  const resetLocalCaptureSession = (shots = totalShots) => {
+    if (captureLockRef.current) return;
+
+    localBlobsRef.current = [];
+    liveFramesRef.current = new Map();
+    setLocalBlobs([]);
+    setLiveFrames([]);
+    setCountdown(null);
+    setIsTransmitting(false);
+    prepareCaptureSession(shots || totalShots || 1);
   };
 
   const checkProcessingComplete = async (sessionMode, participantsCount, expectedShots = totalShots) => {
@@ -546,7 +692,7 @@ export default function useCapture({
     setCurrentShotIndex(0);
     setTotalShots(0);
     setCountdown(null);
-    stopLiveVC(null);
+    void stopLiveVC();
   };
 
   return {
@@ -572,6 +718,8 @@ export default function useCapture({
     setTotalShots,
     startCamera,
     attachStream,
+    prepareCaptureSession,
+    captureNextShot,
     startCaptureSequence,
     startSingleShotRetake,
     startSessionTimer,
@@ -580,6 +728,7 @@ export default function useCapture({
     checkProcessingComplete,
     storeRemoteBlob,
     storeRemoteLiveFrame,
+    resetLocalCaptureSession,
     resetCapture,
     
     // EXPOSE LIVE VC API

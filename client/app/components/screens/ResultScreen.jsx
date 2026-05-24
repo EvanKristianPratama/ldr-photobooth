@@ -2,6 +2,75 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import LivePhotoViewer from '../ui/LivePhotoViewer';
 import { convertToPaperSize } from '../../services/paperService';
+import Swal from 'sweetalert2';
+
+/**
+ * Konversi gambar B&W menjadi array bytes perintah biner ESC/POS (Raster Bit Image GS v 0).
+ * Lebar standar 80mm adalah 576 dots (piksel) mendatar.
+ */
+const canvasToEscPosBytes = (imgElement) => {
+  const printWidth = 576; // Lebar standard printer thermal 80mm
+  const scale = printWidth / imgElement.width;
+  const printHeight = Math.round(imgElement.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = printWidth;
+  canvas.height = printHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgElement, 0, 0, printWidth, printHeight);
+
+  const imgData = ctx.getImageData(0, 0, printWidth, printHeight);
+  const pixels = imgData.data;
+
+  const widthBytes = printWidth / 8; // 72 bytes per baris
+  const escPosCommands = [];
+
+  // 1. Inisialisasi Printer: ESC @ (0x1B, 0x40)
+  escPosCommands.push(0x1B, 0x40);
+
+  // 2. Command Cetak Gambar: GS v 0 m xL xH yL yH
+  const m = 0; // Normal mode
+  const xL = widthBytes % 256;
+  const xH = Math.floor(widthBytes / 256);
+  const yL = printHeight % 256;
+  const yH = Math.floor(printHeight / 256);
+
+  escPosCommands.push(0x1D, 0x76, 0x30, m, xL, xH, yL, yH);
+
+  // 3. Konversi piksel ke format bit biner (1 = hitam, 0 = putih)
+  for (let y = 0; y < printHeight; y++) {
+    for (let x = 0; x < widthBytes; x++) {
+      let byteVal = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        const pixelX = x * 8 + bit;
+        const pixelIdx = (y * printWidth + pixelX) * 4;
+        const r = pixels[pixelIdx];
+        const g = pixels[pixelIdx + 1];
+        const b = pixels[pixelIdx + 2];
+        const a = pixels[pixelIdx + 3];
+
+        let isBlack = 0;
+        if (a > 50) {
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          if (luminance < 140) { // Threshold sedikit dinaikkan untuk hasil print hitam-putih yang solid
+            isBlack = 1;
+          }
+        }
+        
+        byteVal |= (isBlack << (7 - bit));
+      }
+      escPosCommands.push(byteVal);
+    }
+  }
+
+  // 4. Feed & Cut
+  // Feed 4 line kosong agar gambar keluar penuh dari pemotong
+  escPosCommands.push(0x1B, 0x64, 4);
+  // Cut paper: GS V 66 0
+  escPosCommands.push(0x1D, 0x56, 66, 0);
+
+  return new Uint8Array(escPosCommands);
+};
 
 export default function ResultScreen({
   mergedImage,
@@ -147,6 +216,198 @@ export default function ResultScreen({
     }
   };
 
+  const handleDirectBluetoothPrint = async () => {
+    if (!mergedImage) return;
+
+    Swal.fire({
+      title: 'Connecting Bluetooth Printer... 🔌',
+      text: 'Please select your Bluetooth thermal printer in the browser dialog.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+      customClass: { popup: 'swal-doodle' }
+    });
+
+    try {
+      // 1. Request Bluetooth Device
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb', // Standard Printer GATT Service
+          '00001101-0000-1000-8000-00805f9b34fb', // Serial Port UUID
+          '0000e808-0000-1000-8000-00805f9b34fb'  // Generic raw write GATT Service
+        ]
+      });
+
+      Swal.fire({
+        title: 'Connecting GATT Server... ⚡',
+        text: `Establishing hardware connection with ${device.name || 'Printer'}...`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'swal-doodle' }
+      });
+
+      const server = await device.gatt.connect();
+      
+      Swal.fire({
+        title: 'Discovering Printer Services... 🔍',
+        text: 'Searching for serial write characteristic...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'swal-doodle' }
+      });
+
+      const services = await server.getPrimaryServices();
+      let writeCharacteristic = null;
+
+      for (const service of services) {
+        try {
+          const characteristics = await service.getCharacteristics();
+          for (const char of characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              writeCharacteristic = char;
+              break;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to scan service characteristics:', service.uuid, e);
+        }
+        if (writeCharacteristic) break;
+      }
+
+      if (!writeCharacteristic) {
+        throw new Error('Could not find a valid write characteristic on this device. Make sure it is a GATT-capable thermal printer.');
+      }
+
+      Swal.fire({
+        title: 'Processing Image... 🎨',
+        text: 'Scaling and converting receipt booth to ESC/POS binary bitmap...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'swal-doodle' }
+      });
+
+      // 2. Generate the 80mm B&W Receipt Image
+      const processedImage = await convertToPaperSize(mergedImage, {
+        targetPaper: 'RECEIPT_80MM',
+        sessionMode: sessionMode,
+        layout: frameLayout,
+        count: localBlobs?.length || 1,
+        frameColor: '#ffffff'
+      });
+
+      // Load image to read data
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = processedImage;
+      });
+
+      // Convert to raster binary data
+      const escPosBytes = canvasToEscPosBytes(img);
+
+      Swal.fire({
+        title: 'Printing Photo Strip... 🖨️✨',
+        text: 'Transmitting ESC/POS packets in safe chunks...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'swal-doodle' }
+      });
+
+      // 3. Send bytes in safe chunk sizes to avoid Bluetooth buffer overflows
+      const chunkSize = 120;
+      const delayMs = 15;
+      for (let offset = 0; offset < escPosBytes.length; offset += chunkSize) {
+        const chunk = escPosBytes.slice(offset, offset + chunkSize);
+        if (writeCharacteristic.properties.writeWithoutResponse) {
+          await writeCharacteristic.writeValueWithoutResponse(chunk);
+        } else {
+          await writeCharacteristic.writeValueWithResponse(chunk);
+        }
+        if (delayMs > 0) {
+          await new Promise(r => setTimeout(r, delayMs));
+        }
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Printed Successfully! 🎉',
+        text: 'Your receipt booth photostrip has been printed.',
+        timer: 3000,
+        confirmButtonColor: '#8b5cf6',
+        customClass: { popup: 'swal-doodle' }
+      });
+
+    } catch (err) {
+      console.error('Direct Bluetooth print failed:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Printing Failed ❌',
+        text: err.message || 'Make sure Bluetooth is active and your printer is powered on.',
+        confirmButtonColor: '#e11d48',
+        customClass: { popup: 'swal-doodle' }
+      });
+    }
+  };
+
+  const handleDownloadEscPosBin = async () => {
+    if (!mergedImage) return;
+
+    Swal.fire({
+      title: 'Generating ESC/POS Binary... ⚙️',
+      text: 'Preparing raw thermal print instructions...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+      customClass: { popup: 'swal-doodle' }
+    });
+
+    try {
+      // 1. Generate the 80mm B&W Receipt Image
+      const processedImage = await convertToPaperSize(mergedImage, {
+        targetPaper: 'RECEIPT_80MM',
+        sessionMode: sessionMode,
+        layout: frameLayout,
+        count: localBlobs?.length || 1,
+        frameColor: '#ffffff'
+      });
+
+      // Load image to read data
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = processedImage;
+      });
+
+      // 2. Convert to raster binary data
+      const escPosBytes = canvasToEscPosBytes(img);
+
+      // 3. Create blob and download
+      const blob = new Blob([escPosBytes], { type: 'application/octet-stream' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      
+      const baseName = downloadName || `ldr-photo-${Date.now()}.jpg`;
+      const binName = baseName.replace(/\.[^/.]+$/, '') + '-receipt.bin';
+      
+      link.download = binName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Swal.close();
+    } catch (err) {
+      console.error('ESC/POS binary generation failed:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Conversion Failed ❌',
+        text: err.message || 'Error occurred while compiling ESC/POS format.',
+        confirmButtonColor: '#e11d48',
+        customClass: { popup: 'swal-doodle' }
+      });
+    }
+  };
+
   const downloadAnimatedGif = async () => {
     if (isGeneratingGif) return;
     setIsGeneratingGif(true);
@@ -195,8 +456,8 @@ export default function ResultScreen({
       gifshot.createGIF({
         images: frameUrls,
         interval: 0.15,
-        gifWidth: (sessionMode === 'solo' || sessionMode === 'live') ? 280 : 600,
-        gifHeight: (sessionMode === 'solo' || sessionMode === 'live') ? 840 : 450,
+        gifWidth: (sessionMode === 'solo') ? 280 : 600,
+        gifHeight: (sessionMode === 'solo') ? 840 : 450,
         numFrames: 10,
         sampleInterval: 10
       }, function (obj) {
@@ -399,7 +660,7 @@ export default function ResultScreen({
           <div 
             className="fs__preview-box" 
             style={{ 
-              maxWidth: (sessionMode === 'solo' || sessionMode === 'live') ? '280px' : '500px',
+              maxWidth: (sessionMode === 'solo') ? '280px' : '500px',
               height: '55vh', // Force exact max bounding reference
               display: 'flex',
               alignItems: 'center',
@@ -603,6 +864,18 @@ export default function ResultScreen({
                 </div>
               </button>
 
+              {/* Option 2.5: Receipt Booth (80mm B&W) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 #333333', background: '#f5f5f5', width: '100%', padding: '14px', borderColor: '#333333' }}
+                onClick={() => { onDownload('RECEIPT_80MM'); setShowDownloadModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#333333', color: 'white' }}>🧾</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.receipt')}</div>
+                </div>
+              </button>
+
               {/* Option 3: Classic Strip */}
               <button 
                 className="mode-option-card"
@@ -614,20 +887,6 @@ export default function ResultScreen({
                   <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.strip')}</div>
                 </div>
               </button>
-
-              {/* Option 4: Duplicated 4R Strip (Classic Double) - ONLY show if layout is Strip! */}
-              {frameLayout === 'strip' && (
-                <button 
-                  className="mode-option-card"
-                  style={{ boxShadow: '4px 4px 0 var(--pink)', background: 'var(--pink-lt, #fff0f5)', width: '100%', padding: '14px', borderColor: 'var(--pink)' }}
-                  onClick={() => { onDownload('4R_DUPLICATED_STRIP'); setShowDownloadModal(false); }}
-                >
-                  <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--pink)', color: 'white' }}>👥</div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>{t('result.format.duoStrip')}</div>
-                  </div>
-                </button>
-              )}
 
               {/* Option 5: Animated GIF */}
               {localLiveFrames?.length > 0 && (
@@ -692,6 +951,32 @@ export default function ResultScreen({
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print as 4R Page</div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>Printable size (6" x 4" format)</div>
+                </div>
+              </button>
+
+              {/* Option 2.5: Receipt Booth (80mm B&W) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 #333333', background: '#f5f5f5', width: '100%', padding: '14px', borderColor: '#333333' }}
+                onClick={() => { handlePrint('RECEIPT_80MM'); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#333333', color: 'white' }}>🧾</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print as Receipt (80mm B&W)</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Grayscale thermal print format</div>
+                </div>
+              </button>
+
+              {/* Option 2.6: Direct Bluetooth Print (ESC/POS) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 #10b981', background: 'rgba(16, 185, 129, 0.1)', width: '100%', padding: '14px', borderColor: '#10b981' }}
+                onClick={() => { handleDirectBluetoothPrint(); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#10b981', color: 'white' }}>⚡🔵</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print via Bluetooth (ESC/POS)</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Direct driverless print to BT printer</div>
                 </div>
               </button>
 
