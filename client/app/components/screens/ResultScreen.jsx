@@ -337,6 +337,16 @@ export default function ResultScreen({
         confirmButtonColor: '#8b5cf6',
         customClass: { popup: 'swal-doodle' }
       });
+    } catch (err) {
+      console.error('Direct Bluetooth print failed:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Print Failed ❌',
+        text: err.message || 'Could not connect or print to Bluetooth thermal printer.',
+        confirmButtonColor: '#e11d48',
+        customClass: { popup: 'swal-doodle' }
+      });
+    }
   };
 
   const handlePrintViaThermer = async () => {
