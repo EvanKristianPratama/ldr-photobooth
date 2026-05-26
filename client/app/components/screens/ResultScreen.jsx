@@ -996,9 +996,7 @@ export default function ResultScreen({
                 </button>
                 <button 
                   className="btn-share" 
-                  onClick={() => {
-                    if (onCheckout) onCheckout();
-                  }}
+                  onClick={() => setShowPrintModal(true)}
                   style={{ 
                     flex: 1, 
                     fontSize: '18px', 
@@ -1011,49 +1009,9 @@ export default function ResultScreen({
                     boxShadow: '4px 4px 0 var(--ink)'
                   }}
                 >
-                  {t('result.print') || 'Order Print'}
+                  {t('result.print') || 'Print Photo'}
                 </button>
               </div>
-              
-              {/* DIRECT PRINT VIA THERMER APP BUTTON */}
-              <button 
-                className="btn-share" 
-                onClick={handlePrintViaThermer}
-                style={{ 
-                  width: '100%', 
-                  fontSize: '18px', 
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: '#06d6a0',
-                  boxShadow: '4px 4px 0 var(--ink)',
-                  color: 'var(--ink)'
-                }}
-              >
-                📲 Print via Thermer App
-              </button>
-
-              {/* DIRECT PRINT VIA BLUETOOTH PRINT APP (iOS) BUTTON */}
-              <button 
-                className="btn-share" 
-                onClick={handlePrintViaBluetoothPrintApp}
-                style={{ 
-                  width: '100%', 
-                  fontSize: '18px', 
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: '#118ab2',
-                  boxShadow: '4px 4px 0 var(--ink)',
-                  color: '#ffffff'
-                }}
-              >
-                📱 Print via Bluetooth Print App (iOS)
-              </button>
 
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.share')}
@@ -1311,6 +1269,32 @@ export default function ResultScreen({
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print via Thermer App</div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>Instant print on iOS & Android</div>
+                </div>
+              </button>
+
+              {/* Option 2.8: Print via Bluetooth Print App (iOS/Android) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 #118ab2', background: 'rgba(17, 138, 178, 0.1)', width: '100%', padding: '14px', borderColor: '#118ab2' }}
+                onClick={() => { handlePrintViaBluetoothPrintApp(); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#118ab2', color: 'white' }}>📱</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print via Bluetooth Print App (iOS)</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Print directly using the external iOS/Android helper app</div>
+                </div>
+              </button>
+
+              {/* Option 2.9: Order Printed Copy (Ship to Home) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 var(--pink)', background: 'var(--pink-lt, #fff0f5)', width: '100%', padding: '14px', borderColor: 'var(--pink)' }}
+                onClick={() => { if (onCheckout) onCheckout(); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--pink)', color: 'white' }}>📦</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Order Print (Ship to Home)</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Receive high-quality glossy prints shipped straight to your address</div>
                 </div>
               </button>
 

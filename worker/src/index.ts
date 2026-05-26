@@ -78,6 +78,103 @@ export default {
       });
     }
 
+    // ── THERMAL PRINTER (IOS APP API) ──
+    if (url.pathname === '/api/print/thermal/upload' && request.method === 'POST') {
+      try {
+        const formData = await request.formData();
+        const file = formData.get('file') as File;
+        if (!file) {
+          return new Response(JSON.stringify({ error: 'Missing file' }), { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+        
+        const id = crypto.randomUUID();
+        const extension = file.name.split('.').pop() || 'jpg';
+        const filename = `thermal-prints/${id}.${extension}`;
+        
+        await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: file.type } });
+        
+        return new Response(JSON.stringify({ success: true, id, filename }), { 
+          status: 201, 
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } 
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Print upload failed', details: err.message }), { 
+          status: 500, headers: { 'Access-Control-Allow-Origin': '*' } 
+        });
+      }
+    }
+
+    if (url.pathname.match(/^\/api\/print\/thermal\/[^/]+$/) && request.method === 'GET') {
+      try {
+        const id = url.pathname.split('/').pop();
+        // Construct the full object for iOS Bluetooth Print app
+        const imageUrl = `${url.origin}/thermal-prints/${id}`;
+        
+        const format = {
+          "0": {
+            type: 0,
+            content: "LDR THERMAL BOOTH",
+            bold: 1,
+            align: 1,
+            format: 3
+          },
+          "1": {
+            type: 0,
+            content: "================================",
+            bold: 0,
+            align: 1
+          },
+          "2": {
+            type: 0,
+            content: " ",
+            bold: 0,
+            align: 0
+          },
+          "3": {
+            type: 1,
+            path: imageUrl,
+            align: 1
+          },
+          "4": {
+            type: 0,
+            content: " ",
+            bold: 0,
+            align: 0
+          },
+          "5": {
+            type: 3, // QR
+            value: imageUrl,
+            size: 40,
+            align: 1
+          },
+          "6": {
+            type: 0,
+            content: " ",
+            bold: 0,
+            align: 0
+          },
+          "7": {
+            type: 0,
+            content: "Thank you for your visit!",
+            bold: 0,
+            align: 1
+          },
+          "8": {
+            type: 0,
+            content: " ",
+            bold: 0,
+            align: 0
+          }
+        };
+
+        return new Response(JSON.stringify(format), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'Failed' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+    }
+
     if (url.pathname === '/api/livekit/token' && request.method === 'POST') {
       try {
         const apiKey = env.LIVEKIT_API_KEY;
@@ -894,8 +991,8 @@ export default {
       }
     }
 
-    // 3. Serve images from R2 (Support /frames/, /posts/, /frame-templates/, /orders/)
-    if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/') || url.pathname.startsWith('/frame-templates/') || url.pathname.startsWith('/orders/')) {
+    // 3. Serve images from R2 (Support /frames/, /posts/, /frame-templates/, /orders/, /thermal-prints/)
+    if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/') || url.pathname.startsWith('/frame-templates/') || url.pathname.startsWith('/orders/') || url.pathname.startsWith('/thermal-prints/')) {
       const filename = url.pathname.slice(1);
       const object = await env.BUCKET.get(filename);
       if (!object) {
