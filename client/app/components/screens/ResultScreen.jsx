@@ -552,6 +552,74 @@ export default function ResultScreen({
     }
   };
 
+  const handlePrintViaBluetoothPrintApp = async () => {
+    if (!mergedImage) return;
+    
+    Swal.fire({
+      title: 'Preparing Print... 🧾',
+      text: 'Optimizing layout for Bluetooth Print App...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+      customClass: { popup: 'swal-doodle' }
+    });
+
+    try {
+      // 1. Generate the 80mm B&W Receipt Image
+      const processedImage = await convertToPaperSize(mergedImage, {
+        targetPaper: 'RECEIPT_80MM',
+        sessionMode: sessionMode,
+        layout: frameLayout,
+        count: localBlobs?.length || 1,
+        frameColor: '#ffffff'
+      });
+
+      Swal.fire({
+        title: 'Uploading Photo... ⚡',
+        text: 'Preparing cloud link for Bluetooth Print App...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'swal-doodle' }
+      });
+
+      // 2. Convert base64 dataUrl to blob/file
+      const response = await fetch(processedImage);
+      const blob = await response.blob();
+      const finalFile = new File([blob], 'receipt-80mm.jpg', { type: 'image/jpeg' });
+
+      // 3. Upload to thermal print endpoint
+      const formData = new FormData();
+      formData.append('file', finalFile);
+
+      const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
+      const uploadRes = await fetch(`${API_BASE}/api/print/thermal/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload receipt image to server');
+      }
+
+      const uploadData = await uploadRes.json();
+      
+      const responseUrl = `${API_BASE}/api/print/thermal/${uploadData.id}`;
+      const schemeUrl = `bprint://${responseUrl}`;
+
+      console.log("Opening Bluetooth Print URL Scheme:", schemeUrl);
+      Swal.close();
+      window.location.href = schemeUrl;
+    } catch (err) {
+      console.error('Bluetooth print preparation failed:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Print Failed ❌',
+        text: err.message || 'Could not prepare 80mm image for Bluetooth Print App.',
+        confirmButtonColor: '#e11d48',
+        customClass: { popup: 'swal-doodle' }
+      });
+    }
+  };
+
   const handleDownloadEscPosBin = async () => {
     if (!mergedImage) return;
 
@@ -955,6 +1023,26 @@ export default function ResultScreen({
                 }}
               >
                 📲 Print via Thermer App
+              </button>
+
+              {/* DIRECT PRINT VIA BLUETOOTH PRINT APP (iOS) BUTTON */}
+              <button 
+                className="btn-share" 
+                onClick={handlePrintViaBluetoothPrintApp}
+                style={{ 
+                  width: '100%', 
+                  fontSize: '18px', 
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: '#118ab2',
+                  boxShadow: '4px 4px 0 var(--ink)',
+                  color: '#ffffff'
+                }}
+              >
+                📱 Print via Bluetooth Print App (iOS)
               </button>
 
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
