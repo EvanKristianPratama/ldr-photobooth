@@ -104,6 +104,31 @@ export default function CmsDashboard() {
             Pantau dan hapus hasil foto yang diposting oleh user.
           </p>
         </a>
+
+        <a href="/cms/settings" style={{
+          background: '#1a1a24',
+          border: '1px solid #333346',
+          borderRadius: '16px',
+          padding: '32px',
+          textDecoration: 'none',
+          color: 'inherit',
+          transition: 'all 0.2s',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }} onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#6366f1';
+          e.currentTarget.style.transform = 'translateY(-5px)';
+        }} onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#333346';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}>
+          <span style={{ fontSize: '40px', marginBottom: '16px' }}>⚙️</span>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>Android Settings</h2>
+          <p style={{ fontSize: '14px', color: '#8888a0', textAlign: 'center' }}>
+            Kelola jumlah pilihan foto (1,3,4) dan teks cetak struk Android.
+          </p>
+        </a>
       </div>
 
       <a href="/" style={{

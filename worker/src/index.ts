@@ -832,6 +832,68 @@ export default {
       }
     }
 
+    // ── CMS SETTINGS API ──
+    if (url.pathname === '/api/cms/settings' && request.method === 'GET') {
+      try {
+        const { results } = await env.DB.prepare('SELECT * FROM system_settings').all();
+        const settingsObj: Record<string, string> = {};
+        for (const row of (results || []) as any[]) {
+          settingsObj[row.key] = row.value;
+        }
+        
+        // Add defaults if they are missing
+        if (!settingsObj.android_photo_choices) settingsObj.android_photo_choices = '1,3,4';
+        if (!settingsObj.receipt_title) settingsObj.receipt_title = 'LDR THERMAL BOOTH';
+        if (!settingsObj.receipt_subtitle) settingsObj.receipt_subtitle = 'STORE #9821 // ZURICH CO-OP STUDIO';
+        if (!settingsObj.receipt_slogan) settingsObj.receipt_slogan = 'THANK YOU FOR YOUR VISIT!';
+
+        return new Response(JSON.stringify(settingsObj), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (err: any) {
+        // Fallback if table doesn't exist yet
+        return new Response(JSON.stringify({
+          android_photo_choices: '1,3,4',
+          receipt_title: 'LDR THERMAL BOOTH',
+          receipt_subtitle: 'STORE #9821 // ZURICH CO-OP STUDIO',
+          receipt_slogan: 'THANK YOU FOR YOUR VISIT!'
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+    }
+
+    if (url.pathname === '/api/cms/settings' && request.method === 'POST') {
+      try {
+        const body = await request.json() as Record<string, string>;
+        
+        // Let's iterate over keys and values and insert/update
+        for (const [key, value] of Object.entries(body)) {
+          await env.DB.prepare(
+            'INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?'
+          ).bind(key, value, value).run();
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: 'Failed to save settings', details: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
+
     // 3. Serve images from R2 (Support /frames/, /posts/, /frame-templates/, /orders/)
     if (url.pathname.startsWith('/frames/') || url.pathname.startsWith('/posts/') || url.pathname.startsWith('/frame-templates/') || url.pathname.startsWith('/orders/')) {
       const filename = url.pathname.slice(1);

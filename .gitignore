@@ -5,3 +5,12 @@ dist/
 .env
 .vscode/
 client/.next/
+
+# C++ Build & Packaging outputs
+photobooth_cpp/swiss_booth
+photobooth_cpp/cpp_test_printer
+photobooth_cpp/test_printer
+photobooth_cpp/obj/
+photobooth_cpp/STRIPS.app/
+photobooth_cpp/STRIPS_standalone.zip
+photobooth_cpp/exports/
