@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDR Receiptbooth - Web Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1a1a2e;
+            --cream: #fffdf5;
+            --pink: #ff6b9d;
+            --yellow: #ffd93d;
+            --teal: #06d6a0;
+            --gray: #8d99ae;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--ink);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Mockup Mobile Android Container */
+        .phone-mockup {
+            width: 100%;
+            max-width: 440px;
+            height: 95vh;
+            max-height: 860px;
+            background-color: var(--cream);
+            border: 8px solid #2a2a3e;
+            border-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            color: var(--ink);
+        }
+
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(100%);
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+
+        .screen.prev {
+            transform: translateX(-100%);
+        }
+
+        /* Stark Swiss Design UI Utility Classes */
+        .btn-primary {
+            background-color: var(--yellow);
+            color: var(--ink);
+            border: 3px solid var(--ink);
+            padding: 18px;
+            font-size: 18px;
+            font-weight: 900;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--ink);
+            transition: all 0.15s active;
+            outline: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--ink);
+        }
+
+        .btn-secondary {
+            background-color: #fff;
+            color: var(--ink);
+            border: 3px solid var(--ink);
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 800;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--ink);
+            transition: all 0.15s;
+            outline: none;
+        }
+
+        .btn-secondary:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--ink);
+        }
+
+        /* ─── START SCREEN ─── */
+        #screen-start {
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header-section {
+            margin-top: 40px;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--pink);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .banner-box {
+            width: 220px;
+            height: 220px;
+            background-color: #fff4f5;
+            border: 3px solid var(--ink);
+            border-radius: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 6px 6px 0 var(--ink);
+        }
+
+        .banner-text-huge {
+            font-size: 46px;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .banner-text-sub {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--pink);
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ─── LAYOUT SELECT SCREEN ─── */
+        #screen-layout {
+            justify-content: space-between;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .back-circle {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border: 2.5px solid var(--ink);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 var(--ink);
+            font-weight: 900;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .layout-option {
+            background: #fff;
+            border: 3px solid var(--ink);
+            border-radius: 20px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 var(--ink);
+            transition: all 0.2s;
+        }
+
+        .layout-option:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--ink);
+        }
+
+        .layout-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .number-badge {
+            width: 44px;
+            height: 44px;
+            background: #fff4f5;
+            border: 2.5px solid var(--ink);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .layout-label {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        /* ─── CAPTURE VIEW SCREEN ─── */
+        #screen-capture {
+            padding: 0;
+            background-color: var(--ink);
+            color: #fff;
+        }
+
+        .webcam-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .viewfinder-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            border: 16px solid var(--ink);
+            pointer-events: none;
+        }
+
+        .grid-line-h {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(255,255,255,0.25);
+        }
+
+        .grid-line-v {
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: rgba(255,255,255,0.25);
+        }
+
+        .capture-header {
+            position: absolute;
+            top: 32px;
+            left: 32px;
+            right: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .capture-title {
+            font-size: 16px;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .pose-pill {
+            background-color: var(--pink);
+            color: var(--ink);
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 900;
+            border-radius: 8px;
+        }
+
+        /* Big Countdown Overlay */
+        .countdown-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            background: rgba(0,0,0,0.6);
+            border: 3px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 64px;
+            font-weight: 900;
+            color: #fff;
+            z-index: 20;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+        }
+
+        /* Shutter Shutter Flash */
+        .shutter-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            opacity: 0;
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        /* ─── REVIEW SCREEN ─── */
+        #screen-review {
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-box {
+            width: 100%;
+            flex: 1;
+            margin: 20px 0;
+            background: #fff;
+            border: 3px solid var(--ink);
+            border-radius: 24px;
+            box-shadow: 4px 4px 0 var(--ink);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #review-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .action-row button {
+            flex: 1;
+        }
+
+        /* ─── RESULT TICKET SCREEN ─── */
+        #screen-result {
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-scroll-container {
+            width: 100%;
+            flex: 1;
+            margin: 20px 0;
+            background: #fff;
+            border: 3px solid var(--ink);
+            border-radius: 24px;
+            box-shadow: 4px 4px 0 var(--ink);
+            overflow-y: auto;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #result-canvas-preview {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* ─── Animations ─── */
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes flashEffect {
+            0% { opacity: 0; }
+            30% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .flash-active {
+            animation: flashEffect 0.2s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Mobile Mockup Application -->
+    <div class="phone-mockup">
+
+        <!-- 1. START WELCOME SCREEN -->
+        <div class="screen active" id="screen-start">
+            <div class="header-section">
+                <div class="badge">LDR THERMAL BOOTH</div>
+                <h1 class="title" id="text-receipt-title">LDR THERMAL BOOTH</h1>
+                <p class="subtitle" id="text-receipt-subtitle">STORE #9821 // ZURICH CO-OP STUDIO</p>
+            </div>
+
+            <div class="banner-box">
+                <p class="banner-text-huge">80MM</p>
+                <p class="banner-text-sub">THERMAL COLLAGE</p>
+            </div>
+
+            <button class="btn-primary" style="width: 100%;" onclick="transitionTo('screen-layout')">
+                TAP TO SNAP 📸
+            </button>
+        </div>
+
+        <!-- 2. LAYOUT COUNT SELECT SCREEN -->
+        <div class="screen" id="screen-layout">
+            <div class="top-nav">
+                <div class="back-circle" onclick="transitionTo('screen-start')">←</div>
+                <div class="nav-title">CHOOSE COLLAGE COUNT</div>
+            </div>
+
+            <div class="options-list" id="choices-list-container">
+                <!-- Will load photo layout count dynamically from CMS worker -->
+            </div>
+
+            <div></div> <!-- spacer -->
+        </div>
+
+        <!-- 3. CAMERA VIEW & COUNTDOWN SCREEN -->
+        <div class="screen" id="screen-capture">
+            <div class="webcam-container">
+                <video id="webcam" autoplay playsinline muted></video>
+                
+                <!-- Guidelines grid overlay -->
+                <div class="viewfinder-grid">
+                    <div class="grid-line-h" style="top: 33.33%;"></div>
+                    <div class="grid-line-h" style="top: 66.66%;"></div>
+                    <div class="grid-line-v" style="left: 33.33%;"></div>
+                    <div class="grid-line-v" style="left: 66.66%;"></div>
+                </div>
+
+                <div class="capture-header">
+                    <div class="capture-title" id="capture-status-text">CAPTURING 1 OF 4</div>
+                    <div class="pose-pill">POSE</div>
+                </div>
+
+                <div class="countdown-overlay" id="countdown-number">3</div>
+                <div class="shutter-flash" id="flash-overlay"></div>
+            </div>
+        </div>
+
+        <!-- 4. KEEP OR RETAKE PHOTO REVIEW SCREEN -->
+        <div class="screen" id="screen-review">
+            <h2 class="nav-title" id="review-title" style="margin-top: 10px;">REVIEW PHOTO 1</h2>
+
+            <div class="preview-box">
+                <img id="review-img" src="" alt="Review Capture">
+            </div>
+
+            <div class="action-row">
+                <button class="btn-secondary" onclick="retakePhoto()">RETAKE WIPE</button>
+                <button class="btn-primary" style="background-color: var(--teal);" onclick="keepPhoto()">KEEP NEXT ✌️</button>
+            </div>
+        </div>
+
+        <!-- 5. RESULT TICKET COMPILED VIEW SCREEN -->
+        <div class="screen" id="screen-result">
+            <div class="top-nav" style="width: 100%; justify-content: space-between; align-items: center;">
+                <div class="nav-title">80MM THERMAL TICKET</div>
+                <div class="pose-pill" id="reset-timer-label" style="background: var(--yellow); color: var(--ink);">RESET IN 25S</div>
+            </div>
+
+            <div class="ticket-scroll-container">
+                <!-- Scrollable generated thermal ticket preview image -->
+                <img id="result-canvas-preview" src="" alt="Dithered Thermal Ticket">
+            </div>
+
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                <div class="action-row" style="margin-bottom: 12px;">
+                    <button class="btn-secondary" onclick="downloadTicket()">DOWNLOAD</button>
+                    <button class="btn-primary" style="background: var(--pink);" onclick="printTicket()">BROWSER PRINT</button>
+                </div>
+                <button class="btn-primary" style="width: 100%; background-color: var(--teal); color: #fff; margin-bottom: 12px;" onclick="printViaThermer()">
+                    📲 PRINT VIA THERMER APP
+                </button>
+                <button class="btn-primary" style="width: 100%; background-color: var(--yellow);" onclick="resetSession()">
+                    FINISHED, RESET SESSION ✌️
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Canvas helpers in background (hidden) -->
+    <canvas id="offscreen-canvas" style="display:none;"></canvas>
+
+    <script>
+        const API_BASE = "https://ldr-photobooth.if2372047.workers.dev";
+        
+        // Settings cached from Cloudflare Worker settings endpoint
+        let allowedPhotoCounts = [1, 3, 4];
+        let receiptTitle = "LDR THERMAL BOOTH";
+        let receiptSubtitle = "STORE #9821 // ZURICH CO-OP STUDIO";
+        let receiptSlogan = "THANK YOU FOR YOUR VISIT!";
+
+        let selectedPhotoCount = 4;
+        let capturedPhotos = [];
+        let currentPhotoIndex = 0;
+        
+        let videoStream = null;
+        let autoResetTimeout = null;
+
+        // Fetch settings from API
+        async function fetchSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/api/cms/settings`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.android_photo_choices) {
+                        allowedPhotoCounts = data.android_photo_choices.split(',').map(Number);
+                    }
+                    if (data.receipt_title) receiptTitle = data.receipt_title;
+                    if (data.receipt_subtitle) receiptSubtitle = data.receipt_subtitle;
+                    if (data.receipt_slogan) receiptSlogan = data.receipt_slogan;
+                }
+            } catch (e) {
+                console.error("Failed to load settings from worker, fallback applied", e);
+            }
+            applyConfigToUI();
+        }
+
+        function applyConfigToUI() {
+            document.getElementById('text-receipt-title').innerText = receiptTitle.toUpperCase();
+            document.getElementById('text-receipt-subtitle').innerText = receiptSubtitle;
+            
+            // Build Layout Option Rows dynamically based on choices
+            const container = document.getElementById('choices-list-container');
+            container.innerHTML = '';
+            allowedPhotoCounts.forEach(count => {
+                const opt = document.createElement('div');
+                opt.className = 'layout-option';
+                opt.onclick = () => chooseLayout(count);
+                opt.innerHTML = `
+                    <div class="layout-left">
+                        <div class="number-badge">${count}</div>
+                        <div class="layout-label">CLASSIC ${count} PHOTOS</div>
+                    </div>
+                    <div style="font-size: 20px; font-weight: 900;">→</div>
+                `;
+                container.appendChild(opt);
+            });
+        }
+
+        // Screen state transition controls
+        function transitionTo(targetId) {
+            const screens = document.querySelectorAll('.screen');
+            const targetScreen = document.getElementById(targetId);
+            
+            screens.forEach(s => {
+                if (s.classList.contains('active')) {
+                    s.classList.remove('active');
+                    s.classList.add('prev');
+                } else {
+                    s.classList.remove('prev');
+                }
+            });
+
+            targetScreen.classList.add('active');
+
+            // Hook camera start on entering capture screen
+            if (targetId === 'screen-capture') {
+                startCamera();
+            } else {
+                stopCamera();
+            }
+        }
+
+        function chooseLayout(count) {
+            selectedPhotoCount = count;
+            capturedPhotos = [];
+            currentPhotoIndex = 0;
+            transitionTo('screen-capture');
+        }
+
+        // CameraX simulation in HTML5
+        async function startCamera() {
+            const video = document.getElementById('webcam');
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 640, height: 480 },
+                    audio: false
+                });
+                video.srcObject = videoStream;
+                startCaptureCountdown();
+            } catch (e) {
+                alert("Camera access denied or unavailable. Simulator will use random canvas mocks.");
+                mockCapturedPhotoFlow();
+            }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+        }
+
+        function startCaptureCountdown() {
+            document.getElementById('capture-status-text').innerText = `CAPTURING ${currentPhotoIndex + 1} OF ${selectedPhotoCount}`;
+            
+            const overlay = document.getElementById('countdown-number');
+            overlay.style.display = 'flex';
+            
+            let count = 3;
+            overlay.innerText = count;
+            
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    overlay.innerText = count;
+                } else {
+                    clearInterval(interval);
+                    overlay.style.display = 'none';
+                    triggerShutterSnap();
+                }
+            }, 1000);
+        }
+
+        function triggerShutterSnap() {
+            const flash = document.getElementById('flash-overlay');
+            flash.classList.add('flash-active');
+            
+            setTimeout(() => {
+                flash.classList.remove('flash-active');
+                grabFrameFromVideo();
+            }, 120);
+        }
+
+        function grabFrameFromVideo() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('offscreen-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 640;
+            canvas.height = 480;
+            
+            // Draw mirrored camera frame
+            ctx.translate(640, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, 640, 480);
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale/mirror
+
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            document.getElementById('review-title').innerText = `REVIEW PHOTO ${currentPhotoIndex + 1}`;
+            document.getElementById('review-img').src = dataUrl;
+            
+            transitionTo('screen-review');
+        }
+
+        function retakePhoto() {
+            transitionTo('screen-capture');
+        }
+
+        function keepPhoto() {
+            const img = document.getElementById('review-img').src;
+            capturedPhotos.push(img);
+
+            if (capturedPhotos.length < selectedPhotoCount) {
+                currentPhotoIndex++;
+                transitionTo('screen-capture');
+            } else {
+                compileFinalReceipt();
+            }
+        }
+
+        // ── Floyd-Steinberg Thermal Dithering Algorithm ──
+        function applyThermalDitherFilter(ctx, width, height) {
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const d = imgData.data;
+
+            // Step 1: Grayscale and equalization
+            for (let i = 0; i < d.length; i += 4) {
+                const r = d[i];
+                const g = d[i+1];
+                const b = d[i+2];
+                // Grayscale luminance formula
+                const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                
+                // Contrast stretch/eq simulation
+                let eq = gray;
+                if (gray > 128) {
+                    eq = Math.min(255, Math.round(gray + (gray - 128) * 0.4));
+                } else {
+                    eq = Math.max(0, Math.round(gray - (128 - gray) * 0.4));
+                }
+                
+                d[i] = eq;
+                d[i+1] = eq;
+                d[i+2] = eq;
+            }
+
+            // Step 2: Floyd-Steinberg dithering algorithm
+            const ditherMap = new Int32Array(width * height);
+            for (let i = 0; i < ditherMap.length; i++) {
+                ditherMap[i] = d[i * 4];
+            }
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = y * width + x;
+                    const oldPixel = ditherMap[idx];
+                    const newPixel = oldPixel > 128 ? 255 : 0;
+                    
+                    // Update original image data array with thermal receipt colors (off-white or deep charcoal)
+                    const rgb = newPixel === 255 ? [244, 246, 245] : [26, 26, 46];
+                    d[idx * 4] = rgb[0];
+                    d[idx * 4 + 1] = rgb[1];
+                    d[idx * 4 + 2] = rgb[2];
+
+                    const err = oldPixel - newPixel;
+                    
+                    // Distribute error to neighboring pixels
+                    if (x + 1 < width) ditherMap[idx + 1] += Math.round(err * 7 / 16);
+                    if (y + 1 < height) {
+                        if (x - 1 >= 0) ditherMap[idx + width - 1] += Math.round(err * 3 / 16);
+                        ditherMap[idx + width] += Math.round(err * 5 / 16);
+                        if (x + 1 < width) ditherMap[idx + width + 1] += Math.round(err * 1 / 16);
+                    }
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        // Draw pixel-perfect retro receipt barcode
+        function drawMockBarcode(ctx, x, y, width, height, seedStr) {
+            // Fill thermal bg
+            ctx.fillStyle = "#f4f6f5";
+            ctx.fillRect(x, y, width, height);
+
+            ctx.fillStyle = "#1a1a2e";
+            let curX = x + 30;
+            const endX = x + width - 30;
+            
+            // Pseudo-random barcode layout based on seed
+            let seed = 0;
+            for (let i = 0; i < seedStr.length; i++) seed += seedStr.charCodeAt(i);
+            
+            function rand() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            }
+
+            while (curX < endX - 10) {
+                const barW = Math.floor(rand() * 4) + 2;
+                const spaceW = Math.floor(rand() * 5) + 3;
+                ctx.fillRect(curX, y + 10, barW, height - 35);
+                curX += barW + spaceW;
+            }
+
+            // Print code label below barcode
+            ctx.font = "bold 20px 'Share Tech Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(`* ${seedStr.slice(0, 12).toUpperCase()} *`, x + width/2, y + height - 8);
+        }
+
+        // Assemble taken photos and render the 80mm long thermal receipt
+        async function compileFinalReceipt() {
+            const canvas = document.getElementById('offscreen-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const canvasWidth = 800;
+            const marginX = 50;
+            const photoW = canvasWidth - marginX * 2; // 700px
+            const photoH = 500; // Landscape 7:5 ratio
+            const spacingY = 40;
+
+            const headerHeight = 360;
+            const photosGridHeight = selectedPhotoCount * (photoH + spacingY) - spacingY;
+            const footerHeight = 480;
+            const canvasHeight = headerHeight + photosGridHeight + footerHeight;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // 1. Solid receipt background
+            ctx.fillStyle = "#f4f6f5";
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // 2. Receipt Header
+            ctx.fillStyle = "#1a1a2e";
+            ctx.font = "bold 18px 'Share Tech Mono', monospace";
+            ctx.textAlign = "center";
+            const tearOff = "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *";
+            ctx.fillText(tearOff, canvasWidth / 2, 35);
+
+            ctx.font = "900 42px 'Inter', sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText(receiptTitle.toUpperCase(), marginX, 90);
+
+            ctx.font = "bold 18px 'Inter', sans-serif";
+            ctx.fillText(receiptSubtitle.toUpperCase(), marginX, 125);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#1a1a2e";
+            ctx.beginPath();
+            ctx.moveTo(marginX, 150);
+            ctx.lineTo(canvasWidth - marginX, 150);
+            ctx.stroke();
+
+            // Transaction details
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, "_").split(".")[0];
+            const dateText = `DATE: ${new Date().toLocaleDateString()}   TIME: ${new Date().toLocaleTimeString()}`;
+            
+            ctx.font = "600 17px 'Inter', sans-serif";
+            ctx.fillText(dateText, marginX, 185);
+            ctx.fillText(`ORDER #: #9821-${timestamp.slice(-6)}`, marginX, 215);
+            ctx.fillText("OPERATOR: WEB_SIMULATOR_BOOTH", marginX, 245);
+
+            ctx.beginPath();
+            ctx.moveTo(marginX, 265);
+            ctx.lineTo(canvasWidth - marginX, 265);
+            ctx.stroke();
+
+            // 3. Render Captured Photos and Dither them!
+            const startPhotosY = headerHeight;
+            
+            for (let i = 0; i < selectedPhotoCount; i++) {
+                const img = new Image();
+                img.src = capturedPhotos[i];
+                
+                // Block/Wait for image load
+                await new Promise(r => img.onload = r);
+
+                // Draw to temporary viewport to apply thermal filter cleanly
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = photoW;
+                tempCanvas.height = photoH;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Crop and draw image to match 7:5 aspect ratio exactly
+                const sourceAspect = img.width / img.height;
+                const targetAspect = photoW / photoH;
+                let cropW = img.width;
+                let cropH = img.height;
+                let cropX = 0;
+                let cropY = 0;
+                
+                if (sourceAspect > targetAspect) {
+                    cropW = img.height * targetAspect;
+                    cropX = (img.width - cropW) / 2;
+                } else {
+                    cropH = img.width / targetAspect;
+                    cropY = (img.height - cropH) / 2;
+                }
+                
+                tempCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, photoW, photoH);
+
+                // Apply Floyd-Steinberg monochrome dithering to the photo frame!
+                applyThermalDitherFilter(tempCtx, photoW, photoH);
+
+                // Copy dithered filter frame onto our main ticket canvas
+                const posY = startPhotosY + i * (photoH + spacingY);
+                ctx.drawImage(tempCanvas, marginX, posY);
+                
+                // Draw thin outer black frame border
+                ctx.strokeRect(marginX, posY, photoW, photoH);
+            }
+
+            // 4. Render Receipt Footer details
+            const footerStartY = startPhotosY + photosGridHeight + 40;
+            ctx.beginPath();
+            ctx.moveTo(marginX, footerStartY);
+            ctx.lineTo(canvasWidth - marginX, footerStartY);
+            ctx.stroke();
+
+            ctx.font = "bold 17px 'Inter', sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("ITEM DESCRIPTION", marginX, footerStartY + 30);
+            
+            ctx.textAlign = "right";
+            ctx.fillText("QTY", canvasWidth - marginX - 100, footerStartY + 30);
+            ctx.fillText("PRICE", canvasWidth - marginX, footerStartY + 30);
+
+            const itemsList = [
+                ["THERMAL ACQUISITION ENGINE", selectedPhotoCount, "$ 0.00"],
+                ["LDR RETINA BORDER PRINT", 1, "$ 0.00"],
+                ["PREMIUM THERMAL PAPER", 1, "$ 0.00"]
+            ];
+
+            let curItemY = footerStartY + 65;
+            ctx.font = "600 16px 'Inter', sans-serif";
+            itemsList.forEach(([desc, qty, prc]) => {
+                ctx.textAlign = "left";
+                ctx.fillText(desc, marginX, curItemY);
+                ctx.textAlign = "right";
+                ctx.fillText(qty, canvasWidth - marginX - 100, curItemY);
+                ctx.fillText(prc, canvasWidth - marginX, curItemY);
+                curItemY += 30;
+            });
+
+            ctx.beginPath();
+            ctx.moveTo(marginX, curItemY + 10);
+            ctx.lineTo(canvasWidth - marginX, curItemY + 10);
+            ctx.stroke();
+
+            ctx.font = "900 20px 'Inter', sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("TOTAL AMOUNT (TAX INCL.)", marginX, curItemY + 50);
+            ctx.textAlign = "right";
+            ctx.fillText("$ 0.00", canvasWidth - marginX, curItemY + 50);
+
+            ctx.beginPath();
+            ctx.moveTo(marginX, curItemY + 75);
+            ctx.lineTo(canvasWidth - marginX, curItemY + 75);
+            ctx.stroke();
+
+            // Render seeded barcode
+            drawMockBarcode(ctx, marginX, curItemY + 95, canvasWidth - marginX * 2, 110, timestamp);
+
+            // Slogan
+            ctx.font = "bold 18px 'Inter', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(receiptSlogan.toUpperCase(), canvasWidth / 2, curItemY + 245);
+            ctx.font = "bold 18px 'Share Tech Mono', monospace";
+            ctx.fillText(tearOff, canvasWidth / 2, curItemY + 285);
+
+            // Display finalized image on screen
+            const finalDataUrl = canvas.toDataURL('image/png');
+            document.getElementById('result-canvas-preview').src = finalDataUrl;
+            
+            // Trigger 25s auto-reset timeout (mirror C++)
+            let resetTimer = 25;
+            const timerLabel = document.getElementById('reset-timer-label');
+            timerLabel.innerText = `RESET IN ${resetTimer}S`;
+            
+            if (autoResetTimeout) clearInterval(autoResetTimeout);
+            autoResetTimeout = setInterval(() => {
+                resetTimer--;
+                if (resetTimer > 0) {
+                    timerLabel.innerText = `RESET IN ${resetTimer}S`;
+                } else {
+                    clearInterval(autoResetTimeout);
+                    resetSession();
+                }
+            }, 1000);
+
+            transitionTo('screen-result');
+        }
+
+        function downloadTicket() {
+            const dataUrl = document.getElementById('result-canvas-preview').src;
+            const link = document.createElement('a');
+            link.download = `LDR_Thermal_Receipt_${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+        }
+
+        function printTicket() {
+            const dataUrl = document.getElementById('result-canvas-preview').src;
+            const win = window.open("");
+            win.document.write(`<img src="${dataUrl}" style="width:100%; max-width:80mm;" onload="window.print();window.close();">`);
+            win.document.close();
+        }
+
+        function printViaThermer() {
+            // Build the JSON Print Entries array representing the receipt items dynamically
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, "_").split(".")[0];
+            const dateStr = new Date().toLocaleDateString();
+            const timeStr = new Date().toLocaleTimeString();
+            
+            const entries = [
+                // Header Title
+                {
+                    Type: 0,
+                    Content: receiptTitle.toUpperCase(),
+                    Bold: 1,
+                    Align: 1,
+                    Format: 2 // Double height + width
+                },
+                // Subtitle
+                {
+                    Type: 0,
+                    Content: receiptSubtitle,
+                    Bold: 0,
+                    Align: 1,
+                    Format: 4 // Small font
+                },
+                // Line separator
+                {
+                    Type: 0,
+                    Content: "--------------------------------",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                },
+                // Details
+                {
+                    Type: 0,
+                    Content: `DATE: ${dateStr}  TIME: ${timeStr}`,
+                    Bold: 0,
+                    Align: 0,
+                    Format: 4
+                },
+                {
+                    Type: 0,
+                    Content: `ORDER #: #9821-${timestamp.slice(-6)}`,
+                    Bold: 1,
+                    Align: 0,
+                    Format: 4
+                },
+                {
+                    Type: 0,
+                    Content: "OPERATOR: WEB_SIMULATOR_BOOTH",
+                    Bold: 0,
+                    Align: 0,
+                    Format: 4
+                },
+                // Line separator
+                {
+                    Type: 0,
+                    Content: "--------------------------------",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                },
+                // Items
+                {
+                    Type: 0,
+                    Content: `1x CLASSIC ${selectedPhotoCount} PHOTOS COLLAGE $0.00`,
+                    Bold: 0,
+                    Align: 0,
+                    Format: 4
+                },
+                {
+                    Type: 0,
+                    Content: "1x LDR RETINA BORDER PRINT  $0.00",
+                    Bold: 0,
+                    Align: 0,
+                    Format: 4
+                },
+                {
+                    Type: 0,
+                    Content: "1x PREMIUM THERMAL PAPER    $0.00",
+                    Bold: 0,
+                    Align: 0,
+                    Format: 4
+                },
+                // Line separator
+                {
+                    Type: 0,
+                    Content: "--------------------------------",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                },
+                // Total
+                {
+                    Type: 0,
+                    Content: "TOTAL AMOUNT: $0.00",
+                    Bold: 1,
+                    Align: 0,
+                    Format: 0
+                },
+                // Line separator
+                {
+                    Type: 0,
+                    Content: "--------------------------------",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                },
+                // QR Code (Type 3) to represent digital receipt / download link
+                {
+                    Type: 3,
+                    Value: "https://ldr-photobooth.if2372047.workers.dev",
+                    Size: 50,
+                    Align: 1
+                },
+                // Slogan
+                {
+                    Type: 0,
+                    Content: " ",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                },
+                {
+                    Type: 0,
+                    Content: receiptSlogan.toUpperCase(),
+                    Bold: 1,
+                    Align: 1,
+                    Format: 0
+                },
+                {
+                    Type: 0,
+                    Content: " ",
+                    Bold: 0,
+                    Align: 1,
+                    Format: 0
+                }
+            ];
+            
+            // Encode to JSON
+            const jsonStr = JSON.stringify(entries);
+            
+            // URL encode
+            const urlEncoded = encodeURIComponent(jsonStr);
+            
+            // Construct Thermer custom URL scheme
+            const url = "thermer://print?data=" + urlEncoded;
+            
+            console.log("Launching Thermer URL:", url);
+            
+            // Launch Thermer app on iOS/Android
+            window.location.href = url;
+        }
+
+        function resetSession() {
+            if (autoResetTimeout) clearInterval(autoResetTimeout);
+            capturedPhotos = [];
+            currentPhotoIndex = 0;
+            transitionTo('screen-start');
+        }
+
+        // Mock camera flow fallback if device does not have camera hardware
+        function mockCapturedPhotoFlow() {
+            alert("Starting simulation with solid colored placeholders...");
+            capturedPhotos = [];
+            const canvas = document.getElementById('offscreen-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 640;
+            canvas.height = 480;
+
+            const mockColors = ['#ff6b9d', '#ffd93d', '#06d6a0', '#c77dff'];
+            let index = 0;
+
+            function snapMock() {
+                ctx.fillStyle = mockColors[index % mockColors.length];
+                ctx.fillRect(0,0, 640, 480);
+                ctx.fillStyle = "#1a1a2e";
+                ctx.font = "900 48px 'Inter', sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(`MOCK PHOTO ${index + 1}`, 320, 240);
+
+                const mockData = canvas.toDataURL('image/png');
+                capturedPhotos.push(mockData);
+
+                index++;
+                if (index < selectedPhotoCount) {
+                    setTimeout(snapMock, 800);
+                } else {
+                    compileFinalReceipt();
+                }
+            }
+            setTimeout(snapMock, 500);
+        }
+
+        // Initialize Settings
+        fetchSettings();
+    </script>
+</body>
+</html>

@@ -337,17 +337,143 @@ export default function ResultScreen({
         confirmButtonColor: '#8b5cf6',
         customClass: { popup: 'swal-doodle' }
       });
+  };
 
-    } catch (err) {
-      console.error('Direct Bluetooth print failed:', err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Printing Failed ❌',
-        text: err.message || 'Make sure Bluetooth is active and your printer is powered on.',
-        confirmButtonColor: '#e11d48',
-        customClass: { popup: 'swal-doodle' }
-      });
-    }
+  const handlePrintViaThermer = () => {
+    if (!mergedImage) return;
+    
+    const timestamp = new Date().toISOString().replace(/[-:T]/g, "_").split(".")[0];
+    const dateStr = new Date().toLocaleDateString();
+    const timeStr = new Date().toLocaleTimeString();
+    
+    // Build the JSON Print Entries array representing the photobooth receipt
+    const entries = [
+      {
+        Type: 0,
+        Content: "LDR THERMAL BOOTH",
+        Bold: 1,
+        Align: 1,
+        Format: 2 // Double height + width
+      },
+      {
+        Type: 0,
+        Content: "STORE #9821 // PORTABLE CLIENT",
+        Bold: 0,
+        Align: 1,
+        Format: 4 // Small font
+      },
+      {
+        Type: 0,
+        Content: "--------------------------------",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: `DATE: ${dateStr}  TIME: ${timeStr}`,
+        Bold: 0,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: `ORDER #: #9821-${timestamp.slice(-6)}`,
+        Bold: 1,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: `SESSION: ${sessionMode.toUpperCase()} (${localBlobs?.length || 1} PHOTOS)`,
+        Bold: 0,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: `LAYOUT: ${frameLayout.toUpperCase()} (${orientation.toUpperCase()})`,
+        Bold: 0,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: "--------------------------------",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: "1x PREMIUM THERMAL ACQUISITION",
+        Bold: 0,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: "1x LDR BRAND CUSTOM FRAME",
+        Bold: 0,
+        Align: 0,
+        Format: 4
+      },
+      {
+        Type: 0,
+        Content: "--------------------------------",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: "TOTAL AMOUNT: $0.00",
+        Bold: 1,
+        Align: 0,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: "--------------------------------",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 3, // QR Code linking to worker web client
+        Value: "https://ldr-photobooth.if2372047.workers.dev",
+        Size: 50,
+        Align: 1
+      },
+      {
+        Type: 0,
+        Content: " ",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: "THANK YOU FOR YOUR SNAP! ✨",
+        Bold: 1,
+        Align: 1,
+        Format: 0
+      },
+      {
+        Type: 0,
+        Content: " ",
+        Bold: 0,
+        Align: 1,
+        Format: 0
+      }
+    ];
+
+    const jsonStr = JSON.stringify(entries);
+    const urlEncoded = encodeURIComponent(jsonStr);
+    const url = "thermer://print?data=" + urlEncoded;
+
+    console.log("Opening Thermer URL Scheme:", url);
+    window.location.href = url;
   };
 
   const handleDownloadEscPosBin = async () => {
@@ -734,6 +860,27 @@ export default function ResultScreen({
                   {t('result.print') || 'Order Print'}
                 </button>
               </div>
+              
+              {/* DIRECT PRINT VIA THERMER APP BUTTON */}
+              <button 
+                className="btn-share" 
+                onClick={handlePrintViaThermer}
+                style={{ 
+                  width: '100%', 
+                  fontSize: '18px', 
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: '#06d6a0',
+                  boxShadow: '4px 4px 0 var(--ink)',
+                  color: 'var(--ink)'
+                }}
+              >
+                📲 Print via Thermer App
+              </button>
+
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>
                 {t('result.share')}
               </button>
@@ -977,6 +1124,19 @@ export default function ResultScreen({
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print via Bluetooth (ESC/POS)</div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>Direct driverless print to BT printer</div>
+                </div>
+              </button>
+
+              {/* Option 2.7: Print via Thermer App (Custom Scheme) */}
+              <button 
+                className="mode-option-card"
+                style={{ boxShadow: '4px 4px 0 #06d6a0', background: 'rgba(6, 214, 160, 0.1)', width: '100%', padding: '14px', borderColor: '#06d6a0' }}
+                onClick={() => { handlePrintViaThermer(); setShowPrintModal(false); }}
+              >
+                <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: '#06d6a0', color: 'white' }}>📲🧾</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print via Thermer App</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Instant print on iOS & Android</div>
                 </div>
               </button>
 
