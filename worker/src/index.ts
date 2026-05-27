@@ -88,8 +88,7 @@ export default {
         }
         
         const id = crypto.randomUUID();
-        const extension = file.name.split('.').pop() || 'jpg';
-        const filename = `thermal-prints/${id}.${extension}`;
+        const filename = `thermal-prints/${id}`;
         
         await env.BUCKET.put(filename, file.stream(), { httpMetadata: { contentType: file.type } });
         

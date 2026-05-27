@@ -354,7 +354,7 @@ export default function ResultScreen({
     
     Swal.fire({
       title: 'Preparing Print... 🧾',
-      text: 'Optimizing layout to 80mm monochrome...',
+      text: 'Optimizing layout for Thermer...',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
       customClass: { popup: 'swal-doodle' }
@@ -383,16 +383,12 @@ export default function ResultScreen({
       const blob = await response.blob();
       const finalFile = new File([blob], 'receipt-80mm.jpg', { type: 'image/jpeg' });
 
-      // 3. Upload to our existing posts API to get a public URL
+      // 3. Upload to thermal print endpoint
       const formData = new FormData();
       formData.append('file', finalFile);
-      formData.append('author', 'ThermerClient');
-      formData.append('title', 'Thermer Print Job');
-      formData.append('type', sessionMode === 'solo' ? 'solo' : 'duo');
-      formData.append('frame_id', selectedFrameId || '');
 
       const API_BASE = globalThis.process?.env?.NEXT_PUBLIC_API_BASE || 'https://ldr-photobooth.if2372047.workers.dev';
-      const uploadRes = await fetch(`${API_BASE}/api/community/posts`, {
+      const uploadRes = await fetch(`${API_BASE}/api/print/thermal/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -402,154 +398,13 @@ export default function ResultScreen({
       }
 
       const uploadData = await uploadRes.json();
-      const imageUrl = `${API_BASE}/posts/${uploadData.id}.png`;
-
-      const timestamp = new Date().toISOString().replace(/[-:T]/g, "_").split(".")[0];
-      const dateStr = new Date().toLocaleDateString();
-      const timeStr = new Date().toLocaleTimeString();
       
-      // Build the JSON Print Entries array representing the photobooth receipt
-      const entries = [
-        {
-          Type: 0,
-          Content: "LDR THERMAL BOOTH",
-          Bold: 1,
-          Align: 1,
-          Format: 2 // Double height + width
-        },
-        {
-          Type: 0,
-          Content: "STORE #9821 // PORTABLE CLIENT",
-          Bold: 0,
-          Align: 1,
-          Format: 4 // Small font
-        },
-        {
-          Type: 0,
-          Content: "--------------------------------",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: `DATE: ${dateStr}  TIME: ${timeStr}`,
-          Bold: 0,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: `ORDER #: #9821-${timestamp.slice(-6)}`,
-          Bold: 1,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: `SESSION: ${sessionMode.toUpperCase()} (${localBlobs?.length || 1} PHOTOS)`,
-          Bold: 0,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: `LAYOUT: ${frameLayout.toUpperCase()} (${orientation.toUpperCase()})`,
-          Bold: 0,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: "--------------------------------",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        // EMBED THE 80MM MONOCHROME PHOTO IN THE RECEIPT
-        {
-          Type: 1, // Image type for Thermer
-          Path: imageUrl,
-          Align: 1 // Center align
-        },
-        {
-          Type: 0,
-          Content: "--------------------------------",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: "1x PREMIUM THERMAL ACQUISITION",
-          Bold: 0,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: "1x LDR BRAND CUSTOM FRAME",
-          Bold: 0,
-          Align: 0,
-          Format: 4
-        },
-        {
-          Type: 0,
-          Content: "--------------------------------",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: "TOTAL AMOUNT: $0.00",
-          Bold: 1,
-          Align: 0,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: "--------------------------------",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 3, // QR Code linking to worker web client
-          Value: "https://ldr-photobooth.if2372047.workers.dev",
-          Size: 50,
-          Align: 1
-        },
-        {
-          Type: 0,
-          Content: " ",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: "THANK YOU FOR YOUR SNAP! ✨",
-          Bold: 1,
-          Align: 1,
-          Format: 0
-        },
-        {
-          Type: 0,
-          Content: " ",
-          Bold: 0,
-          Align: 1,
-          Format: 0
-        }
-      ];
+      const responseUrl = `${API_BASE}/api/print/thermal/${uploadData.id}`;
+      const schemeUrl = `thermer://print?data=${encodeURIComponent(responseUrl)}`;
 
-      const jsonStr = JSON.stringify(entries);
-      const urlEncoded = encodeURIComponent(jsonStr);
-      const url = "thermer://print?data=" + urlEncoded;
-
-      console.log("Opening Thermer URL Scheme:", url);
+      console.log("Opening Thermer URL Scheme:", schemeUrl);
       Swal.close();
-      window.location.href = url;
+      window.location.href = schemeUrl;
     } catch (err) {
       console.error('Thermer print preparation failed:', err);
       Swal.fire({
