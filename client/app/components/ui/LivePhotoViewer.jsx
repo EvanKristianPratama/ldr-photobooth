@@ -17,7 +17,8 @@ export default function LivePhotoViewer({
   remoteLiveFrames,
   mergePhotos,
   livePhotoPlayback = true,
-  sessionMode
+  sessionMode,
+  onPreviewClick
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFrameIdx, setCurrentFrameIdx] = useState(0);
@@ -99,6 +100,25 @@ export default function LivePhotoViewer({
       onMouseLeave={() => setIsPlaying(false)}
       onTouchStart={() => livePhotoPlayback && setIsPlaying(true)}
       onTouchEnd={() => setIsPlaying(false)}
+      onClick={(e) => {
+        const imgEl = e.currentTarget.querySelector('.preview-img');
+        if (!imgEl) return;
+        const rect = imgEl.getBoundingClientRect();
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        
+        // Ensure the click was actually inside the bounded image, not on empty container border
+        if (clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom) {
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+          const xRatio = x / rect.width;
+          const yRatio = y / rect.height;
+          if (onPreviewClick) {
+            onPreviewClick(xRatio, yRatio);
+          }
+        }
+      }}
       style={{ 
         position: 'relative', 
         cursor: 'pointer', 

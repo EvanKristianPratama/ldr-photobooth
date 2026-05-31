@@ -31,6 +31,8 @@ export default function useFrame({ participants, locationsById = {} }) {
     activeTemplate, setActiveTemplate,
     showWeather, setShowWeather,
     weatherText, setWeatherText,
+    photoOffsets, updatePhotoOffset,
+    selectedAdjustSlot, setSelectedAdjustSlot,
     addSticker, removeSticker, updateSticker, clearStickers
   } = frameState;
 
@@ -43,7 +45,8 @@ export default function useFrame({ participants, locationsById = {} }) {
   const {
     mergedImage, setMergedImage,
     isMerging, setIsMerging,
-    mergePhotos, lastMergeCount
+    mergePhotos, lastMergeCount,
+    selectPhotoByRatio
   } = useFrameRenderer({
     frameState,
     participants,
@@ -187,6 +190,9 @@ export default function useFrame({ participants, locationsById = {} }) {
     activeTemplate,
     showWeather, setShowWeather,
     weatherText, setWeatherText,
+    photoOffsets, updatePhotoOffset,
+    selectedAdjustSlot, setSelectedAdjustSlot,
+    selectPhotoByRatio,
     cmsTemplates,
     framePresets,
     communityPresets,

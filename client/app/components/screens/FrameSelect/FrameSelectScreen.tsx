@@ -94,6 +94,11 @@ interface FrameSelectScreenProps {
   setShowWeather: (show: boolean) => void;
   weatherText: string;
   setWeatherText: (text: string) => void;
+  photoOffsets?: Record<number, { x: number, y: number }>;
+  updatePhotoOffset?: (index: number, x: number, y: number) => void;
+  selectedAdjustSlot?: number;
+  setSelectedAdjustSlot?: (slot: number) => void;
+  selectPhotoByRatio?: (x: number, y: number) => void;
 }
 
 export default function FrameSelectScreen({
@@ -107,6 +112,11 @@ export default function FrameSelectScreen({
   remoteBlobsByPeer,
   locationsById,
   mergePhotos,
+  photoOffsets = {},
+  updatePhotoOffset,
+  selectedAdjustSlot = 0,
+  setSelectedAdjustSlot,
+  selectPhotoByRatio,
   framePresets = [],
   framePresetId,
   selectFramePreset,
@@ -159,6 +169,25 @@ export default function FrameSelectScreen({
   const [showPresetsModal, setShowPresetsModal] = useState(false);
   const [livePhotoPlayback, setLivePhotoPlayback] = useState(true);
 
+  const currentOffset = photoOffsets[selectedAdjustSlot] || { x: 0, y: 0 };
+  const currentOffsetX = currentOffset.x || 0;
+  const currentOffsetY = currentOffset.y || 0;
+
+  const handleOffsetChange = (index: number, value: number, axis: 'x' | 'y') => {
+    if (!updatePhotoOffset) return;
+    const current = photoOffsets[index] || { x: 0, y: 0 };
+    const nextX = axis === 'x' ? value : current.x;
+    const nextY = axis === 'y' ? value : current.y;
+    updatePhotoOffset(index, nextX, nextY);
+    onReapply();
+  };
+
+  const handleResetOffset = (index: number) => {
+    if (!updatePhotoOffset) return;
+    updatePhotoOffset(index, 0, 0);
+    onReapply();
+  };
+
   // Decoupled Weather Custom Hook Presenter
   const { weather, loading: weatherLoading, error: weatherError, fetchWeather } = useWeather(
     participants,
@@ -183,6 +212,9 @@ export default function FrameSelectScreen({
             mergePhotos={mergePhotos}
             livePhotoPlayback={livePhotoPlayback}
             sessionMode={sessionMode}
+            onPreviewClick={(xRatio, yRatio) => {
+              if (selectPhotoByRatio) selectPhotoByRatio(xRatio, yRatio);
+            }}
           />
         </div>
       </div>
@@ -360,6 +392,105 @@ export default function FrameSelectScreen({
                 {g.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* ── PHOTO ADJUSTER ── */}
+        <div className="ctrl-section">
+          <div className="ctrl-label">🧭 ADJUST PHOTO POSITION</div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', overflowX: 'auto', paddingBottom: '6px' }}>
+            {Array.from({ length: localBlobs?.length || 1 }).map((_, idx) => {
+              const isActive = selectedAdjustSlot === idx;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`btn-secondary ${isActive ? 'active' : ''}`}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    fontFamily: "'Gaegu', cursive",
+                    background: isActive ? 'var(--yellow)' : 'white',
+                    border: '2px solid var(--ink)',
+                    borderRadius: '8px',
+                    flexShrink: 0
+                  }}
+                  onClick={() => {
+                    if (setSelectedAdjustSlot) setSelectedAdjustSlot(idx);
+                  }}
+                >
+                  Photo {idx + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Horizontal Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontFamily: "'Gaegu', cursive" }}>
+                <span>↔️ Left / Right Pan</span>
+                <span style={{ fontWeight: 'bold' }}>{currentOffsetX > 0 ? `+${currentOffsetX}` : currentOffsetX}%</span>
+              </div>
+              <input
+                type="range"
+                min="-100"
+                max="100"
+                value={currentOffsetX}
+                onChange={e => handleOffsetChange(selectedAdjustSlot, parseInt(e.target.value), 'x')}
+                style={{
+                  width: '100%',
+                  accentColor: 'var(--yellow)',
+                  cursor: 'pointer',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: '#ddd',
+                  marginTop: '4px'
+                }}
+              />
+            </div>
+
+            {/* Vertical Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontFamily: "'Gaegu', cursive" }}>
+                <span>↕️ Up / Down Pan</span>
+                <span style={{ fontWeight: 'bold' }}>{currentOffsetY > 0 ? `+${currentOffsetY}` : currentOffsetY}%</span>
+              </div>
+              <input
+                type="range"
+                min="-100"
+                max="100"
+                value={currentOffsetY}
+                onChange={e => handleOffsetChange(selectedAdjustSlot, parseInt(e.target.value), 'y')}
+                style={{
+                  width: '100%',
+                  accentColor: 'var(--yellow)',
+                  cursor: 'pointer',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: '#ddd',
+                  marginTop: '4px'
+                }}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{
+                width: '100%',
+                padding: '6px',
+                fontSize: '12px',
+                fontFamily: "'Gaegu', cursive",
+                borderRadius: '8px',
+                border: '1.5px solid var(--ink)',
+                marginTop: '4px',
+                cursor: 'pointer'
+              }}
+              onClick={() => handleResetOffset(selectedAdjustSlot)}
+            >
+              🔄 Reset Position
+            </button>
           </div>
         </div>
 
@@ -637,12 +768,14 @@ export default function FrameSelectScreen({
           {frameError && <p className="error-msg show">{frameError}</p>}
         </div>
 
-        {/* ── NEXT SUBMIT BUTTON ── */}
         <div style={styles.submitRow}>
           <button 
             type="button"
             className="btn-primary" 
-            onClick={onContinue} 
+            onClick={() => {
+              if (setSelectedAdjustSlot) setSelectedAdjustSlot(-1);
+              onContinue();
+            }} 
             style={styles.submitBtn}
           >
             {t('common.next')}

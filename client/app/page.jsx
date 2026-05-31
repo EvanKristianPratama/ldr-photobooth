@@ -271,6 +271,11 @@ export default function Page() {
             remoteBlobsByPeer={capture.remoteBlobsRef.current}
             locationsById={locationsById}
             mergePhotos={frame.mergePhotos}
+            photoOffsets={frame.photoOffsets}
+            updatePhotoOffset={frame.updatePhotoOffset}
+            selectedAdjustSlot={frame.selectedAdjustSlot}
+            setSelectedAdjustSlot={frame.setSelectedAdjustSlot}
+            selectPhotoByRatio={frame.selectPhotoByRatio}
             framePresets={frame.framePresets}
             framePresetId={frame.framePresetId}
             selectFramePreset={frame.selectFramePreset}

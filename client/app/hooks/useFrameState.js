@@ -25,6 +25,15 @@ export function useFrameState() {
   const [activeTemplate, setActiveTemplate] = useState(null); // CMS template mode
   const [showWeather, setShowWeather] = useState(false);
   const [weatherText, setWeatherText] = useState('');
+  const [photoOffsets, setPhotoOffsets] = useState({});
+  const [selectedAdjustSlot, setSelectedAdjustSlot] = useState(0);
+
+  const updatePhotoOffset = useCallback((index, x, y) => {
+    setPhotoOffsets(prev => ({
+      ...prev,
+      [index]: { x, y }
+    }));
+  }, []);
 
   const addSticker = useCallback((emoji) => {
     setStickers(prev => [...prev, { id: crypto.randomUUID(), emoji, x: 200, y: 200, scale: 2, rotation: 0 }]);
@@ -64,6 +73,8 @@ export function useFrameState() {
     activeTemplate, setActiveTemplate,
     showWeather, setShowWeather,
     weatherText, setWeatherText,
+    photoOffsets, setPhotoOffsets, updatePhotoOffset,
+    selectedAdjustSlot, setSelectedAdjustSlot,
     addSticker, removeSticker, updateSticker, clearStickers
   };
 }

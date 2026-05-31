@@ -19,8 +19,12 @@ export function useFrameRenderer({
     frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, 
     stickers, orientation, frameFont, frameLayout, frameDate, 
     frameNoise, frameGlare, activeTemplate, showWeather, weatherText,
-    locTextEdited, setLocTextLeft, setLocTextRight, setFrameError
+    locTextEdited, setLocTextLeft, setLocTextRight, setFrameError,
+    photoOffsets = {}, selectedAdjustSlot, setSelectedAdjustSlot
   } = frameState;
+
+  const slotBoundsRef = useRef([]);
+  const canvasSizeRef = useRef(null);
 
   useEffect(() => {
     mergeCacheRef.current.clear();
@@ -91,6 +95,7 @@ export function useFrameRenderer({
       locTextRight,
       photoFilter,
       JSON.stringify(stickers),
+      JSON.stringify(photoOffsets),
       orientation,
       frameFont,
       frameLayout,
@@ -101,7 +106,7 @@ export function useFrameRenderer({
       showWeather,
       weatherText
     ].join('|');
-  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate, showWeather, weatherText]);
+  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, photoOffsets, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate, showWeather, weatherText]);
 
   const mergePhotos = useCallback(async ({
     count,
@@ -138,6 +143,10 @@ export function useFrameRenderer({
         canvas.width = tpl.canvas_width;
         canvas.height = tpl.canvas_height;
         const ctx = canvas.getContext('2d');
+
+        // Clear boundaries cache and track canvas size
+        slotBoundsRef.current = [];
+        canvasSizeRef.current = { w: canvas.width, h: canvas.height };
 
         // Extract metadata and active decorations
         let loadedDecos = tpl.decorations || [];
@@ -203,6 +212,28 @@ export function useFrameRenderer({
                 ctx.translate(-(slot.x + slot.width / 2), -(slot.y + slot.height / 2));
               }
               
+              const imgRatio = img.width / img.height;
+              const targetRatio = slot.width / slot.height;
+              let sw, sh, sx, sy;
+
+              const participantCount = participants.length || 1;
+              const photoIndex = Math.floor(si / participantCount);
+              const offset = photoOffsets[photoIndex] || { x: 0, y: 0 };
+              const offsetX = offset.x || 0;
+              const offsetY = offset.y || 0;
+
+              if (imgRatio > targetRatio) {
+                sh = img.height; sw = sh * targetRatio;
+                const maxShift = (img.width - sw) / 2;
+                sx = (img.width - sw) / 2 + (offsetX / 100) * maxShift;
+                sy = 0;
+              } else {
+                sw = img.width; sh = sw / targetRatio;
+                sx = 0;
+                const maxShift = (img.height - sh) / 2;
+                sy = (img.height - sh) / 2 + (offsetY / 100) * maxShift;
+              }
+              
               const shape = slot.shape || 'rect';
               if (shape === 'oval') {
                 ctx.beginPath();
@@ -214,14 +245,6 @@ export function useFrameRenderer({
                 ctx.translate(slot.x, slot.y);
                 ctx.scale(slot.width / 100, slot.height / 100);
                 ctx.clip(p);
-                const imgRatio = img.width / img.height;
-                const targetRatio = slot.width / slot.height;
-                let sw, sh, sx, sy;
-                if (imgRatio > targetRatio) {
-                  sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
-                } else {
-                  sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
-                }
                 ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 100, 100);
                 ctx.restore();
                 ctx.restore();
@@ -236,15 +259,19 @@ export function useFrameRenderer({
                 ctx.clip();
               }
 
-              const imgRatio = img.width / img.height;
-              const targetRatio = slot.width / slot.height;
-              let sw, sh, sx, sy;
-              if (imgRatio > targetRatio) {
-                sh = img.height; sw = sh * targetRatio; sx = (img.width - sw) / 2; sy = 0;
-              } else {
-                sw = img.width; sh = sw / targetRatio; sx = 0; sy = (img.height - sh) / 2;
-              }
               ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
+
+              // Cache slot boundaries
+              slotBoundsRef.current.push({
+                index: si,
+                photoIndex: photoIndex,
+                x: slot.x,
+                y: slot.y,
+                w: slot.width,
+                h: slot.height
+              });
+
+
 
               if (photoFilter !== 'none') {
                 try {
@@ -432,18 +459,21 @@ export function useFrameRenderer({
       const staticHeightUsed = headerH + footerH + (gap * (totalRows + 1));
       let cellH = Math.floor((totalH - staticHeightUsed) / totalRows);
 
-      // Safety fallback jika foto jadi sangat gepeng (jika ada bug / settingan aneh)
+      // Safety fallback jika foto terlalu tinggi jenjang
       if (cellH < (cellW * 0.4)) {
         cellH = Math.floor(cellW * 0.4);
         totalH = (cellH * totalRows) + staticHeightUsed; // Recalc height jika overflow
       } else if (cellH > (cellW * 1.8)) {
-        // Safety fallback jika foto terlalu tinggi jenjang
         cellH = Math.floor(cellW * 1.6);
         totalH = (cellH * totalRows) + staticHeightUsed; 
       }
 
       canvas.width = totalW;
       canvas.height = totalH;
+
+      // Clear boundaries cache and track canvas size
+      slotBoundsRef.current = [];
+      canvasSizeRef.current = { w: canvas.width, h: canvas.height };
 
       const isCustomFrame = frameMode === 'custom';
 
@@ -544,21 +574,27 @@ export function useFrameRenderer({
         setFrameError('');
       }
 
-      const drawCroppedImage = (img, x, y, w, h) => {
+      const drawCroppedImage = (img, x, y, w, h, slotIndex) => {
         const imgRatio = img.width / img.height;
         const targetRatio = w / h;
         let sw, sh, sx, sy;
 
+        const offset = photoOffsets[slotIndex] || { x: 0, y: 0 };
+        const offsetX = offset.x || 0;
+        const offsetY = offset.y || 0;
+
         if (imgRatio > targetRatio) {
           sh = img.height;
           sw = sh * targetRatio;
-          sx = (img.width - sw) / 2;
+          const maxShift = (img.width - sw) / 2;
+          sx = (img.width - sw) / 2 + (offsetX / 100) * maxShift;
           sy = 0;
         } else {
           sw = img.width;
           sh = sw / targetRatio;
           sx = 0;
-          sy = (img.height - sh) / 2;
+          const maxShift = (img.height - sh) / 2;
+          sy = (img.height - sh) / 2 + (offsetY / 100) * maxShift;
         }
         ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
       };
@@ -659,7 +695,21 @@ export function useFrameRenderer({
 
           if (blob) {
             const img = await blobToImage(blob);
-            drawCroppedImage(img, colX, rowY, cellW, cellH);
+            drawCroppedImage(img, colX, rowY, cellW, cellH, i);
+
+            // Cache slot boundaries
+            const slotIndex = i * photoColumns + j;
+            slotBoundsRef.current.push({
+              index: slotIndex,
+              photoIndex: i,
+              x: colX,
+              y: rowY,
+              w: cellW,
+              h: cellH
+            });
+
+
+
             if (photoFilter !== 'none') {
               applyPixelFilter(ctx, colX, rowY, cellW, cellH, photoFilter);
             }
@@ -850,12 +900,28 @@ export function useFrameRenderer({
 
 
 
+  const selectPhotoByRatio = useCallback((xRatio, yRatio) => {
+    if (!slotBoundsRef.current.length || !canvasSizeRef.current) return;
+    const canvasX = xRatio * canvasSizeRef.current.w;
+    const canvasY = yRatio * canvasSizeRef.current.h;
+
+    const clickedSlot = slotBoundsRef.current.find(s => 
+      canvasX >= s.x && canvasX <= s.x + s.w &&
+      canvasY >= s.y && canvasY <= s.y + s.h
+    );
+
+    if (clickedSlot !== undefined && setSelectedAdjustSlot) {
+      setSelectedAdjustSlot(clickedSlot.photoIndex);
+    }
+  }, [setSelectedAdjustSlot]);
+
   return {
     mergedImage,
     setMergedImage,
     isMerging,
     setIsMerging,
     mergePhotos,
-    lastMergeCount
+    lastMergeCount,
+    selectPhotoByRatio
   };
 }

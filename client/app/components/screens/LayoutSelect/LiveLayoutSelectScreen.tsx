@@ -54,10 +54,7 @@ export default function LiveLayoutSelectScreen({
       )}
       
       <div className="page-title-row" style={styles.titleRow}>
-        <div className="page-title" style={{ fontSize: '32px' }}>Pilih Tata Letak Foto Bareng ✦</div>
-        <p style={{ fontFamily: "'Gaegu', cursive", fontSize: '18px', opacity: 0.7, marginTop: '8px' }}>
-          Tentukan jumlah pose dalam satu strip cetak Anda berdua ✨
-        </p>
+        <div className="page-title" style={{ fontSize: '32px' }}>{t('liveLayout.title')}</div>
       </div>
 
       <div className="layout-grid" style={styles.grid}>
@@ -76,7 +73,7 @@ export default function LiveLayoutSelectScreen({
             <div className="layout-info">
               <span className="layout-name" style={{ fontWeight: 'bold' }}>{layout.name}</span>
               <span className="layout-count">
-                {layout.count} Pose Berdua
+                {layout.count} {layout.count > 1 ? t('liveLayout.poses') : t('liveLayout.pose')}
               </span>
             </div>
           </div>
@@ -87,7 +84,7 @@ export default function LiveLayoutSelectScreen({
         <div style={styles.warningBanner}>
           <span style={{ fontSize: '24px' }}>📱</span>
           <div style={{ textAlign: 'left' }}>
-            <strong>Rekomendasi Orientasi:</strong> Jika memilih <strong>1 Foto Bareng</strong>, disarankan menggunakan HP posisi tegak (<strong>Portrait</strong>) agar badan & wajah pas dan tidak terpotong ekstrem di frame!
+            {t('liveLayout.warning')}
           </div>
         </div>
       )}
@@ -105,7 +102,7 @@ export default function LiveLayoutSelectScreen({
             borderColor: 'var(--ink)'
           }}
         >
-          {selectedLayout ? 'Masuk ke Live Room →' : 'Pilih Layout Foto Terlebih Dahulu ✨'}
+          {selectedLayout ? t('liveLayout.start') : t('liveLayout.selectFirst')}
         </button>
       </div>
     </section>

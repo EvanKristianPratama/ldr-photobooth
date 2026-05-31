@@ -142,8 +142,17 @@ export default function LiveCaptureScreen({
   const activeTimeLeft = sessionTimeLeft !== null ? sessionTimeLeft : (isLiveVCActive && hasRemoteStream ? liveVCTimeLeft : null);
 
   return (
-    <section className="page active" id="page-capture">
-      <div className="capture-full">
+    <section className="page active" id="page-capture" style={{ flexDirection: 'column', alignItems: 'center', background: 'var(--cream)', minHeight: 'calc(100vh - 60px)', padding: '24px 0' }}>
+      
+      {/* Handdrawn Header Title Row */}
+      <div className="page-title-row" style={{ justifyContent: 'center', marginBottom: '24px', textAlign: 'center', fontFamily: "'Gaegu', cursive" }}>
+        <div className="page-title" style={{ fontSize: '36px', fontWeight: 'bold' }}>{t('live.title')}</div>
+        <p style={{ fontSize: '18px', opacity: 0.7, marginTop: '6px' }}>
+          {t('live.subtitle')}
+        </p>
+      </div>
+
+      <div className="capture-full" style={{ background: 'transparent', width: '100%', flex: 1, padding: '0 40px', boxSizing: 'border-box' }}>
         <div style={styles.mainContent}>
           
           <div className="live-videos-container">
@@ -172,29 +181,42 @@ export default function LiveCaptureScreen({
                  top: '18px',
                  right: '20px',
                  zIndex: 20,
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '8px',
+                 fontFamily: "'Gaegu', cursive",
+                 fontWeight: 'bold',
+                 fontSize: '16px',
+                 padding: '8px 16px',
+                 borderRadius: '20px',
+                 border: '2.5px solid var(--ink)',
+                 background: livePhotoEnabled ? 'var(--pink)' : '#fff',
+                 color: 'var(--ink)',
+                 boxShadow: '2.5px 2.5px 0 var(--ink)',
                }}
              >
                <div
                  style={{
-                   width: '8px',
-                   height: '8px',
+                   width: '10px',
+                   height: '10px',
                    borderRadius: '50%',
-                   background: livePhotoEnabled ? '#ff6b9d' : '#888',
-                   boxShadow: livePhotoEnabled ? '0 0 8px #ff6b9d' : 'none'
+                   background: livePhotoEnabled ? '#fff' : '#888',
+                   border: '1.5px solid var(--ink)',
+                   boxShadow: livePhotoEnabled ? '0 0 8px #fff' : 'none'
                  }}
                />
                {livePhotoEnabled ? 'LIVE: ON' : 'LIVE: OFF'}
              </button>
 
              <div style={styles.statusRow}>
-               <div style={styles.statusPill}>{shotsTaken}/{safeTotalShots} terambil</div>
+               <div style={styles.statusPill}>{t('live.taken', { taken: shotsTaken, total: safeTotalShots })}</div>
                <div style={styles.statusPill}>
-                 {!isLiveVCActive ? 'VC Off' : hasRemoteStream ? 'VC On' : 'Menghubungkan VC...'}
+                 {!isLiveVCActive ? t('live.vcOff') : hasRemoteStream ? t('live.vcOn') : t('live.connecting')}
                </div>
              </div>
 
              {/* Local Video Card */}
-             <div className="camera-card live-video-card">
+             <div style={styles.videoCard}>
                <video 
                  ref={videoRef} 
                  autoPlay 
@@ -221,7 +243,7 @@ export default function LiveCaptureScreen({
              </div>
 
              {/* Remote Video Card */}
-             <div className="camera-card live-video-card">
+             <div style={styles.videoCard}>
                {hasRemoteStream ? (
                  <video 
                    ref={remoteVideoRef} 
@@ -236,7 +258,7 @@ export default function LiveCaptureScreen({
                  />
                ) : (
                  <div style={styles.videoPlaceholder}>
-                   {!isLiveVCActive ? 'VC belum diaktifkan' : 'Menghubungkan partner...'}
+                   {!isLiveVCActive ? t('live.vcNotEnabled') : t('live.connectingPartner')}
                  </div>
                )}
               
@@ -245,17 +267,63 @@ export default function LiveCaptureScreen({
 
             {/* Big Countdown Overlay (covers video area) */}
             {countdown !== null && (
-              <div className="cam-countdown-overlay" style={{ borderRadius: '12px', zIndex: 30 }}>
-                <span className="cam-countdown-num">{countdown}</span>
+              <div 
+                className="cam-countdown-overlay" 
+                style={{ 
+                  borderRadius: '16px', 
+                  zIndex: 30, 
+                  background: 'rgba(255, 253, 245, 0.6)', 
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)'
+                }}
+              >
+                <span 
+                  className="cam-countdown-num"
+                  style={{
+                    color: 'var(--pink)',
+                    textShadow: '4px 4px 0 var(--ink)',
+                    WebkitTextStroke: '2px var(--ink)',
+                    fontSize: '180px'
+                  }}
+                >
+                  {countdown}
+                </span>
               </div>
             )}
 
             {/* Finished / Retake Overlay (covers video area) */}
             {isFinishedAllShots && countdown === null && (
-              <div className="capture-action-overlay" style={{ borderRadius: '12px', zIndex: 40 }}>
-                <div className="capture-action-text">
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(255, 253, 245, 0.9)',
+                  zIndex: 40,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '18px',
+                  border: '3.5px solid var(--ink)',
+                  gap: '24px',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  padding: '24px',
+                  animation: 'fadeIn 0.3s ease'
+                }}
+              >
+                <div 
+                  style={{
+                    color: 'var(--ink)',
+                    fontSize: '32px',
+                    fontFamily: "'Gaegu', cursive",
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    lineHeight: '1.3'
+                  }}
+                >
                   {t('capture.niceShots')}<br />
-                  <span>
+                  <span style={{ fontSize: '18px', opacity: 0.8, display: 'block', marginTop: '8px' }}>
                     {isTimeOut
                       ? '⏳ Waktu habis, kamu sudah tidak bisa retake lagi.'
                       : selectedRetakeIdx !== null
@@ -264,18 +332,27 @@ export default function LiveCaptureScreen({
                   </span>
                 </div>
 
-                <div className="capture-action-buttons">
+                <div style={{ display: 'flex', gap: '16px', width: '90%', maxWidth: '400px' }}>
                   <button
                     type="button"
                     onClick={handleRetakeClick}
                     disabled={isTimeOut}
-                    className="btn-share retake-btn"
+                    className="btn-secondary"
                     style={{
-                      boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 #1a1a2e',
-                      borderColor: selectedRetakeIdx !== null ? '#FF5252' : '#1a1a2e',
+                      flex: 1,
+                      padding: '14px',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      fontFamily: "'Gaegu', cursive",
+                      boxShadow: selectedRetakeIdx !== null ? '4px 4px 0 #FF5252' : '4px 4px 0 var(--ink)',
+                      borderColor: selectedRetakeIdx !== null ? '#FF5252' : 'var(--ink)',
+                      borderWidth: '2.5px',
+                      borderRadius: '12px',
                       opacity: isTimeOut ? 0.5 : 1,
                       cursor: isTimeOut ? 'not-allowed' : 'pointer',
-                      transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none'
+                      transform: selectedRetakeIdx !== null ? 'scale(1.05)' : 'none',
+                      background: '#fff',
+                      color: 'var(--ink)'
                     }}
                   >
                     {selectedRetakeIdx !== null
@@ -283,7 +360,24 @@ export default function LiveCaptureScreen({
                       : (t('action.retake') || 'RETAKE ALL').toUpperCase()}
                   </button>
 
-                  <button type="button" onClick={onFinish} className="btn-dl finish-btn">
+                  <button 
+                    type="button" 
+                    onClick={onFinish} 
+                    className="btn-primary"
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      fontFamily: "'Gaegu', cursive",
+                      background: 'var(--yellow)',
+                      color: 'var(--ink)',
+                      borderWidth: '2.5px',
+                      borderColor: 'var(--ink)',
+                      borderRadius: '12px',
+                      boxShadow: '4px 4px 0 var(--ink)'
+                    }}
+                  >
                     {(t('action.done') || 'Done & Send').toUpperCase()}
                   </button>
                 </div>
@@ -300,7 +394,7 @@ export default function LiveCaptureScreen({
                 onClick={() => startLiveVC && startLiveVC()} 
                 style={styles.startVCBtn}
               >
-                START
+                {t('live.startVc')}
               </button>
             ) : (
               <button
@@ -314,9 +408,9 @@ export default function LiveCaptureScreen({
                 }}
               >
                 {!hasRemoteStream
-                  ? 'Menunggu Partner VC'
+                  ? t('live.waitingPartnerButton')
                   : countdown !== null
-                    ? 'Timer Jalan...'
+                    ? t('live.timerRunning')
                     : `Take ${nextShotNumber}/${safeTotalShots}`}
               </button>
             )}
@@ -339,10 +433,10 @@ export default function LiveCaptureScreen({
                     border: isThisSelected
                       ? '4px solid #FFD700'
                       : canRetakeThis
-                        ? '2px solid rgba(255, 255, 255, 0.5)'
-                        : 'none',
+                        ? '3px solid var(--ink)'
+                        : '3px solid var(--ink)',
                     transform: isThisSelected ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: isThisSelected ? '0 4px 12px rgba(255, 215, 0, 0.4)' : 'none',
+                    boxShadow: isThisSelected ? '0 4px 12px rgba(255, 215, 0, 0.4)' : '4px 4px 0 var(--ink)',
                     zIndex: isThisSelected ? 10 : 1,
                     cursor: canRetakeThis ? 'pointer' : 'default'
                   }}
@@ -377,8 +471,8 @@ export default function LiveCaptureScreen({
                     </>
                   ) : (
                     <>
-                      <span className="strip-thumb-num">{i + 1}</span>
-                      <span className="strip-thumb-label">{i === currentShotIndex ? 'READY' : ''}</span>
+                      <span className="strip-thumb-num" style={{ color: 'var(--ink)' }}>{i + 1}</span>
+                      <span className="strip-thumb-label" style={{ color: 'var(--pink)' }}>{i === currentShotIndex ? 'READY' : ''}</span>
                     </>
                   )}
                 </div>
@@ -403,30 +497,50 @@ const styles = {
     position: 'relative' as const,
     minWidth: '0',
   },
+  videoCard: {
+    flex: 1,
+    aspectRatio: '16/9',
+    width: '100%',
+    maxHeight: '90%',
+    background: '#fff',
+    border: '3.5px solid var(--ink)',
+    borderRadius: '18px',
+    boxShadow: '6px 6px 0 var(--ink)',
+    overflow: 'hidden',
+    position: 'relative' as const,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   videoPlaceholder: {
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'var(--ink)',
+    opacity: 0.7,
     fontFamily: "'Gaegu', cursive",
-    fontSize: '20px',
+    fontSize: '22px',
+    fontWeight: 'bold' as const,
     textAlign: 'center' as const,
     padding: '20px',
+    height: '100%',
+    width: '100%',
+    background: 'var(--cream-dk, #eedec9)',
   },
   cardLabel: {
     position: 'absolute' as const,
     bottom: '12px',
     left: '12px',
-    background: 'rgba(26, 26, 46, 0.75)',
-    color: '#fff',
-    borderRadius: '999px',
+    background: 'var(--yellow)',
+    color: 'var(--ink)',
+    border: '2.5px solid var(--ink)',
+    borderRadius: '10px',
     padding: '6px 14px',
-    fontSize: '14px',
+    fontSize: '16px',
     fontWeight: 'bold' as const,
     fontFamily: "'Gaegu', cursive",
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
+    boxShadow: '2.5px 2.5px 0 var(--ink)',
     zIndex: 5,
   },
   relative: {
@@ -461,18 +575,20 @@ const styles = {
     zIndex: 16,
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '12px',
     flexWrap: 'wrap' as const,
     justifyContent: 'center',
   },
   statusPill: {
-    background: 'rgba(26, 26, 46, 0.88)',
-    color: '#fff',
-    borderRadius: '999px',
+    background: '#fff',
+    color: 'var(--ink)',
+    border: '2.5px solid var(--ink)',
+    borderRadius: '12px',
     padding: '7px 14px',
-    fontSize: '13px',
+    fontSize: '16px',
     fontWeight: 'bold' as const,
     fontFamily: "'Gaegu', cursive",
+    boxShadow: '2.5px 2.5px 0 var(--ink)',
   },
   nameRow: {
     position: 'absolute' as const,
@@ -544,18 +660,19 @@ const styles = {
     fontFamily: "'Gaegu', cursive",
   },
   startVCBtn: {
-    background: '#22c55e', // Vibrant green
+    background: 'var(--teal)',
     color: 'var(--ink)',
     border: '3px solid var(--ink)',
-    borderRadius: '14px',
-    padding: '16px 36px',
-    fontSize: '22px',
+    borderRadius: '16px',
+    padding: '20px 40px',
+    fontSize: '24px',
     fontWeight: 'bold' as const,
-    boxShadow: '4px 4px 0 var(--ink)',
-    minWidth: '280px',
+    boxShadow: '6px 6px 0 var(--ink)',
+    minWidth: '320px',
     textAlign: 'center' as const,
     cursor: 'pointer',
     transition: 'all 0.15s ease',
+    fontFamily: "'Gaegu', cursive",
   },
   stopVCBtn: {
     background: '#ff5252',
@@ -568,23 +685,27 @@ const styles = {
     boxShadow: '2px 2px 0 var(--ink)',
   },
   takeBtn: {
-    background: 'var(--yellow)', // Simple flat yellow matching 'ULANGI SEMUA'
+    background: 'var(--yellow)',
     color: 'var(--ink)',
     border: '3px solid var(--ink)',
-    borderRadius: '14px',
-    padding: '16px 36px',
-    fontSize: '22px',
+    borderRadius: '16px',
+    padding: '20px 40px',
+    fontSize: '24px',
     fontWeight: 'bold' as const,
-    boxShadow: '4px 4px 0 var(--ink)',
-    minWidth: '280px',
+    boxShadow: '6px 6px 0 var(--ink)',
+    minWidth: '320px',
     textAlign: 'center' as const,
     transition: 'all 0.15s ease',
+    fontFamily: "'Gaegu', cursive",
   },
   thumbnail: {
     width: '160px',
     height: '120px',
     overflow: 'hidden',
-    background: '#000',
+    background: '#fff',
+    border: '3px solid var(--ink)',
+    borderRadius: '12px',
+    boxShadow: '4px 4px 0 var(--ink)',
     position: 'relative' as const,
     transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   },

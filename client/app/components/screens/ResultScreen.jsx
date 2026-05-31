@@ -17,10 +17,81 @@ const canvasToEscPosBytes = (imgElement) => {
   canvas.width = printWidth;
   canvas.height = printHeight;
   const ctx = canvas.getContext('2d');
+  
+  // Enable high-quality image smoothing to prevent aliasing/blocky downscaling
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
   ctx.drawImage(imgElement, 0, 0, printWidth, printHeight);
 
   const imgData = ctx.getImageData(0, 0, printWidth, printHeight);
   const pixels = imgData.data;
+
+  // 1. Convert pixels to a fast monochrome/gray map with standard luminance and soft contrast stretching
+  const ditherMap = new Int32Array(printWidth * printHeight);
+  for (let i = 0; i < ditherMap.length; i++) {
+    const idx = i * 4;
+    const r = pixels[idx];
+    const g = pixels[idx + 1];
+    const b = pixels[idx + 2];
+    const a = pixels[idx + 3];
+
+    if (a < 50) {
+      ditherMap[i] = 255; // White for transparent background
+    } else {
+      const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+      
+      // Soft contrast equalization to prevent harsh graininess (from 0.4 down to 0.12)
+      let eq = gray;
+      if (gray > 128) {
+        eq = Math.min(255, Math.round(gray + (gray - 128) * 0.12));
+      } else {
+        eq = Math.max(0, Math.round(gray - (128 - gray) * 0.12));
+      }
+      ditherMap[i] = eq;
+    }
+  }
+
+  // 2. Floyd-Steinberg Dithering Algorithm
+  for (let y = 0; y < printHeight; y++) {
+    for (let x = 0; x < printWidth; x++) {
+      const idx = y * printWidth + x;
+      const oldPixel = ditherMap[idx];
+      const newPixel = oldPixel > 128 ? 255 : 0;
+      
+      ditherMap[idx] = newPixel;
+      const err = oldPixel - newPixel;
+
+      // Diffuse quantization error to neighboring pixels
+      if (x + 1 < printWidth) ditherMap[idx + 1] += Math.round(err * 7 / 16);
+      if (y + 1 < printHeight) {
+        if (x - 1 >= 0) ditherMap[idx + printWidth - 1] += Math.round(err * 3 / 16);
+        ditherMap[idx + printWidth] += Math.round(err * 5 / 16);
+        if (x + 1 < printWidth) ditherMap[idx + printWidth + 1] += Math.round(err * 1 / 16);
+      }
+    }
+  }
+
+  // 3. Scan from bottom up to detect where the actual printed content ends (first row with any black pixel)
+  let lastContentRow = -1;
+  const paddingBottom = 20; // 20 pixels safety padding at the bottom of the content
+  
+  for (let y = printHeight - 1; y >= 0; y--) {
+    let isRowBlank = true;
+    for (let x = 0; x < printWidth; x++) {
+      if (ditherMap[y * printWidth + x] === 0) { // Black pixel found
+        isRowBlank = false;
+        break;
+      }
+    }
+    if (!isRowBlank) {
+      lastContentRow = y;
+      break;
+    }
+  }
+
+  // Determine effective height to crop any trailing blank space
+  const effectiveHeight = lastContentRow !== -1 ? Math.min(printHeight, lastContentRow + 1 + paddingBottom) : printHeight;
 
   const widthBytes = printWidth / 8; // 72 bytes per baris
   const escPosCommands = [];
@@ -28,33 +99,29 @@ const canvasToEscPosBytes = (imgElement) => {
   // 1. Inisialisasi Printer: ESC @ (0x1B, 0x40)
   escPosCommands.push(0x1B, 0x40);
 
+  // Set line spacing to 0: ESC 3 0 (0x1B, 0x33, 0x00)
+  escPosCommands.push(0x1B, 0x33, 0x00);
+
   // 2. Command Cetak Gambar: GS v 0 m xL xH yL yH
   const m = 0; // Normal mode
   const xL = widthBytes % 256;
   const xH = Math.floor(widthBytes / 256);
-  const yL = printHeight % 256;
-  const yH = Math.floor(printHeight / 256);
+  const yL = effectiveHeight % 256;
+  const yH = Math.floor(effectiveHeight / 256);
 
   escPosCommands.push(0x1D, 0x76, 0x30, m, xL, xH, yL, yH);
 
-  // 3. Konversi piksel ke format bit biner (1 = hitam, 0 = putih)
-  for (let y = 0; y < printHeight; y++) {
+  // 3. Konversi piksel hasil dither ke format bit biner (1 = hitam, 0 = putih)
+  for (let y = 0; y < effectiveHeight; y++) {
     for (let x = 0; x < widthBytes; x++) {
       let byteVal = 0;
       for (let bit = 0; bit < 8; bit++) {
         const pixelX = x * 8 + bit;
-        const pixelIdx = (y * printWidth + pixelX) * 4;
-        const r = pixels[pixelIdx];
-        const g = pixels[pixelIdx + 1];
-        const b = pixels[pixelIdx + 2];
-        const a = pixels[pixelIdx + 3];
-
+        const idx = y * printWidth + pixelX;
+        
         let isBlack = 0;
-        if (a > 50) {
-          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-          if (luminance < 140) { // Threshold sedikit dinaikkan untuk hasil print hitam-putih yang solid
-            isBlack = 1;
-          }
+        if (idx < ditherMap.length) {
+          isBlack = ditherMap[idx] === 0 ? 1 : 0;
         }
         
         byteVal |= (isBlack << (7 - bit));
@@ -64,8 +131,8 @@ const canvasToEscPosBytes = (imgElement) => {
   }
 
   // 4. Feed & Cut
-  // Feed 4 line kosong agar gambar keluar penuh dari pemotong
-  escPosCommands.push(0x1B, 0x64, 4);
+  // Feed 6 line kosong agar gambar keluar penuh dari pemotong (LF x 6)
+  escPosCommands.push(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A);
   // Cut paper: GS V 66 0
   escPosCommands.push(0x1D, 0x56, 66, 0);
 
@@ -314,18 +381,23 @@ export default function ResultScreen({
         customClass: { popup: 'swal-doodle' }
       });
 
-      // 3. Send bytes in safe chunk sizes to avoid Bluetooth buffer overflows
-      const chunkSize = 120;
-      const delayMs = 15;
+      // 3. Send bytes in safe chunk sizes with dynamic rate-limiting to avoid Bluetooth buffer overflows
+      const chunkSize = 128; // Increased from 64 to 128 for smoother physical paper roll
+      const delayMsWithoutResponse = 8; // Optimal delay for writeWithoutResponse
+      const delayMsWithResponse = 2; // Micro delay for writeWithResponse since link-layer handles flow control
+      
       for (let offset = 0; offset < escPosBytes.length; offset += chunkSize) {
         const chunk = escPosBytes.slice(offset, offset + chunkSize);
         if (writeCharacteristic.properties.writeWithoutResponse) {
           await writeCharacteristic.writeValueWithoutResponse(chunk);
+          if (delayMsWithoutResponse > 0) {
+            await new Promise(r => setTimeout(r, delayMsWithoutResponse));
+          }
         } else {
           await writeCharacteristic.writeValueWithResponse(chunk);
-        }
-        if (delayMs > 0) {
-          await new Promise(r => setTimeout(r, delayMs));
+          if (delayMsWithResponse > 0) {
+            await new Promise(r => setTimeout(r, delayMsWithResponse));
+          }
         }
       }
 
