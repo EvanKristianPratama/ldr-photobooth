@@ -2,142 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import LivePhotoViewer from '../ui/LivePhotoViewer';
 import { convertToPaperSize } from '../../services/paperService';
+import { imageToEscPosBytes, sendViaBluetooth } from '../../services/escposService';
 import Swal from 'sweetalert2';
 
 /**
- * Konversi gambar B&W menjadi array bytes perintah biner ESC/POS (Raster Bit Image GS v 0).
- * Lebar standar 80mm adalah 576 dots (piksel) mendatar.
+ * Load a data URL image source into an HTMLImageElement.
+ * @param {string} src - Image data URL or path
+ * @returns {Promise<HTMLImageElement>}
  */
-const canvasToEscPosBytes = (imgElement) => {
-  const printWidth = 576; // Lebar standard printer thermal 80mm
-  const scale = printWidth / imgElement.width;
-  const printHeight = Math.round(imgElement.height * scale);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = printWidth;
-  canvas.height = printHeight;
-  const ctx = canvas.getContext('2d');
-  
-  // Enable high-quality image smoothing to prevent aliasing/blocky downscaling
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  
-  ctx.drawImage(imgElement, 0, 0, printWidth, printHeight);
-
-  const imgData = ctx.getImageData(0, 0, printWidth, printHeight);
-  const pixels = imgData.data;
-
-  // 1. Convert pixels to a fast monochrome/gray map with standard luminance and soft contrast stretching
-  const ditherMap = new Int32Array(printWidth * printHeight);
-  for (let i = 0; i < ditherMap.length; i++) {
-    const idx = i * 4;
-    const r = pixels[idx];
-    const g = pixels[idx + 1];
-    const b = pixels[idx + 2];
-    const a = pixels[idx + 3];
-
-    if (a < 50) {
-      ditherMap[i] = 255; // White for transparent background
-    } else {
-      const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-      
-      // Soft contrast equalization to prevent harsh graininess (from 0.4 down to 0.12)
-      let eq = gray;
-      if (gray > 128) {
-        eq = Math.min(255, Math.round(gray + (gray - 128) * 0.12));
-      } else {
-        eq = Math.max(0, Math.round(gray - (128 - gray) * 0.12));
-      }
-      ditherMap[i] = eq;
-    }
-  }
-
-  // 2. Floyd-Steinberg Dithering Algorithm
-  for (let y = 0; y < printHeight; y++) {
-    for (let x = 0; x < printWidth; x++) {
-      const idx = y * printWidth + x;
-      const oldPixel = ditherMap[idx];
-      const newPixel = oldPixel > 128 ? 255 : 0;
-      
-      ditherMap[idx] = newPixel;
-      const err = oldPixel - newPixel;
-
-      // Diffuse quantization error to neighboring pixels
-      if (x + 1 < printWidth) ditherMap[idx + 1] += Math.round(err * 7 / 16);
-      if (y + 1 < printHeight) {
-        if (x - 1 >= 0) ditherMap[idx + printWidth - 1] += Math.round(err * 3 / 16);
-        ditherMap[idx + printWidth] += Math.round(err * 5 / 16);
-        if (x + 1 < printWidth) ditherMap[idx + printWidth + 1] += Math.round(err * 1 / 16);
-      }
-    }
-  }
-
-  // 3. Scan from bottom up to detect where the actual printed content ends (first row with any black pixel)
-  let lastContentRow = -1;
-  const paddingBottom = 20; // 20 pixels safety padding at the bottom of the content
-  
-  for (let y = printHeight - 1; y >= 0; y--) {
-    let isRowBlank = true;
-    for (let x = 0; x < printWidth; x++) {
-      if (ditherMap[y * printWidth + x] === 0) { // Black pixel found
-        isRowBlank = false;
-        break;
-      }
-    }
-    if (!isRowBlank) {
-      lastContentRow = y;
-      break;
-    }
-  }
-
-  // Determine effective height to crop any trailing blank space
-  const effectiveHeight = lastContentRow !== -1 ? Math.min(printHeight, lastContentRow + 1 + paddingBottom) : printHeight;
-
-  const widthBytes = printWidth / 8; // 72 bytes per baris
-  const escPosCommands = [];
-
-  // 1. Inisialisasi Printer: ESC @ (0x1B, 0x40)
-  escPosCommands.push(0x1B, 0x40);
-
-  // Set line spacing to 0: ESC 3 0 (0x1B, 0x33, 0x00)
-  escPosCommands.push(0x1B, 0x33, 0x00);
-
-  // 2. Command Cetak Gambar: GS v 0 m xL xH yL yH
-  const m = 0; // Normal mode
-  const xL = widthBytes % 256;
-  const xH = Math.floor(widthBytes / 256);
-  const yL = effectiveHeight % 256;
-  const yH = Math.floor(effectiveHeight / 256);
-
-  escPosCommands.push(0x1D, 0x76, 0x30, m, xL, xH, yL, yH);
-
-  // 3. Konversi piksel hasil dither ke format bit biner (1 = hitam, 0 = putih)
-  for (let y = 0; y < effectiveHeight; y++) {
-    for (let x = 0; x < widthBytes; x++) {
-      let byteVal = 0;
-      for (let bit = 0; bit < 8; bit++) {
-        const pixelX = x * 8 + bit;
-        const idx = y * printWidth + pixelX;
-        
-        let isBlack = 0;
-        if (idx < ditherMap.length) {
-          isBlack = ditherMap[idx] === 0 ? 1 : 0;
-        }
-        
-        byteVal |= (isBlack << (7 - bit));
-      }
-      escPosCommands.push(byteVal);
-    }
-  }
-
-  // 4. Feed & Cut
-  // Feed 6 line kosong agar gambar keluar penuh dari pemotong (LF x 6)
-  escPosCommands.push(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A);
-  // Cut paper: GS V 66 0
-  escPosCommands.push(0x1D, 0x56, 66, 0);
-
-  return new Uint8Array(escPosCommands);
-};
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
 
 export default function ResultScreen({
   mergedImage,
@@ -175,6 +54,13 @@ export default function ResultScreen({
   const [isPrinting, setIsPrinting] = useState(false);
   const [printStatus, setPrintStatus] = useState('idle');
   const [autoPrintEnabled, setAutoPrintEnabled] = useState(true);
+  const [bleDelay, setBleDelay] = useState(8);
+  const [bleChunkSize, setBleChunkSize] = useState(128);
+  const [bleSlowdown, setBleSlowdown] = useState(false);
+  const [bleDoubleHeight, setBleDoubleHeight] = useState(false);
+  const [bleScale, setBleScale] = useState(1.0);
+
+
   const autoPrintAttemptedRef = useRef(false);
 
   // Initialize auto-print setting from localStorage
@@ -286,74 +172,16 @@ export default function ResultScreen({
   const handleDirectBluetoothPrint = async () => {
     if (!mergedImage) return;
 
-    Swal.fire({
-      title: 'Connecting Bluetooth Printer... 🔌',
-      text: 'Please select your Bluetooth thermal printer in the browser dialog.',
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-      customClass: { popup: 'swal-doodle' }
-    });
-
     try {
-      // 1. Request Bluetooth Device
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          '000018f0-0000-1000-8000-00805f9b34fb', // Standard Printer GATT Service
-          '00001101-0000-1000-8000-00805f9b34fb', // Serial Port UUID
-          '0000e808-0000-1000-8000-00805f9b34fb'  // Generic raw write GATT Service
-        ]
-      });
-
-      Swal.fire({
-        title: 'Connecting GATT Server... ⚡',
-        text: `Establishing hardware connection with ${device.name || 'Printer'}...`,
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
-        customClass: { popup: 'swal-doodle' }
-      });
-
-      const server = await device.gatt.connect();
-      
-      Swal.fire({
-        title: 'Discovering Printer Services... 🔍',
-        text: 'Searching for serial write characteristic...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
-        customClass: { popup: 'swal-doodle' }
-      });
-
-      const services = await server.getPrimaryServices();
-      let writeCharacteristic = null;
-
-      for (const service of services) {
-        try {
-          const characteristics = await service.getCharacteristics();
-          for (const char of characteristics) {
-            if (char.properties.write || char.properties.writeWithoutResponse) {
-              writeCharacteristic = char;
-              break;
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to scan service characteristics:', service.uuid, e);
-        }
-        if (writeCharacteristic) break;
-      }
-
-      if (!writeCharacteristic) {
-        throw new Error('Could not find a valid write characteristic on this device. Make sure it is a GATT-capable thermal printer.');
-      }
-
+      // 1. Prepare receipt image
       Swal.fire({
         title: 'Processing Image... 🎨',
-        text: 'Scaling and converting receipt booth to ESC/POS binary bitmap...',
+        text: 'Converting to thermal receipt format...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
         customClass: { popup: 'swal-doodle' }
       });
 
-      // 2. Generate the 80mm B&W Receipt Image
       const processedImage = await convertToPaperSize(mergedImage, {
         targetPaper: 'RECEIPT_80MM',
         sessionMode: sessionMode,
@@ -362,44 +190,35 @@ export default function ResultScreen({
         frameColor: '#ffffff'
       });
 
-      // Load image to read data
-      const img = await new Promise((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = processedImage;
-      });
+      const img = await loadImage(processedImage);
 
-      // Convert to raster binary data
-      const escPosBytes = canvasToEscPosBytes(img);
+      // 2. Convert to ESC/POS binary (strip-based raster for smooth printing)
+      const escPosBytes = imageToEscPosBytes(img, { slowdown: bleSlowdown, doubleHeight: bleDoubleHeight, scale: bleScale });
 
-      Swal.fire({
-        title: 'Printing Photo Strip... 🖨️✨',
-        text: 'Transmitting ESC/POS packets in safe chunks...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
-        customClass: { popup: 'swal-doodle' }
-      });
+      // 3. Send via Bluetooth with live status updates
+      await sendViaBluetooth(escPosBytes, {
+        delayWithoutResponse: bleDelay,
+        chunkSize: bleChunkSize,
+        onStatus: (status, detail) => {
 
-      // 3. Send bytes in safe chunk sizes with dynamic rate-limiting to avoid Bluetooth buffer overflows
-      const chunkSize = 128; // Increased from 64 to 128 for smoother physical paper roll
-      const delayMsWithoutResponse = 8; // Optimal delay for writeWithoutResponse
-      const delayMsWithResponse = 2; // Micro delay for writeWithResponse since link-layer handles flow control
-      
-      for (let offset = 0; offset < escPosBytes.length; offset += chunkSize) {
-        const chunk = escPosBytes.slice(offset, offset + chunkSize);
-        if (writeCharacteristic.properties.writeWithoutResponse) {
-          await writeCharacteristic.writeValueWithoutResponse(chunk);
-          if (delayMsWithoutResponse > 0) {
-            await new Promise(r => setTimeout(r, delayMsWithoutResponse));
+          const statusMessages = {
+            requesting: { title: 'Connecting Bluetooth Printer... 🔌', text: detail },
+            connecting: { title: 'Connecting GATT Server... ⚡', text: detail },
+            discovering: { title: 'Discovering Printer Services... 🔍', text: detail },
+            printing: { title: 'Printing Photo Strip... 🖨️✨', text: detail },
+          };
+          const msg = statusMessages[status];
+          if (msg) {
+            Swal.fire({
+              title: msg.title,
+              text: msg.text,
+              allowOutsideClick: false,
+              didOpen: () => Swal.showLoading(),
+              customClass: { popup: 'swal-doodle' }
+            });
           }
-        } else {
-          await writeCharacteristic.writeValueWithResponse(chunk);
-          if (delayMsWithResponse > 0) {
-            await new Promise(r => setTimeout(r, delayMsWithResponse));
-          }
-        }
-      }
+        },
+      });
 
       Swal.fire({
         icon: 'success',
@@ -569,7 +388,6 @@ export default function ResultScreen({
     });
 
     try {
-      // 1. Generate the 80mm B&W Receipt Image
       const processedImage = await convertToPaperSize(mergedImage, {
         targetPaper: 'RECEIPT_80MM',
         sessionMode: sessionMode,
@@ -578,26 +396,14 @@ export default function ResultScreen({
         frameColor: '#ffffff'
       });
 
-      // Load image to read data
-      const img = await new Promise((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = processedImage;
-      });
+      const img = await loadImage(processedImage);
+      const escPosBytes = imageToEscPosBytes(img, { slowdown: bleSlowdown, doubleHeight: bleDoubleHeight, scale: bleScale });
 
-      // 2. Convert to raster binary data
-      const escPosBytes = canvasToEscPosBytes(img);
-
-      // 3. Create blob and download
+      // Trigger browser download of the raw binary
       const blob = new Blob([escPosBytes], { type: 'application/octet-stream' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      
-      const baseName = downloadName || `ldr-photo-${Date.now()}.jpg`;
-      const binName = baseName.replace(/\.[^/.]+$/, '') + '-receipt.bin';
-      
-      link.download = binName;
+      link.download = (downloadName || `ldr-photo-${Date.now()}.jpg`).replace(/\.[^/.]+$/, '') + '-receipt.bin';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1156,7 +962,7 @@ export default function ResultScreen({
                 <div className="mode-icon" style={{ width: '40px', height: '40px', fontSize: '20px', background: 'var(--yellow)' }}>🖨️</div>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: '700', fontSize: '18px', fontFamily: "'Gaegu', cursive" }}>Print as 4R Page</div>
-                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Printable size (6" x 4" format)</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>Standard 4R glossy paper</div>
                 </div>
               </button>
 
@@ -1239,6 +1045,111 @@ export default function ResultScreen({
                   </div>
                 </button>
               )}
+            </div>
+
+            {/* Bluetooth Configuration Panel */}
+            <div style={{ 
+              marginTop: '15px', 
+              paddingTop: '12px', 
+              borderTop: '2px dashed var(--ink)',
+              fontFamily: "'Gaegu', cursive",
+              fontSize: '15px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              background: '#f8fafc',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '2px solid var(--ink)',
+              boxShadow: '2px 2px 0 var(--ink)'
+            }}>
+              <div style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                ⚙️ Bluetooth Print Settings
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>🐢 Slowdown Motor (ESC/POS)</span>
+                <input 
+                  type="checkbox" 
+                  checked={bleSlowdown}
+                  onChange={(e) => setBleSlowdown(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>🎨 Vintage Smooth (Double Height)</span>
+                <input 
+                  type="checkbox" 
+                  checked={bleDoubleHeight}
+                  onChange={(e) => setBleDoubleHeight(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>📐 Print Scale (Ukuran Cetak)</span>
+                <select 
+                  value={bleScale} 
+                  onChange={(e) => setBleScale(Number(e.target.value))}
+                  style={{ 
+                    padding: '2px 6px', 
+                    border: '2px solid var(--ink)', 
+                    borderRadius: '6px', 
+                    fontFamily: "'Gaegu', cursive", 
+                    fontWeight: 'bold', 
+                    background: 'white',
+                    fontSize: '13px'
+                  }}
+                >
+                  <option value={1.0}>100% (Normal / ~18cm)</option>
+                  <option value={0.8}>80% (Medium / ~14cm)</option>
+                  <option value={0.7}>70% (Compact / ~12cm)</option>
+                  <option value={0.6}>60% (Small / ~10cm)</option>
+                  <option value={0.5}>50% (Mini / ~9cm)</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>⏳ BLE Delay (ms)</span>
+                <select 
+                  value={bleDelay} 
+                  onChange={(e) => setBleDelay(Number(e.target.value))}
+                  style={{ 
+                    padding: '2px 6px', 
+                    border: '2px solid var(--ink)', 
+                    borderRadius: '6px', 
+                    fontFamily: "'Gaegu', cursive", 
+                    fontWeight: 'bold', 
+                    background: 'white',
+                    fontSize: '13px'
+                  }}
+                >
+                  <option value={2}>2 ms (Extreme/Fastest)</option>
+                  <option value={4}>4 ms (Turbo Speed)</option>
+                  <option value={8}>8 ms (Sweet Spot)</option>
+                  <option value={16}>16 ms (Slower/Stable)</option>
+                  <option value={32}>32 ms (Safest)</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>📦 Chunk Size (Bytes)</span>
+                <select 
+                  value={bleChunkSize} 
+                  onChange={(e) => setBleChunkSize(Number(e.target.value))}
+                  style={{ 
+                    padding: '2px 6px', 
+                    border: '2px solid var(--ink)', 
+                    borderRadius: '6px', 
+                    fontFamily: "'Gaegu', cursive", 
+                    fontWeight: 'bold', 
+                    background: 'white',
+                    fontSize: '13px'
+                  }}
+                >
+                  <option value={64}>64 B (Small/Stable)</option>
+                  <option value={128}>128 B (Standard)</option>
+                  <option value={256}>256 B (Fast/Large)</option>
+                  <option value={512}>512 B (Super/MTU Max)</option>
+                  <option value={1024}>1024 B (Giant Chunk)</option>
+                </select>
+              </div>
             </div>
 
             {/* Auto-print Toggle Setting */}

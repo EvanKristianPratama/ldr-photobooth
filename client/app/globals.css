@@ -265,10 +265,10 @@ body::before {
 
 .form-section-title {
   font-family: 'Gaegu', cursive;
-  font-size: 36px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   transform: rotate(-0.5deg);
   display: inline-block;
 }

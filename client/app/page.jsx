@@ -17,6 +17,7 @@ import StepIndicator from './components/ui/StepIndicator';
 import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelect/ModeSelectScreen';
+import WelcomeScreen from './components/screens/WelcomeScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
 
 import useAppController from './hooks/useAppController';
@@ -104,11 +105,11 @@ export default function Page() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
       {/* TOPBAR */}
-      {step !== 'community' && (
+      {step !== 'community' && step !== 'welcome' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
           <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleGoHome}>
             <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '4px' }} />
-            <span style={{ color: 'var(--ink)', fontSize: '26px', lineHeight: 'normal', verticalAlign: 'middle' }}>LDR Photobooth</span>
+            <span style={{ color: 'var(--ink)', fontSize: '26px', lineHeight: 'normal', verticalAlign: 'middle' }}>pico</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
@@ -136,6 +137,10 @@ export default function Page() {
             }} />
             <div style={{ fontSize: '28px', fontWeight: '700', letterSpacing: '0.5px' }}>Memuat Pesanan Anda... ✨</div>
           </div>
+        )}
+
+        {step === 'welcome' && (
+          <WelcomeScreen onContinue={() => setStep('mode-select')} />
         )}
 
         {step === 'mode-select' && (

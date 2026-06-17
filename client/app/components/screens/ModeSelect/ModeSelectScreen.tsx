@@ -177,25 +177,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
 
   return (
     <section className="page active" id="page-mode-select">
-      {/* Help Hint Bubble (only visible on main selection screen) */}
-      {!showGroupOptions && (
-        <div className="help-hint-container" style={styles.hintContainer}>
-          <span style={styles.hintText}>
-            {t('mode.helpHint')}
-          </span>
-        </div>
-      )}
-
-      {/* Reusable Help Button */}
-      <button 
-        type="button" 
-        className="btn-help" 
-        onClick={onShowHelp} 
-        title={t('common.help') || 'Help'}
-      >
-        ?
-      </button>
-      
       {/* Left Sidebar Brand/Title */}
       <div className="mode-left vibe-bg">
         <div className="big-doodle">
@@ -207,7 +188,27 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
       </div>
 
       {/* Right Option Column */}
-      <div className="mode-right">
+      <div className="mode-right" style={{ position: 'relative' }}>
+        {/* Help Hint Bubble (only visible on main selection screen) */}
+        {!showGroupOptions && (
+          <div className="help-hint-container" style={styles.hintContainer}>
+            <span style={styles.hintText}>
+              {t('mode.helpHint')}
+            </span>
+          </div>
+        )}
+
+        {/* Reusable Help Button */}
+        <button 
+          type="button" 
+          className="btn-help" 
+          onClick={onShowHelp} 
+          title={t('common.help') || 'Help'}
+          style={{ position: 'absolute', top: '20px', right: '20px' }}
+        >
+          ?
+        </button>
+
         {showGroupOptions ? renderGroupOptions() : renderMainOptions()}
       </div>
     </section>
@@ -245,10 +246,12 @@ const styles = {
     alignItems: 'center', 
     gap: '8px', 
     pointerEvents: 'none' as const,
+    zIndex: 10,
+    maxWidth: '200px',
   },
   hintText: { 
     fontFamily: "'Gaegu', cursive", 
-    fontSize: '16px', 
+    fontSize: '14px', 
     color: 'var(--ink)', 
     background: 'white',
     padding: '4px 10px',

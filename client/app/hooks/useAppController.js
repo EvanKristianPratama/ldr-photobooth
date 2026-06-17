@@ -38,7 +38,7 @@ const loadJsPDF = () => {
 };
 
 export default function useAppController() {
-  const [step, setStep] = useState('loading');
+  const [step, setStep] = useState('welcome');
   const [invoiceData, setInvoiceData] = useState(null);
   const stepRef = useRef(step);
   const isMountedRef = useRef(false);
@@ -403,7 +403,7 @@ export default function useAppController() {
     const sessionStep = sessionStorage.getItem('ldr_step');
     const sessionModeStored = sessionStorage.getItem('ldr_session_mode');
 
-    let restoredStep = 'mode-select';
+    let restoredStep = 'welcome';
     let restoredMode = null;
 
     if (view === 'community') {
