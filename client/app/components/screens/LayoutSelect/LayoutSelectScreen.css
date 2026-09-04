@@ -6,21 +6,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px 56px;
+  padding: 36px 20px 48px;
   box-sizing: border-box;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #ffffff;
   position: relative;
 }
 
+/* ── HEADER ROW (Clean, Non-overlapping) ── */
+.layout-header-row {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 32px;
+}
+
 .layout-back-btn {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  z-index: 20;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   padding: 8px 18px;
   font-size: 13px;
   font-weight: 600;
@@ -32,20 +43,14 @@
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .layout-back-btn:hover {
   background: #f8fafc;
   color: #0f172a;
   border-color: #cbd5e1;
-  transform: translateX(-2px);
-}
-
-.layout-title-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 36px;
+  transform: translateY(-50%) translateX(-2px);
 }
 
 .layout-title {
@@ -102,10 +107,10 @@
 
 .layout-check-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #0f172a;
   color: #ffffff;
@@ -124,28 +129,37 @@
 
 /* ── CARD PREVIEW ── */
 .layout-preview-modern {
-  height: 165px;
+  height: 155px;
   background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 12px;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.2s ease;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .layout-card-modern.selected .layout-preview-modern {
   background: #f1f5f9;
 }
 
+.layout-preview-slots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 100%;
+  max-width: 100%;
+}
+
 .preview-slot-modern {
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 4px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   transition: border-color 0.2s ease;
-  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -153,9 +167,35 @@
   border-color: #475569;
 }
 
+/* Proportional slots by layout item count (Desktop) */
+.layout-slots-count-1 .preview-slot-modern {
+  width: 110px;
+  height: 80px;
+}
+
+.layout-slots-count-2 .preview-slot-modern {
+  width: 96px;
+  height: 52px;
+}
+
+.layout-slots-count-3 .preview-slot-modern {
+  width: 86px;
+  height: 34px;
+}
+
+.layout-slots-count-4 .preview-slot-modern {
+  width: 78px;
+  height: 24px;
+}
+
+.layout-slots-count-6 .preview-slot-modern {
+  width: 80px;
+  height: 16px;
+}
+
 /* ── CARD INFO ── */
 .layout-info-modern {
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -163,7 +203,7 @@
 }
 
 .layout-name-modern {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.2px;
@@ -176,7 +216,7 @@
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 9999px;
-  padding: 3px 10px;
+  padding: 2px 8px;
 }
 
 .layout-card-modern.selected .layout-count-modern {
@@ -184,43 +224,9 @@
   background: #e2e8f0;
 }
 
-/* ── WARNING BANNER ── */
-.layout-warning-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  max-width: 620px;
-  width: 100%;
-  margin: 28px auto 0;
-  padding: 14px 18px;
-  background: #fffbeb;
-  border: 1px solid #fef08a;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(234, 179, 8, 0.08);
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: #854d0e;
-  text-align: left;
-  box-sizing: border-box;
-}
-
-.layout-warning-icon {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.layout-warning-text {
-  flex: 1;
-}
-
-.layout-warning-text strong {
-  color: #713f12;
-  font-weight: 700;
-}
-
 /* ── START BUTTON CONTAINER ── */
 .layout-start-container-modern {
-  margin-top: 36px;
+  margin-top: 32px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -266,40 +272,74 @@
 /* ── MOBILE RESPONSIVE ── */
 @media (max-width: 768px) {
   .layout-select-section {
-    padding: 60px 16px 36px;
+    padding: 24px 16px 36px;
     justify-content: flex-start;
   }
 
+  .layout-header-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
   .layout-back-btn {
-    top: 16px;
-    left: 16px;
+    position: static !important;
+    transform: none !important;
     padding: 6px 14px;
     font-size: 12px;
   }
 
   .layout-title {
-    font-size: 24px;
-    margin-bottom: 20px;
+    font-size: 22px;
+    text-align: left;
+    margin: 0;
   }
 
   .layout-grid-modern {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
     max-width: 440px;
   }
 
-  .layout-preview-modern {
-    height: 120px;
-    padding: 10px;
+  .layout-card-modern {
+    border-radius: 16px;
   }
 
-  .preview-slot-modern {
-    transform: scale(0.85);
-    transform-origin: center;
+  .layout-preview-modern {
+    height: 114px;
+    padding: 8px;
+  }
+
+  /* Proportional slots by layout item count (Mobile) - NEVER overflow */
+  .layout-slots-count-1 .preview-slot-modern {
+    width: 80px;
+    height: 56px;
+  }
+
+  .layout-slots-count-2 .preview-slot-modern {
+    width: 70px;
+    height: 38px;
+  }
+
+  .layout-slots-count-3 .preview-slot-modern {
+    width: 62px;
+    height: 24px;
+  }
+
+  .layout-slots-count-4 .preview-slot-modern {
+    width: 56px;
+    height: 18px;
+  }
+
+  .layout-slots-count-6 .preview-slot-modern {
+    width: 60px;
+    height: 12px;
   }
 
   .layout-info-modern {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
   .layout-name-modern {
@@ -308,15 +348,7 @@
 
   .layout-count-modern {
     font-size: 11px;
-    padding: 2px 8px;
-  }
-
-  .layout-warning-banner {
-    margin-top: 20px;
-    padding: 12px 14px;
-    font-size: 12.5px;
-    gap: 10px;
-    border-radius: 12px;
+    padding: 2px 7px;
   }
 
   .layout-start-container-modern {

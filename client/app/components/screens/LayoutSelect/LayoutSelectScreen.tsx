@@ -60,22 +60,17 @@ export default function LayoutSelectScreen({
 
   return (
     <section className="layout-select-section" id="page-layout">
-      {onBack && (
-        <button 
-          type="button"
-          onClick={onBack}
-          className="layout-back-btn"
-          aria-label={t('common.back')}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          <span>{t('common.back')}</span>
-        </button>
-      )}
-
-      <div className="layout-title-row">
+      <div className="layout-header-row">
+        {onBack && (
+          <button 
+            type="button"
+            onClick={onBack}
+            className="layout-back-btn"
+            aria-label={t('common.back')}
+          >
+            <span>{t('common.back')}</span>
+          </button>
+        )}
         <h1 className="layout-title">{t('layout.title')}</h1>
       </div>
 
@@ -90,26 +85,24 @@ export default function LayoutSelectScreen({
             >
               {isSelected && (
                 <div className="layout-check-badge">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
               )}
 
-              <div 
-                className="layout-preview-modern" 
-                style={{ 
-                  flexDirection: layout.direction || 'row', 
-                  gap: layout.gap || '6px' 
-                }}
-              >
-                {layout.slots.map((slot, i) => (
-                  <div 
-                    key={i} 
-                    className="preview-slot-modern" 
-                    style={{ width: slot.w, height: slot.h }}
-                  />
-                ))}
+              <div className="layout-preview-modern">
+                <div 
+                  className={`layout-preview-slots layout-slots-count-${layout.slots.length}`}
+                  style={{ 
+                    flexDirection: layout.direction || 'row', 
+                    gap: layout.gap || '5px' 
+                  }}
+                >
+                  {layout.slots.map((_, i) => (
+                    <div key={i} className="preview-slot-modern" />
+                  ))}
+                </div>
               </div>
 
               <div className="layout-info-modern">
@@ -122,28 +115,6 @@ export default function LayoutSelectScreen({
           );
         })}
       </div>
-
-      {selectedLayout === 'layout1' && (
-        <div className="layout-warning-banner">
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="#ca8a04" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            className="layout-warning-icon"
-          >
-            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
-            <line x1="12" y1="18" x2="12.01" y2="18"/>
-          </svg>
-          <div className="layout-warning-text">
-            <strong>Rekomendasi Orientasi:</strong> Jika memilih <strong>1 Foto Bareng</strong>, disarankan menggunakan HP posisi tegak (<strong>Portrait</strong>) agar badan & wajah pas dan tidak terpotong ekstrem di frame!
-          </div>
-        </div>
-      )}
 
       <div className="layout-start-container-modern">
         <button 
