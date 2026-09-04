@@ -547,7 +547,9 @@ export default function useAppController() {
   const waitUntilTime = async (timestamp) => {
     const target = Number(timestamp);
     if (!Number.isFinite(target)) return;
-    const delay = target - Date.now();
+    const rawDelay = target - Date.now();
+    // Clamp to [0, 4000ms]. If client clock is skewed (drifted ahead or behind), fall back safely to 400ms.
+    const delay = (rawDelay >= 0 && rawDelay <= 4000) ? rawDelay : 400;
     if (delay > 0) {
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -641,7 +643,9 @@ export default function useAppController() {
     setProgress(0);
     const shots = getSelectedShotCount(layout || selectedLayoutRef.current);
     if (startTime) {
-      const delay = Math.max(0, startTime - Date.now());
+      const rawDelay = Number(startTime) - Date.now();
+      // Clamp to [0, 4000ms]. If client clock is skewed, fall back safely to 1000ms.
+      const delay = (rawDelay >= 0 && rawDelay <= 4000) ? rawDelay : 1000;
       if (delay > 0) await new Promise(r => setTimeout(r, delay));
     }
     setStep('countdown');

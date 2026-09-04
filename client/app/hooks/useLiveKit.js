@@ -142,7 +142,11 @@ export default function useLiveKit({
     await room.localParticipant.publishTrack(nextTrack, {
       name: VC_TRACK_NAME,
       source: Track.Source.Camera,
-      simulcast: false
+      simulcast: false,
+      videoEncoding: {
+        maxBitrate: 1_500_000,
+        maxFramerate: 30
+      }
     });
 
     publishedTrackRef.current = nextTrack;

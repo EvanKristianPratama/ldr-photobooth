@@ -86,6 +86,7 @@ export default function useCapture({
       video: {
         width: { ideal: 1280 },
         height: { ideal: 720 },
+        frameRate: { ideal: 30, max: 30 },
         facingMode: 'user'
       },
       audio: false
@@ -199,8 +200,8 @@ export default function useCapture({
         return;
       }
 
-      canvas.width = 1280;
-      canvas.height = 720;
+      if (canvas.width !== 1280) canvas.width = 1280;
+      if (canvas.height !== 720) canvas.height = 720;
 
       // Draw elegant dark background (#121212) matching professional studios
       ctx.fillStyle = '#121212';

@@ -131,7 +131,12 @@ export default function useWebRTC({
     if (pcsRef.current.has(remoteId)) return pcsRef.current.get(remoteId);
 
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
+      ]
     });
 
     pc.onicecandidate = e => {
@@ -213,8 +218,8 @@ export default function useWebRTC({
         let offset = 0;
         while (offset < buffer.byteLength) {
           const chunk = buffer.slice(offset, offset + chunkSize);
-          while (dc.bufferedAmount > 10 * 1024 * 1024) {
-            await new Promise(r => setTimeout(r, 50));
+          while (dc.bufferedAmount > 512 * 1024) {
+            await new Promise(r => setTimeout(r, 20));
           }
           if (dc.readyState !== 'open') throw new Error('Channel closed during transfer');
           dc.send(chunk);
@@ -269,8 +274,8 @@ export default function useWebRTC({
           const chunkSize = 16384; // 16KB chunks
           while (offset < buffer.byteLength) {
             const chunk = buffer.slice(offset, offset + chunkSize);
-            while (dc.bufferedAmount > 10 * 1024 * 1024) {
-              await new Promise(r => setTimeout(r, 50));
+            while (dc.bufferedAmount > 512 * 1024) {
+              await new Promise(r => setTimeout(r, 20));
             }
             if (dc.readyState !== 'open') throw new Error('Channel closed during transfer');
             dc.send(chunk);
