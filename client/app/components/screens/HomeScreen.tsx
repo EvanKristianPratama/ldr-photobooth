@@ -94,14 +94,8 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── CLEAN TOPBAR ── */}
       <header className="home-topbar">
         <div className="home-logo" onClick={onEnterBooth}>
-          <img src="/Ldr_photobooth.png" alt="Pico Logo" className="home-logo-img" />
-          <div className="home-logo-wrap">
-            <div className="home-logo-brand">
-              <span className="home-logo-text">P I C O</span>
-              <span className="home-logo-tag">LDR</span>
-            </div>
-            <span className="home-logo-sub">THE ORIGINAL LDR PHOTOBOOTH</span>
-          </div>
+          <img src="/Ldr_photobooth.png" alt="LDR Photobooth" className="home-logo-img" />
+          <span className="home-logo-title">LDR PHOTOBOOTH</span>
         </div>
 
         {/* Navigation links */}
@@ -302,7 +296,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       <footer className="home-footer">
         <div className="home-footer-inner">
           <div className="home-footer-brand">
-            <strong>PICO LDR PHOTOBOOTH</strong>
+            <strong>LDR PHOTOBOOTH</strong>
             <span>The Original LDR Photobooth in the World</span>
           </div>
           <div className="home-footer-links">

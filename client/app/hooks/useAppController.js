@@ -403,6 +403,19 @@ export default function useAppController() {
     const sessionStep = sessionStorage.getItem('ldr_step');
     const sessionModeStored = sessionStorage.getItem('ldr_session_mode');
 
+    // If opening root URL without deep link params, ALWAYS default to 'home'
+    const hasDeepLink = Boolean(view || sharedRoom || orderIdParam || savedStep || mode);
+    if (!hasDeepLink) {
+      sessionStorage.removeItem('ldr_step');
+      sessionStorage.removeItem('ldr_session_mode');
+      setSessionMode(null);
+      setStep('home');
+      setTimeout(() => {
+        isMountedRef.current = true;
+      }, 50);
+      return;
+    }
+
     let restoredStep = 'home';
     let restoredMode = null;
 

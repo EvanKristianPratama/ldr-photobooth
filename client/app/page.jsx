@@ -17,7 +17,6 @@ import StepIndicator from './components/ui/StepIndicator';
 import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelect/ModeSelectScreen';
-import WelcomeScreen from './components/screens/WelcomeScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
 import HomeScreen from './components/screens/HomeScreen';
 
@@ -109,14 +108,10 @@ export default function Page() {
       {step !== 'community' && step !== 'welcome' && step !== 'home' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
           <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }} onClick={handleGoHome}>
-            <img src="/Ldr_photobooth.png" alt="Pico Logo" style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '5px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '2px', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif" }}>PICO</span>
-                <span style={{ fontSize: '9px', fontWeight: '800', background: '#111827', color: '#ffffff', padding: '1px 5px', borderRadius: '4px', letterSpacing: '0.5px' }}>LDR</span>
-              </div>
-              <span className="logo-sub-text" style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>ldr photobooth</span>
-            </div>
+            <img src="/Ldr_photobooth.png" alt="LDR Photobooth" style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '5px' }} />
+            <span style={{ fontSize: '15px', fontWeight: '800', letterSpacing: '1.2px', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif", textTransform: 'uppercase' }}>
+              LDR PHOTOBOOTH
+            </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
@@ -146,15 +141,11 @@ export default function Page() {
           </div>
         )}
 
-        {step === 'home' && (
+        {(step === 'home' || step === 'welcome') && (
           <HomeScreen
             onEnterBooth={() => setStep('mode-select')}
             onSelectMode={handleModeSelect}
           />
-        )}
-
-        {step === 'welcome' && (
-          <WelcomeScreen onContinue={() => setStep('mode-select')} />
         )}
 
         {step === 'mode-select' && (
@@ -476,7 +467,7 @@ export default function Page() {
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
       
       {/* GLOBAL WATERMARK */}
-      {step !== 'community' && step !== 'countdown' && step !== 'processing' && step !== 'mode-select' && (
+      {step !== 'community' && step !== 'countdown' && step !== 'processing' && step !== 'mode-select' && step !== 'home' && step !== 'welcome' && (
         <div 
           className="credits" 
           style={{ 

@@ -4747,33 +4747,14 @@ body:has(.home-container) {
   border-radius: 6px;
 }
 
-.home-logo-brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.home-logo-text {
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 2.5px;
-  color: #111827;
-}
-
-.home-logo-tag {
-  font-size: 10px;
+.home-logo-title {
+  font-size: 15px;
   font-weight: 800;
-  background: #111827;
-  color: #ffffff;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.home-logo-sub {
-  font-size: 9px;
-  color: #94a3b8;
-  font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.2px;
+  color: #111827;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .home-nav {
@@ -5326,6 +5307,10 @@ body:has(.home-container) {
   .home-topbar {
     padding: 0 16px !important;
     height: 56px !important;
+  }
+  .home-logo-title {
+    font-size: 13px !important;
+    letter-spacing: 0.8px !important;
   }
   .home-nav {
     display: none !important;
