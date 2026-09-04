@@ -3,6 +3,7 @@
     "version": "1.0.7",
     "description": "LDR Photobooth - P2P Photo Sharing",
     "scripts": {
+        "dev": "npm run dev:client",
         "dev:client": "cd client && npm run dev",
         "dev:worker": "cd worker && npx wrangler dev",
         "build:client": "cd client && npm run build",

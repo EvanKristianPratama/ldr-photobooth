@@ -3,15 +3,12 @@
   "private": true,
   "version": "1.2.1",
   "type": "module",
-  "main": "main.cjs",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest",
-    "electron": "electron .",
-    "electron:build": "npm run build && electron-builder"
+    "test": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -38,9 +35,6 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.5.0",
-    "electron": "^42.0.1",
-    "electron-builder": "^26.8.1",
-    "electron-is-dev": "^3.0.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "latest",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -53,27 +47,5 @@
     "typescript": "^6.0.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.15"
-  },
-  "build": {
-    "appId": "com.ldrphotobooth.futu",
-    "productName": "FUTU LDR Photobooth",
-    "files": [
-      "out/**/*",
-      "main.cjs",
-      "preload.js",
-      "package.json"
-    ],
-    "mac": {
-      "category": "public.app-category.entertainment",
-      "hardenedRuntime": true,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "extendInfo": {
-        "NSCameraUsageDescription": "Aplikasi ini memerlukan akses kamera untuk fitur Photobooth."
-      }
-    },
-    "win": {
-      "target": "nsis"
-    }
   }
 }

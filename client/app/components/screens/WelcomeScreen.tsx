@@ -51,7 +51,8 @@ export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
         .welcome-wrap.leaving { animation: fadeOut 0.45s cubic-bezier(0.4,0,1,1) both; pointer-events: none; }
         .welcome-img   { animation: scaleIn 0.8s cubic-bezier(0.16,1,0.3,1) both; }
         .welcome-title { animation: fadeUp 0.6s 0.2s cubic-bezier(0.16,1,0.3,1) both; }
-        .welcome-sub   { animation: fadeUp 0.6s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+        .welcome-by    { animation: fadeUp 0.6s 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+        .welcome-sub   { animation: fadeUp 0.6s 0.38s cubic-bezier(0.16,1,0.3,1) both; }
         .welcome-tap   { animation: fadeUp 0.6s 0.5s cubic-bezier(0.16,1,0.3,1) both; }
       `}</style>
 
@@ -59,16 +60,17 @@ export default function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
       <div className="welcome-img" style={styles.imgWrapper}>
         <img
           src="/hi_im_pico.png"
-          alt="Hi, I'm Pico"
+          alt="Pico — LDR Photobooth by Pico | The Original LDR Photobooth & The First in the World"
           style={styles.image}
         />
       </div>
 
-      {/* Title */}
-      <h1 className="welcome-title" style={styles.title}>pico</h1>
+      {/* Title & Byline */}
+      <h1 className="welcome-title" style={styles.title}>ldr photobooth</h1>
+      <p className="welcome-by" style={styles.byText}>by pico</p>
 
-      {/* Subtitle */}
-      <p className="welcome-sub" style={styles.subtitle}>your long-distance photo booth</p>
+      {/* Subtitle / Tagline */}
+      <p className="welcome-sub" style={styles.subtitle}>the original LDR photobooth</p>
 
       {/* Tap hint */}
       <span className="welcome-tap" style={styles.tapHint}>tap anywhere to start</span>
@@ -101,20 +103,30 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
   },
   title: {
-    margin: '0 0 8px 0',
-    fontSize: '56px',
+    margin: '0 0 2px 0',
+    fontSize: '44px',
     fontFamily: "'PanellosPen', cursive",
     fontWeight: 'normal',
     color: '#111',
     letterSpacing: '2px',
-    lineHeight: 1,
+    lineHeight: 1.1,
+    textAlign: 'center',
+  },
+  byText: {
+    margin: '0 0 10px 0',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#aaa',
+    letterSpacing: '2px',
+    textTransform: 'lowercase',
+    fontFamily: "system-ui, -apple-system, sans-serif",
   },
   subtitle: {
     margin: '0 0 48px 0',
-    fontSize: '14px',
-    fontWeight: '400',
-    color: '#999',
-    letterSpacing: '3px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#888',
+    letterSpacing: '2.5px',
     textTransform: 'uppercase',
     fontFamily: "system-ui, -apple-system, sans-serif",
   },

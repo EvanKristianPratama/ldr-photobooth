@@ -88,78 +88,62 @@ export default function ResultScreen({
         frameColor: '#ffffff'
       });
 
-      // 2. Determine execution context (Electron App vs standard Web Browser)
-      if (typeof window !== 'undefined' && window.electronAPI?.printImage) {
-        // Native Electron Print (Silent / Instant)
-        const res = await window.electronAPI.printImage(processedImage, {
-          silent: true,
-          deviceName: '' // default printer
-        });
-        if (res?.success) {
-          setPrintStatus('success');
-        } else {
-          console.error('Electron silent print failed:', res?.error);
-          setPrintStatus('error');
-          alert(t('result.printFailed') || 'Print failed, please try again.');
-        }
-      } else {
-        // Web Browser Print via hidden iframe (standard fallback)
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
+      // 2. Web Browser Print via hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
 
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(`
-          <html>
-            <head>
-              <title>Print Photobooth</title>
-              <style>
-                @page {
-                  size: auto;
-                  margin: 0mm;
-                }
-                body {
-                  margin: 0;
-                  padding: 0;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  height: 100vh;
-                  background: #fff;
-                }
-                img {
-                  max-width: 100%;
-                  max-height: 100%;
-                  object-fit: contain;
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${processedImage}" onload="window.print();" />
-            </body>
-          </html>
-        `);
-        doc.close();
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <html>
+          <head>
+            <title>Print Photobooth</title>
+            <style>
+              @page {
+                size: auto;
+                margin: 0mm;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background: #fff;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${processedImage}" onload="window.print();" />
+          </body>
+        </html>
+      `);
+      doc.close();
 
-        iframe.contentWindow.onafterprint = () => {
+      iframe.contentWindow.onafterprint = () => {
+        document.body.removeChild(iframe);
+        setPrintStatus('success');
+      };
+
+      // Fallback cleanup in case onafterprint does not fire
+      setTimeout(() => {
+        if (iframe.parentNode) {
           document.body.removeChild(iframe);
-          setPrintStatus('success');
-        };
-
-        // Fallback cleanup in case onafterprint does not fire
-        setTimeout(() => {
-          if (iframe.parentNode) {
-            document.body.removeChild(iframe);
-          }
-          setPrintStatus('success');
-        }, 5000);
-      }
+        }
+        setPrintStatus('success');
+      }, 5000);
     } catch (err) {
       console.error('Print error:', err);
       setPrintStatus('error');
@@ -716,7 +700,7 @@ export default function ResultScreen({
                   className="btn-dl" 
                   onClick={() => setShowDownloadModal(true)} 
                   style={{ 
-                    flex: 1, 
+                    width: '100%', 
                     fontSize: '18px', 
                     padding: '16px',
                     display: 'flex',
@@ -727,6 +711,7 @@ export default function ResultScreen({
                 >
                   {t('result.download')}
                 </button>
+                {/* Cetak Foto button hidden temporarily:
                 <button 
                   className="btn-share" 
                   onClick={() => setShowPrintModal(true)}
@@ -744,6 +729,7 @@ export default function ResultScreen({
                 >
                   {t('result.print') || 'Print Photo'}
                 </button>
+                */}
               </div>
 
               <button className="btn-share" onClick={handleShare} style={{ width: '100%', fontSize: '16px', padding: '14px' }}>

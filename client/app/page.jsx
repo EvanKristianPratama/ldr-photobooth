@@ -109,7 +109,8 @@ export default function Page() {
         <header className="topbar" style={{ flexShrink: 0 }}>
           <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleGoHome}>
             <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '4px' }} />
-            <span style={{ color: 'var(--ink)', fontSize: '26px', lineHeight: 'normal', verticalAlign: 'middle' }}>pico</span>
+            <span style={{ color: 'var(--ink)', fontSize: '22px', lineHeight: 'normal', verticalAlign: 'middle', fontFamily: "'PanellosPen', cursive" }}>ldr photobooth</span>
+            <span style={{ color: 'var(--ink)', opacity: 0.45, fontSize: '12px', lineHeight: 'normal', verticalAlign: 'middle', letterSpacing: '0.5px' }}>by pico</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
