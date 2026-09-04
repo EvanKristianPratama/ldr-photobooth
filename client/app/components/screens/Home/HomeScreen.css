@@ -604,6 +604,108 @@ body:has(.home-container) {
   display: flex;
   flex-direction: column;
   align-items: center;
+  will-change: transform;
+}
+
+/* Subtle floating micro-animations */
+@keyframes scatterFloatA {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1.2deg);
+  }
+}
+
+@keyframes scatterFloatB {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(-1.4deg);
+  }
+}
+
+@keyframes scatterFloatC {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-1.1deg);
+  }
+}
+
+@keyframes scatterFloatD {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(7px) rotate(1.3deg);
+  }
+}
+
+.home-scatter-card.sc-1 .home-scatter-paper {
+  animation: scatterFloatA 5.2s ease-in-out infinite;
+  animation-delay: -0.8s;
+}
+
+.home-scatter-card.sc-2 .home-scatter-paper {
+  animation: scatterFloatB 6.1s ease-in-out infinite;
+  animation-delay: -2.3s;
+}
+
+.home-scatter-card.sc-3 .home-scatter-paper {
+  animation: scatterFloatC 4.8s ease-in-out infinite;
+  animation-delay: -1.2s;
+}
+
+.home-scatter-card.sc-4 .home-scatter-paper {
+  animation: scatterFloatD 5.7s ease-in-out infinite;
+  animation-delay: -3.5s;
+}
+
+.home-scatter-card.sc-5 .home-scatter-paper {
+  animation: scatterFloatA 6.4s ease-in-out infinite;
+  animation-delay: -1.9s;
+}
+
+.home-scatter-card.sc-6 .home-scatter-paper {
+  animation: scatterFloatB 5.0s ease-in-out infinite;
+  animation-delay: -4.1s;
+}
+
+.home-scatter-card.sc-7 .home-scatter-paper {
+  animation: scatterFloatC 6.8s ease-in-out infinite;
+  animation-delay: -2.7s;
+}
+
+.home-scatter-card.sc-8 .home-scatter-paper {
+  animation: scatterFloatD 5.5s ease-in-out infinite;
+  animation-delay: -0.5s;
+}
+
+.home-scatter-card.sc-9 .home-scatter-paper {
+  animation: scatterFloatA 6.0s ease-in-out infinite;
+  animation-delay: -3.8s;
+}
+
+.home-scatter-card.sc-10 .home-scatter-paper {
+  animation: scatterFloatB 5.4s ease-in-out infinite;
+  animation-delay: -1.6s;
+}
+
+.home-scatter-card.sc-11 .home-scatter-paper {
+  animation: scatterFloatC 4.9s ease-in-out infinite;
+  animation-delay: -4.5s;
+}
+
+.home-scatter-card.sc-12 .home-scatter-paper {
+  animation: scatterFloatD 6.3s ease-in-out infinite;
+  animation-delay: -2.0s;
+}
+
+.home-scatter-card:hover .home-scatter-paper {
+  animation-play-state: paused;
 }
 
 .home-scatter-img {
