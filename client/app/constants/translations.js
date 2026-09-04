@@ -189,7 +189,7 @@ export const TRANSLATIONS = {
     'frame.glare': 'CAMERA GLARE',
 
     // Home Landing Page
-    'home.nav.activities': 'Activities',
+    'home.nav.activities': 'Modes',
     'home.nav.articles': 'Articles',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -430,7 +430,7 @@ export const TRANSLATIONS = {
     'frame.glare': 'KILAU CAHAYA (GLARE)',
 
     // Home Landing Page
-    'home.nav.activities': 'Aktivitas',
+    'home.nav.activities': 'Mode',
     'home.nav.articles': 'Artikel',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -671,7 +671,7 @@ export const TRANSLATIONS = {
     'frame.glare': '카메라 플래시 (글레어)',
 
     // Home Landing Page
-    'home.nav.activities': '즐길거리',
+    'home.nav.activities': '모드',
     'home.nav.articles': '스토리',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -912,7 +912,7 @@ export const TRANSLATIONS = {
     'frame.glare': 'カメラグレア',
 
     // Home Landing Page
-    'home.nav.activities': 'あそびかた',
+    'home.nav.activities': 'モード',
     'home.nav.articles': 'お役立ち',
     'home.nav.faq': 'よくある質問',
     'home.hero.title1': 'The',
