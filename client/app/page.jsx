@@ -467,7 +467,7 @@ export default function Page() {
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
       
       {/* GLOBAL WATERMARK */}
-      {step !== 'community' && step !== 'countdown' && step !== 'processing' && step !== 'mode-select' && step !== 'home' && step !== 'welcome' && (
+      {step !== 'community' && step !== 'countdown' && step !== 'processing' && step !== 'mode-select' && step !== 'home' && step !== 'welcome' && step !== 'layout-select' && (
         <div 
           className="credits" 
           style={{ 

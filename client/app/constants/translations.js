@@ -83,7 +83,7 @@ export const TRANSLATIONS = {
     'live.startVc': 'START LIVE VC',
     'live.waitingPartnerButton': 'Waiting for Partner...',
     'live.timerRunning': 'Timer Running...',
-    'liveLayout.title': 'Choose Live Layout ✦',
+    'liveLayout.title': 'Choose Live Layout',
     'liveLayout.start': 'Enter Live Room →',
     'liveLayout.selectFirst': 'Pilih Layout',
     'liveLayout.pose': 'Pose',
@@ -91,11 +91,11 @@ export const TRANSLATIONS = {
     'liveLayout.warning': 'Orientation Recommendation: If choosing 1 Photo, it is recommended to use the phone in Portrait mode so bodies & faces fit well and do not get cropped awkwardly!',
 
     // Layout Select
-    'layout.title': 'Pick a layout ✦',
+    'layout.title': 'Pick a layout',
     'layout.photos': 'photo',
     'layout.photosPlural': 'photos',
     'layout.start': 'Start Capture →',
-    'layout.selectFirst': 'Choose a Layout First ✨',
+    'layout.selectFirst': 'Choose a Layout First',
 
     // Capture / Processing Screen
     'capture.developing': 'Developing',
@@ -323,7 +323,7 @@ export const TRANSLATIONS = {
     'live.startVc': 'MULAI LIVE VC',
     'live.waitingPartnerButton': 'Menunggu Partner VC...',
     'live.timerRunning': 'Timer Jalan...',
-    'liveLayout.title': 'Pilih Tata Letak Foto Bareng ✦',
+    'liveLayout.title': 'Pilih Tata Letak Foto Bareng',
     'liveLayout.start': 'Masuk ke Live Room →',
     'liveLayout.selectFirst': 'Pilih Layout',
     'liveLayout.pose': 'Pose Berdua',
@@ -331,11 +331,11 @@ export const TRANSLATIONS = {
     'liveLayout.warning': 'Rekomendasi Orientasi: Jika memilih 1 Foto Bareng, disarankan menggunakan HP posisi tegak (Portrait) agar badan & wajah pas dan tidak terpotong ekstrem di frame!',
 
     // Layout Select
-    'layout.title': 'Pilih tata letak ✦',
+    'layout.title': 'Pilih tata letak',
     'layout.photos': 'foto',
     'layout.photosPlural': 'foto',
     'layout.start': 'Mulai Ambil Foto →',
-    'layout.selectFirst': 'Pilih Layout Dulu ✨',
+    'layout.selectFirst': 'Pilih Layout Dulu',
 
     // Capture / Processing Screen
     'capture.developing': 'Mencuci',
@@ -563,7 +563,7 @@ export const TRANSLATIONS = {
     'live.startVc': '라이브 영상 통화 시작',
     'live.waitingPartnerButton': '파트너 대기 중...',
     'live.timerRunning': '타이머 작동 중...',
-    'liveLayout.title': '라이브 사진 레이아웃 선택 ✦',
+    'liveLayout.title': '라이브 사진 레이아웃 선택',
     'liveLayout.start': '라이브 룸 입장 →',
     'liveLayout.selectFirst': '레이아웃 선택',
     'liveLayout.pose': '포즈',
@@ -571,11 +571,11 @@ export const TRANSLATIONS = {
     'liveLayout.warning': '방향 권장 사항: 1 장의 사진을 선택하는 경우, 본문 및 얼굴이 잘 맞고 어색하게 잘리지 않도록 세로 모드로 전화를 사용하는 것이 좋습니다!',
 
     // Layout Select
-    'layout.title': '레이아웃을 고르세요 ✦',
+    'layout.title': '레이아웃을 고르세요',
     'layout.photos': '사진',
     'layout.photosPlural': '사진',
     'layout.start': '촬영 시작 →',
-    'layout.selectFirst': '레이아웃을 먼저 선택하세요 ✨',
+    'layout.selectFirst': '레이아웃을 먼저 선택하세요',
 
     // Capture / Processing Screen
     'capture.developing': '필름 현상',
@@ -803,7 +803,7 @@ export const TRANSLATIONS = {
     'live.startVc': 'ライブ通話を開始',
     'live.waitingPartnerButton': 'パートナーを待機中...',
     'live.timerRunning': 'タイマー稼働中...',
-    'liveLayout.title': 'ライブ写真レイアウト選択 ✦',
+    'liveLayout.title': 'ライブ写真レイアウト選択',
     'liveLayout.start': 'ライブ室に入る →',
     'liveLayout.selectFirst': 'レイアウト選択',
     'liveLayout.pose': 'ポーズ',
@@ -811,11 +811,11 @@ export const TRANSLATIONS = {
     'liveLayout.warning': '向きの推奨事項: 写真を1枚選択する場合は、体と顔がうまく収まり、不自然にトリミングされないように、スマートフォンをポートレート（縦）モードで使用することをお勧めします！',
 
     // Layout Select
-    'layout.title': 'レイアウトを選んでください ✦',
+    'layout.title': 'レイアウトを選んでください',
     'layout.photos': '枚',
     'layout.photosPlural': '枚',
     'layout.start': '撮影スタート →',
-    'layout.selectFirst': '最初にレイアウトを選んでね ✨',
+    'layout.selectFirst': '最初にレイアウトを選んでね',
 
     // Capture / Processing Screen
     'capture.developing': '写真を現像',
@@ -1025,7 +1025,7 @@ export const TRANSLATIONS = {
     'room.copy': '复制邀请链接',
     'room.start': '大家都到了，开拍！ 🚀',
     'room.waiting': '等待伴侣进入房间...',
-    'layout.title': '选择拍立得排版 ✦',
+    'layout.title': '选择拍立得排版',
     'layout.classic': '经典四格条 (4格)',
     'layout.wide': '宽幅双格 (2格)',
     'layout.grid': '四格网格 (2x2)',
@@ -1175,7 +1175,7 @@ export const TRANSLATIONS = {
     'room.copy': 'लिंक कॉपी करें',
     'room.start': 'सब तैयार हैं, शुरू करें! 🚀',
     'room.waiting': 'पार्टनर के जुड़ने का इंतज़ार...',
-    'layout.title': 'फोटो लेआउट चुनें ✦',
+    'layout.title': 'फोटो लेआउट चुनें',
     'layout.classic': 'क्लासिक 4-कट (4 Shots)',
     'layout.wide': 'वाइड 2-कट (2 Shots)',
     'layout.grid': 'ग्रिड 4-कट (2x2)',
@@ -1325,7 +1325,7 @@ export const TRANSLATIONS = {
     'room.copy': 'คัดลอกลิงก์ชวนเพื่อน',
     'room.start': 'มาครบแล้ว เริ่มเลย! 🚀',
     'room.waiting': 'รอแฟนกดเข้าห้องสักครู่...',
-    'layout.title': 'เลือกเลย์เอาต์รูป ✦',
+    'layout.title': 'เลือกเลย์เอาต์รูป',
     'layout.classic': 'คลาสสิก 4 ช่อง (4 รูป)',
     'layout.wide': 'แนวกว้าง 2 ช่อง (2 รูป)',
     'layout.grid': 'ตารางสี่ช่อง (2x2)',
@@ -1475,7 +1475,7 @@ export const TRANSLATIONS = {
     'room.copy': 'Sao chép link mời',
     'room.start': 'Đủ người rồi, chụp thôi! 🚀',
     'room.waiting': 'Đợi đối phương vào phòng chút nha...',
-    'layout.title': 'Chọn bố cục ảnh ✦',
+    'layout.title': 'Chọn bố cục ảnh',
     'layout.classic': 'Dải 4 ảnh cổ điển (4 ô)',
     'layout.wide': 'Khung rộng 2 ảnh (2 ô)',
     'layout.grid': 'Lưới vuông 4 ảnh (2x2)',

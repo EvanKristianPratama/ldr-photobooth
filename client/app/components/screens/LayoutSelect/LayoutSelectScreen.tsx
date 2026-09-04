@@ -3,6 +3,8 @@
 import React, { useMemo } from 'react';
 import { useLanguage } from '../../../context/LanguageContext';
 
+import './LayoutSelectScreen.css';
+
 interface LayoutSlot {
   w: string;
   h: string;
@@ -57,123 +59,102 @@ export default function LayoutSelectScreen({
   }, [groupSize]);
 
   return (
-    <section className="page active" id="page-layout" style={styles.section}>
+    <section className="layout-select-section" id="page-layout">
       {onBack && (
         <button 
           type="button"
           onClick={onBack}
-          className="btn-secondary btn-back-absolute"
-          style={styles.backBtn}
+          className="layout-back-btn"
+          aria-label={t('common.back')}
         >
-          {t('common.back')}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>{t('common.back')}</span>
         </button>
       )}
-      <div className="page-title-row" style={styles.titleRow}>
-        <div className="page-title">{t('layout.title')}</div>
+
+      <div className="layout-title-row">
+        <h1 className="layout-title">{t('layout.title')}</h1>
       </div>
 
-      <div className="layout-grid" style={styles.grid}>
-        {layouts.map((layout) => (
-          <div 
-            key={layout.id}
-            className={`layout-card squiggle ${selectedLayout === layout.id ? 'selected' : ''}`} 
-            onClick={() => onSelectLayout(layout.id)}
-            style={styles.card}
-          >
-            <div className="layout-preview" style={{ ...styles.preview, flexDirection: layout.direction || 'row', gap: layout.gap || '6px' }}>
-              {layout.slots.map((slot, i) => (
-                <div key={i} className="preview-slot" style={{ width: slot.w, height: slot.h }}></div>
-              ))}
+      <div className="layout-grid-modern">
+        {layouts.map((layout) => {
+          const isSelected = selectedLayout === layout.id;
+          return (
+            <div 
+              key={layout.id}
+              className={`layout-card-modern ${isSelected ? 'selected' : ''}`} 
+              onClick={() => onSelectLayout(layout.id)}
+            >
+              {isSelected && (
+                <div className="layout-check-badge">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              )}
+
+              <div 
+                className="layout-preview-modern" 
+                style={{ 
+                  flexDirection: layout.direction || 'row', 
+                  gap: layout.gap || '6px' 
+                }}
+              >
+                {layout.slots.map((slot, i) => (
+                  <div 
+                    key={i} 
+                    className="preview-slot-modern" 
+                    style={{ width: slot.w, height: slot.h }}
+                  />
+                ))}
+              </div>
+
+              <div className="layout-info-modern">
+                <span className="layout-name-modern">{layout.name}</span>
+                <span className="layout-count-modern">
+                  {layout.count} {layout.count > 1 ? t('layout.photosPlural') : t('layout.photos')}
+                </span>
+              </div>
             </div>
-            <div className="layout-info">
-              <span className="layout-name">{layout.name}</span>
-              <span className="layout-count">
-                {layout.count} {layout.count > 1 ? t('layout.photosPlural') : t('layout.photos')}
-              </span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {selectedLayout === 'layout1' && (
-        <div style={styles.warningBanner}>
-          <span style={{ fontSize: '24px' }}>📱</span>
-          <div style={{ textAlign: 'left' }}>
+        <div className="layout-warning-banner">
+          <svg 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="#ca8a04" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="layout-warning-icon"
+          >
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+          <div className="layout-warning-text">
             <strong>Rekomendasi Orientasi:</strong> Jika memilih <strong>1 Foto Bareng</strong>, disarankan menggunakan HP posisi tegak (<strong>Portrait</strong>) agar badan & wajah pas dan tidak terpotong ekstrem di frame!
           </div>
         </div>
       )}
 
-      <div className="layout-start-container" style={styles.startContainer}>
+      <div className="layout-start-container-modern">
         <button 
           type="button"
-          className="btn-primary layout-start-btn" 
+          className="layout-start-btn-modern" 
           disabled={!selectedLayout}
           onClick={onStart}
-          style={styles.startBtn}
         >
-          {selectedLayout ? t('layout.start') : t('layout.selectFirst')}
+          <span>{selectedLayout ? t('layout.start') : t('layout.selectFirst')}</span>
         </button>
       </div>
     </section>
   );
 }
-
-const styles = {
-  section: {
-    alignItems: 'center',
-    textAlign: 'center' as const,
-    position: 'relative' as const,
-  },
-  backBtn: { 
-    position: 'absolute' as const,
-    top: '20px',
-    left: '20px',
-    zIndex: 100,
-    padding: '8px 16px',
-    fontSize: '16px',
-    fontFamily: "'Gaegu', cursive",
-  },
-  titleRow: {
-    justifyContent: 'center',
-    marginBottom: '48px',
-  },
-  grid: {
-    justifyContent: 'center',
-    gap: '24px',
-  },
-  card: {
-    minWidth: '220px',
-  },
-  preview: {
-    display: 'flex',
-  },
-  warningBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    maxWidth: '540px',
-    margin: '24px auto -12px auto',
-    padding: '12px 18px',
-    background: '#fffbeb',
-    border: '2.5px solid var(--ink)',
-    borderRadius: '12px',
-    boxShadow: '4px 4px 0 var(--ink)',
-    color: '#854d0e',
-    fontFamily: "'Gaegu', cursive",
-    fontSize: '16px',
-    lineHeight: '1.4',
-  },
-  startContainer: {
-    marginTop: '60px',
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  startBtn: {
-    width: 'auto',
-    minWidth: '300px',
-    padding: '20px 40px',
-    fontSize: '24px',
-  },
-};
