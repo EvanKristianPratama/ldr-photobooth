@@ -107,14 +107,14 @@ export default function Page() {
       {/* TOPBAR */}
       {step !== 'community' && step !== 'welcome' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
-          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleGoHome}>
-            <img src="/Ldr_photobooth.png" alt="Pico Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '6px' }} />
+          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }} onClick={handleGoHome}>
+            <img src="/Ldr_photobooth.png" alt="Pico Logo" style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '5px' }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '17px', fontWeight: '900', letterSpacing: '2.5px', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif" }}>PICO</span>
-                <span style={{ fontSize: '10px', fontWeight: '800', background: '#111827', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.5px' }}>LDR</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '2px', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif" }}>PICO</span>
+                <span style={{ fontSize: '9px', fontWeight: '800', background: '#111827', color: '#ffffff', padding: '1px 5px', borderRadius: '4px', letterSpacing: '0.5px' }}>LDR</span>
               </div>
-              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>ldr photobooth</span>
+              <span className="logo-sub-text" style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>ldr photobooth</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -464,7 +464,7 @@ export default function Page() {
       {showHowTo && <HowToUseScreen onClose={() => setShowHowTo(false)} />}
       
       {/* GLOBAL WATERMARK */}
-      {step !== 'community' && step !== 'countdown' && step !== 'processing' && (
+      {step !== 'community' && step !== 'countdown' && step !== 'processing' && step !== 'mode-select' && (
         <div 
           className="credits" 
           style={{ 

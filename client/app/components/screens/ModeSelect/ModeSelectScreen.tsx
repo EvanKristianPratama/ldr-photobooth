@@ -59,33 +59,32 @@ const ModeOptionCard = React.memo(({
       onClick={onClick}
       style={cardStyle}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <div className="mode-card-top">
         <div className="mode-icon">{icon}</div>
         {badge && (
-          <span 
-            style={{
-              fontSize: '10px',
-              fontWeight: 800,
-              letterSpacing: '0.6px',
-              padding: '3px 8px',
-              borderRadius: '999px',
-              textTransform: 'uppercase',
-              background: badgeColor === 'lime' ? '#ccff00' : badgeColor === 'dark' ? '#111827' : '#f1f5f9',
-              color: badgeColor === 'lime' ? '#0f172a' : badgeColor === 'dark' ? '#ffffff' : '#64748b',
-              border: badgeColor === 'lime' ? '1px solid #bbf7d0' : 'none',
-            }}
-          >
+          <span className={`mode-card-badge desktop-badge ${badgeColor}`}>
             {badge}
           </span>
         )}
       </div>
 
       <div className="mode-details">
-        <div className="mode-title">
-          <span>{title}</span>
+        <div className="mode-title-row">
+          <span className="mode-card-title">{title}</span>
+          {badge && (
+            <span className={`mode-card-badge mobile-inline-badge ${badgeColor}`}>
+              {badge}
+            </span>
+          )}
           {comingSoon && <span className="soon-badge">SOON</span>}
         </div>
         {desc && <div className="mode-desc">{desc}</div>}
+      </div>
+
+      <div className="mode-card-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
       </div>
     </div>
   );
@@ -129,8 +128,23 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
   const renderMainOptions = () => (
     <>
       <div style={styles.sectionHeader}>
+        <div style={styles.headerTopLine}>
+          <div className="mobile-only-pill" style={styles.mobileHeroBadge}>
+            <span style={{ color: '#059669', fontSize: '11px' }}>✦</span>
+            <span>THE ORIGINAL LDR PHOTOBOOTH</span>
+          </div>
+          <button 
+            type="button" 
+            onClick={onShowHelp} 
+            title={t('common.help') || 'Bantuan'}
+            style={styles.cleanHelpBtn}
+          >
+            <span style={{ fontSize: '13px', opacity: 0.7 }}>💡</span>
+            <span style={{ fontSize: '12px', fontWeight: 600 }}>Bantuan</span>
+          </button>
+        </div>
         <h2 style={styles.sectionTitle}>{t('mode.howToPhoto') || 'Mau foto gimana hari ini?'}</h2>
-        <p style={styles.sectionSub}>Pilih mode pemotretan yang kamu inginkan untuk memulai sesi.</p>
+        <p style={styles.sectionSub}>Pilih mode foto untuk memulai sesi pemotretan kamu.</p>
       </div>
 
       <div className="mode-main-grid">
@@ -193,7 +207,7 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
         ← {t('common.back') || 'Kembali'}
       </button>
       
-      <div style={{ ...styles.sectionHeader, marginTop: '40px' }}>
+      <div style={{ ...styles.sectionHeader, marginTop: '20px' }}>
         <h2 style={styles.sectionTitle}>{t('mode.selectSize') || 'Berapa Orang?'}</h2>
         <p style={styles.sectionSub}>Pilih jumlah orang untuk sesi foto bersama ini.</p>
       </div>
@@ -223,7 +237,7 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
 
   return (
     <section className="page active" id="page-mode-select">
-      {/* Left Sidebar: Clean Studio Showcase (LensBooth / Angie inspired) */}
+      {/* Left Sidebar: Clean Studio Showcase (Hidden on mobile via CSS) */}
       <div className="mode-left">
         {/* Top Tag Pill */}
         <div style={styles.brandPill}>
@@ -284,17 +298,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
 
       {/* Right Option Column */}
       <div className="mode-right">
-        {/* Clean Help Button */}
-        <button 
-          type="button" 
-          onClick={onShowHelp} 
-          title={t('common.help') || 'Bantuan'}
-          style={styles.cleanHelpBtn}
-        >
-          <span style={{ fontSize: '12px', opacity: 0.7 }}>💡</span>
-          <span style={{ fontSize: '13px', fontWeight: 600 }}>Bantuan</span>
-        </button>
-
         {showGroupOptions ? renderGroupOptions() : renderMainOptions()}
       </div>
     </section>
@@ -310,7 +313,7 @@ const styles = {
     background: '#ecfdf5',
     border: '1px solid #a7f3d0',
     borderRadius: '999px',
-    marginBottom: '20px',
+    marginBottom: '16px',
   },
   brandPillText: {
     fontSize: '11px',
@@ -318,12 +321,25 @@ const styles = {
     color: '#065f46',
     letterSpacing: '0.8px',
   },
+  mobileHeroBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    padding: '4px 10px',
+    background: '#ecfdf5',
+    border: '1px solid #a7f3d0',
+    borderRadius: '999px',
+    fontSize: '10px',
+    fontWeight: 700,
+    color: '#065f46',
+    letterSpacing: '0.5px',
+  },
   heroHeadline: {
-    fontSize: 'clamp(32px, 4vw, 44px)',
+    fontSize: 'clamp(30px, 3.8vw, 42px)',
     fontWeight: 900,
     lineHeight: 1.15,
     color: '#0f172a',
-    margin: '0 0 16px 0',
+    margin: '0 0 14px 0',
     letterSpacing: '-1px',
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
   },
@@ -334,27 +350,27 @@ const styles = {
     fontWeight: 800,
   },
   heroSubtitle: {
-    fontSize: '15px',
+    fontSize: '14px',
     lineHeight: 1.6,
     color: '#64748b',
-    margin: '0 0 32px 0',
-    maxWidth: '460px',
+    margin: '0 0 28px 0',
+    maxWidth: '440px',
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
   },
   connectionCard: {
     width: '100%',
-    maxWidth: '440px',
+    maxWidth: '420px',
     background: '#ffffff',
     border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '20px 22px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+    borderRadius: '18px',
+    padding: '18px 20px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.04)',
   },
   connectionTop: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    marginBottom: '16px',
+    marginBottom: '14px',
   },
   livePulseDot: {
     width: '8px',
@@ -382,7 +398,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 0 16px',
+    padding: '8px 0 14px',
   },
   cityItem: {
     display: 'flex',
@@ -391,8 +407,8 @@ const styles = {
     gap: '4px',
   },
   cityAvatar: {
-    width: '44px',
-    height: '44px',
+    width: '42px',
+    height: '42px',
     borderRadius: '50%',
     background: '#f8fafc',
     border: '1.5px solid #e2e8f0',
@@ -401,12 +417,12 @@ const styles = {
     justifyContent: 'center',
   },
   cityName: {
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 700,
     color: '#0f172a',
   },
   citySub: {
-    fontSize: '11px',
+    fontSize: '10px',
     color: '#94a3b8',
   },
   connectorLineWrap: {
@@ -415,7 +431,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative' as const,
-    margin: '0 12px',
+    margin: '0 10px',
   },
   connectorLine: {
     width: '100%',
@@ -425,43 +441,48 @@ const styles = {
   connectorHeart: {
     position: 'absolute' as const,
     color: '#f43f5e',
-    fontSize: '14px',
+    fontSize: '13px',
     background: '#ffffff',
     padding: '0 4px',
   },
   connectionFooter: {
     borderTop: '1px solid #f1f5f9',
-    paddingTop: '12px',
+    paddingTop: '10px',
     textAlign: 'center' as const,
     fontSize: '11px',
     fontWeight: 600,
     color: '#64748b',
   },
   sectionHeader: {
-    marginBottom: '8px',
+    marginBottom: '10px',
+    width: '100%',
+  },
+  headerTopLine: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: '10px',
   },
   sectionTitle: {
-    fontSize: '24px',
+    fontSize: '22px',
     fontWeight: 800,
     color: '#0f172a',
-    margin: '0 0 6px 0',
+    margin: '0 0 4px 0',
     letterSpacing: '-0.5px',
     fontFamily: "'Inter', system-ui, sans-serif",
   },
   sectionSub: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: '#64748b',
     margin: 0,
     fontFamily: "'Inter', system-ui, sans-serif",
   },
   cleanHelpBtn: {
-    position: 'absolute' as const,
-    top: '24px',
-    right: '28px',
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '6px 14px',
+    gap: '5px',
+    padding: '5px 12px',
     background: '#ffffff',
     border: '1px solid #e5e7eb',
     borderRadius: '999px',
@@ -472,6 +493,6 @@ const styles = {
   },
   backBtn: {
     alignSelf: 'flex-start',
-    marginBottom: '16px',
+    marginBottom: '10px',
   },
 };
