@@ -190,6 +190,7 @@ export const TRANSLATIONS = {
 
     // Home Landing Page
     'home.nav.activities': 'Modes',
+    'home.nav.gallery': 'Gallery',
     'home.nav.articles': 'Articles',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -431,6 +432,7 @@ export const TRANSLATIONS = {
 
     // Home Landing Page
     'home.nav.activities': 'Mode',
+    'home.nav.gallery': 'Galeri',
     'home.nav.articles': 'Artikel',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -672,6 +674,7 @@ export const TRANSLATIONS = {
 
     // Home Landing Page
     'home.nav.activities': '모드',
+    'home.nav.gallery': '갤러리',
     'home.nav.articles': '스토리',
     'home.nav.faq': 'FAQ',
     'home.hero.title1': 'The',
@@ -913,6 +916,7 @@ export const TRANSLATIONS = {
 
     // Home Landing Page
     'home.nav.activities': 'モード',
+    'home.nav.gallery': 'ギャラリー',
     'home.nav.articles': 'お役立ち',
     'home.nav.faq': 'よくある質問',
     'home.hero.title1': 'The',
@@ -1064,6 +1068,7 @@ export const TRANSLATIONS = {
     'frame.grain': '复古胶片颗粒',
     'frame.glare': '镜头光晕',
     'home.nav.activities': '玩法模式',
+    'home.nav.gallery': '画廊',
     'home.nav.articles': '对比指南',
     'home.nav.faq': '常见问题',
     'home.hero.title1': 'The',
@@ -1215,6 +1220,7 @@ export const TRANSLATIONS = {
     'frame.grain': 'फिल्म ग्रेन',
     'frame.glare': 'कैमरा ग्लेयर',
     'home.nav.activities': 'मोड्स',
+    'home.nav.gallery': 'गैलरी',
     'home.nav.articles': 'लेख',
     'home.nav.faq': 'सवाल-जवाब',
     'home.hero.title1': 'The',
@@ -1366,6 +1372,7 @@ export const TRANSLATIONS = {
     'frame.grain': 'เกรนฟิล์ม',
     'frame.glare': 'แสงสะท้อนกล้อง',
     'home.nav.activities': 'โหมดถ่ายรูป',
+    'home.nav.gallery': 'แกลเลอรี',
     'home.nav.articles': 'บทความ',
     'home.nav.faq': 'คำถามพบบ่อย',
     'home.hero.title1': 'The',
@@ -1517,6 +1524,7 @@ export const TRANSLATIONS = {
     'frame.grain': 'Hạt phim',
     'frame.glare': 'Ánh sáng ống kính',
     'home.nav.activities': 'Chế độ',
+    'home.nav.gallery': 'Bộ sưu tập',
     'home.nav.articles': 'Bài viết',
     'home.nav.faq': 'Hỏi đáp',
     'home.hero.title1': 'The',

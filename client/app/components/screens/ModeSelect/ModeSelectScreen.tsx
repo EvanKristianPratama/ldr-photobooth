@@ -93,11 +93,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp, onBack }: M
         {/* Duo Live Mode */}
         <div className="mode-card popular" onClick={() => onSelectMode('live', 2)}>
           <div className="mode-card-top">
-            <span className="mode-card-icon live-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-            </span>
             <span className="mode-badge lime">{t('home.mode.live.badge')}</span>
           </div>
           <h3 className="mode-card-title">{t('home.mode.live.title')}</h3>
@@ -110,12 +105,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp, onBack }: M
         {/* Solo Mode */}
         <div className="mode-card" onClick={() => onSelectMode('solo')}>
           <div className="mode-card-top">
-            <span className="mode-card-icon solo-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </span>
             <span className="mode-badge solo-badge">{t('home.mode.solo.badge')}</span>
           </div>
           <h3 className="mode-card-title">{t('home.mode.solo.title')}</h3>
@@ -128,14 +117,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp, onBack }: M
         {/* LDR Surprise Mode */}
         <div className="mode-card" onClick={() => setShowGroupOptions(true)}>
           <div className="mode-card-top">
-            <span className="mode-card-icon surprise-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </span>
             <span className="mode-badge surprise-badge">{t('home.mode.group.badge')}</span>
           </div>
           <h3 className="mode-card-title">{t('home.mode.group.title')}</h3>
@@ -148,13 +129,6 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp, onBack }: M
         {/* Community Showcase */}
         <div className="mode-card" onClick={() => onSelectMode('community')}>
           <div className="mode-card-top">
-            <span className="mode-card-icon community-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-            </span>
             <span className="mode-badge gallery-badge">{t('home.mode.community.badge')}</span>
           </div>
           <h3 className="mode-card-title">{t('home.mode.community.title')}</h3>

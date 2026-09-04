@@ -69,6 +69,13 @@ body:has(.home-container) {
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: color 0.15s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
 }
 
 .home-nav-link:hover {
@@ -319,53 +326,20 @@ body:has(.home-container) {
 .home-act-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.home-act-icon {
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.home-act-card:hover .home-act-icon {
-  transform: scale(1.12) rotate(-4deg);
-}
-
-.home-act-icon.live-icon {
-  background: #fef9c3;
-  border: 1px solid #fef08a;
-}
-
-.home-act-icon.solo-icon {
-  background: #fdf2f8;
-  border: 1px solid #fbcfe8;
-}
-
-.home-act-icon.surprise-icon {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-}
-
-.home-act-icon.gallery-icon {
-  background: #faf5ff;
-  border: 1px solid #e9d5ff;
+  justify-content: flex-start;
+  margin-bottom: 20px;
 }
 
 .home-act-badge {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .home-act-badge.lime {
@@ -924,12 +898,20 @@ body:has(.home-container) {
 /* Mobile responsiveness for Home Landing Page */
 @media (max-width: 768px) {
   .home-topbar {
-    padding: 0 16px !important;
-    height: 56px !important;
+    padding: 0 12px !important;
+    height: 48px !important;
+  }
+  .home-logo {
+    gap: 6px !important;
+  }
+  .home-logo-img {
+    height: 22px !important;
+    width: auto !important;
   }
   .home-logo-title {
     font-size: 13px !important;
-    letter-spacing: 0.8px !important;
+    letter-spacing: 0.6px !important;
+    font-weight: 800 !important;
   }
   .home-nav {
     display: none !important;

@@ -20,12 +20,24 @@ interface GalleryPost {
   likes?: number;
 }
 
+// Helper function to thoroughly shuffle an array (Fisher-Yates algorithm)
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 // Fallback photo strips to ensure continuous, instant visual marquee without waiting for network
 const FALLBACK_STRIPS = [
   { id: 'fb-1', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/248cbef7-c87b-4358-9f15-3b0e04583e6c.png', title: 'Khanza & Fara' },
-  { id: 'fb-2', url: '/Ldr_photobooth.png', title: 'Pico Classic' },
+  { id: 'fb-2', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/41e1496c-f8ad-4c3d-98f3-aa0b22445eb3.png', title: 'Din & Pina' },
   { id: 'fb-3', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/63bc198b-8d21-4e63-9bcc-334cc1f08edf.png', title: 'Date Night' },
-  { id: 'fb-4', url: '/Ldr_photobooth.png', title: 'LDR Memories' },
+  { id: 'fb-4', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/46b134b7-1450-4d82-8d78-02abeafd0612.png', title: 'With Bestie' },
+  { id: 'fb-5', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/25ee775c-4996-436a-90d5-b6938da6f558.png', title: 'Couple Moment' },
+  { id: 'fb-6', url: 'https://ldr-photobooth.if2372047.workers.dev/posts/025bf559-92b1-4212-ba85-e17a66ac46ce.png', title: 'Sweet Memories' },
 ];
 
 export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenProps) {
@@ -38,12 +50,13 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
     let isMounted = true;
     const fetchGallery = async () => {
       try {
-        const res = await fetch('https://ldr-photobooth.if2372047.workers.dev/api/community/posts?sort=hot');
+        const res = await fetch('https://ldr-photobooth.if2372047.workers.dev/api/community/posts?sort=new');
         if (res.ok) {
           const json = await res.json();
           const items: GalleryPost[] = Array.isArray(json) ? json : (json.data || []);
           if (isMounted && items.length > 0) {
-            setPosts(items.slice(0, 10));
+            // Keep all valid posts in the pool for true rich randomization
+            setPosts(items.filter(p => p && p.url));
           }
         }
       } catch (e) {
@@ -54,45 +67,57 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
     return () => { isMounted = false; };
   }, []);
 
-  // Display items: combine fetched posts with fallbacks, duplicated for seamless infinite loop
-  const displayPhotos = useMemo(() => {
-    const list = posts.length > 0
+  // 3 Lanes for desktop with completely distinct, randomized photostrip distribution
+  const { column1, column2, column3, scatterPhotos } = useMemo(() => {
+    const rawList = posts.length > 0
       ? posts.map(p => ({
           id: p.id,
           url: p.url.startsWith('http') ? p.url : `https://ldr-photobooth.if2372047.workers.dev${p.url}`,
-          title: p.author || p.title || 'Couple Photo'
+          title: (p.author || p.title || 'Couple Photo').trim()
         }))
       : FALLBACK_STRIPS;
-    return [...list, ...list, ...list];
-  }, [posts]);
 
-  // 3 Lanes for desktop with natural offsets
-  const column1 = useMemo(() => {
-    return [...displayPhotos];
-  }, [displayPhotos]);
+    // Fully randomized pool
+    const pool = shuffleArray(rawList);
 
-  const column2 = useMemo(() => {
-    if (displayPhotos.length <= 1) return [...displayPhotos];
-    const offset = Math.floor(displayPhotos.length / 3);
-    return [...displayPhotos.slice(offset), ...displayPhotos.slice(0, offset)];
-  }, [displayPhotos]);
+    const c1: typeof rawList = [];
+    const c2: typeof rawList = [];
+    const c3: typeof rawList = [];
 
-  const column3 = useMemo(() => {
-    if (displayPhotos.length <= 2) return [...displayPhotos];
-    const offset = Math.floor((displayPhotos.length * 2) / 3);
-    return [...displayPhotos.slice(offset), ...displayPhotos.slice(0, offset)];
-  }, [displayPhotos]);
+    if (pool.length >= 6) {
+      // Distribute round-robin across columns so no two columns share the same photo in any row
+      pool.forEach((item, idx) => {
+        if (idx % 3 === 0) c1.push(item);
+        else if (idx % 3 === 1) c2.push(item);
+        else c3.push(item);
+      });
+      // Ensure each column has at least 6 items for a smooth scroll track
+      while (c1.length < 6) c1.push(...shuffleArray(c1));
+      while (c2.length < 6) c2.push(...shuffleArray(c2));
+      while (c3.length < 6) c3.push(...shuffleArray(c3));
+    } else {
+      c1.push(...shuffleArray(pool));
+      c2.push(...shuffleArray(pool));
+      c3.push(...shuffleArray(pool));
+    }
 
-  // Distinct photo strips for the bottom scatter CTA collage
-  const scatterPhotos = useMemo(() => {
-    const list = posts.length > 0
-      ? posts.map(p => ({
-          id: p.id,
-          url: p.url.startsWith('http') ? p.url : `https://ldr-photobooth.if2372047.workers.dev${p.url}`,
-          title: p.author || p.title || 'Couple Photo'
-        }))
-      : FALLBACK_STRIPS;
-    return [...list, ...FALLBACK_STRIPS, ...list, ...FALLBACK_STRIPS].slice(0, 12);
+    // Duplicate once ([...items, ...items]) so the -50% CSS keyframe loops seamlessly with zero jump
+    const col1 = [...c1, ...c1];
+    const col2 = [...c2, ...c2];
+    const col3 = [...c3, ...c3];
+
+    // Scatter photos for the bottom collage: distinct random shuffle
+    const scatter = shuffleArray(rawList).slice(0, 12);
+    while (scatter.length < 12 && rawList.length > 0) {
+      scatter.push(...shuffleArray(rawList));
+    }
+
+    return {
+      column1: col1,
+      column2: col2,
+      column3: col3,
+      scatterPhotos: scatter.slice(0, 12)
+    };
   }, [posts]);
 
   const faqs = [
@@ -130,6 +155,13 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
         {/* Navigation links */}
         <nav className="home-nav">
           <a href="#activities" className="home-nav-link">{t('home.nav.activities')}</a>
+          <button 
+            type="button" 
+            onClick={() => onSelectMode('community')} 
+            className="home-nav-link"
+          >
+            {t('home.nav.gallery')}
+          </button>
           <a href="#articles" className="home-nav-link">{t('home.nav.articles')}</a>
           <a href="#faq" className="home-nav-link">{t('home.nav.faq')}</a>
         </nav>
@@ -240,7 +272,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           {/* Duo Live Mode */}
           <div className="home-act-card popular" onClick={() => onSelectMode('live', 2)}>
             <div className="home-act-top">
-              <span className="home-act-icon live-icon">⚡</span>
               <span className="home-act-badge lime">{t('home.mode.live.badge')}</span>
             </div>
             <h3 className="home-act-title">{t('home.mode.live.title')}</h3>
@@ -253,7 +284,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           {/* Solo Mode */}
           <div className="home-act-card" onClick={() => onSelectMode('solo')}>
             <div className="home-act-top">
-              <span className="home-act-icon solo-icon">👤</span>
               <span className="home-act-badge solo-badge">{t('home.mode.solo.badge')}</span>
             </div>
             <h3 className="home-act-title">{t('home.mode.solo.title')}</h3>
@@ -266,7 +296,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           {/* LDR Surprise Mode */}
           <div className="home-act-card" onClick={onEnterBooth}>
             <div className="home-act-top">
-              <span className="home-act-icon surprise-icon">👥</span>
               <span className="home-act-badge surprise-badge">{t('home.mode.group.badge')}</span>
             </div>
             <h3 className="home-act-title">{t('home.mode.group.title')}</h3>
@@ -279,7 +308,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           {/* Community Showcase */}
           <div className="home-act-card" onClick={() => onSelectMode('community')}>
             <div className="home-act-top">
-              <span className="home-act-icon gallery-icon">✨</span>
               <span className="home-act-badge gallery-badge">{t('home.mode.community.badge')}</span>
             </div>
             <h3 className="home-act-title">{t('home.mode.community.title')}</h3>

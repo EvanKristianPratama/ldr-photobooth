@@ -2224,17 +2224,33 @@ body::before {
 
   .topbar {
     display: flex !important;
-    padding: 0 16px !important;
-    height: 52px !important;
-    border-bottom-width: 2.5px !important;
+    padding: 0 12px !important;
+    height: 48px !important;
+    border-bottom: 1px solid #eaeaea !important;
+    align-items: center !important;
+    justify-content: space-between !important;
   }
 
   .logo {
-    font-size: 22px !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+  }
+
+  .logo img {
+    height: 22px !important;
+    width: auto !important;
   }
 
   .logo span {
-    font-size: 28px !important;
+    font-size: 13px !important;
+    letter-spacing: 0.6px !important;
+    font-weight: 800 !important;
+  }
+
+  .lang-picker-btn {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
   }
 
   .stepper {
