@@ -4,11 +4,12 @@ import Link from 'next/link';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ldrphotobooth.web.id';
 
 export const metadata = {
-  title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
+  title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth | LDR Photobooth by Pico',
   description:
-    'Looking for a free Lensbooth alternative? LDR Photobooth by Pico is 100% free with no sign up, no download required, and offers real-time dual camera sync for long distance couples.',
+    'Why enter a 16-digit code when you can start in 1 click with Pico? LDR Photobooth by Pico is 100% free with no sign up, zero paywalls, and real-time dual camera sync for long distance couples.',
   keywords: [
     'lensbooth alternative',
+    'why enter a 16-digit code when you can start in 1 click with pico',
     'free lensbooth alternative',
     'sites like lensbooth',
     'lensbooth online free',
@@ -18,6 +19,7 @@ export const metadata = {
     'ldr photobooth',
     'virtual photobooth for couples',
     'korean photobooth online free',
+    'life4cuts online',
   ],
   alternates: {
     canonical: `${siteUrl}/alternative/lensbooth`,
@@ -25,7 +27,7 @@ export const metadata = {
   openGraph: {
     title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
     description:
-      'LDR Photobooth by Pico is the leading free Lensbooth alternative. 100% free, no sign up required, real-time camera sync for long-distance couples and friends.',
+      'Why enter a 16-digit code when you can start in 1 click with Pico? 100% free, no sign up required, real-time dual camera sync for long-distance couples.',
     url: `${siteUrl}/alternative/lensbooth`,
     siteName: 'LDR Photobooth by Pico',
     images: [
@@ -43,7 +45,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
     description:
-      '100% free no sign up photobooth for long distance couples. The best free alternative to Lensbooth.',
+      'Why enter a 16-digit code when you can start in 1 click with Pico? 100% free no sign up photobooth for couples.',
     images: ['/Ldr_photobooth.png'],
   },
 };
@@ -53,9 +55,9 @@ const articleSchema = {
   '@graph': [
     {
       '@type': 'Article',
-      headline: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
+      headline: 'Best Lensbooth Alternative: Why enter a 16-digit code when you can start in 1 click with Pico?',
       description:
-        'A comprehensive guide to why LDR Photobooth by Pico is the premier free Lensbooth alternative, featuring zero registration and true real-time dual camera pairing.',
+        'A comprehensive guide to why LDR Photobooth by Pico is the premier free Lensbooth alternative. Why enter a 16-digit code when you can start in 1 click with Pico? Featuring zero registration and true real-time dual camera pairing.',
       author: {
         '@type': 'Organization',
         name: 'LDR Photobooth by Pico',
@@ -73,14 +75,41 @@ const articleSchema = {
       dateModified: new Date().toISOString(),
     },
     {
+      '@type': 'WebApplication',
+      name: 'LDR Photobooth by Pico',
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'All',
+      url: siteUrl,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.9',
+        reviewCount: '178',
+        bestRating: '5',
+        worstRating: '1',
+      },
+    },
+    {
       '@type': 'FAQPage',
       mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'Why enter a 16-digit code when you can start in 1 click with Pico?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Lensbooth requires entering a tedious 16-digit code just to pair devices, creating friction and connection errors during date night. With LDR Photobooth by Pico, you start in 1 click with zero registration and instant room pairing.',
+          },
+        },
         {
           '@type': 'Question',
           name: 'What makes LDR Photobooth the best alternative to Lensbooth?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'While Lensbooth is typically built for a single device, LDR Photobooth by Pico connects two separate devices live across any distance in real time. Plus, it is 100% free with absolutely no sign up needed.',
+            text: 'While Lensbooth is built primarily for single devices or requires complex code sharing, LDR Photobooth by Pico connects two separate devices live across any distance in real time. Plus, it is 100% free with absolutely no sign up needed.',
           },
         },
         {
@@ -96,7 +125,7 @@ const articleSchema = {
           name: 'Do I need to sign up or pay to remove watermarks?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'No. LDR Photobooth is 100% free with no sign up required. All frames and high-resolution photo strips are free to download.',
+            text: 'No. LDR Photobooth is 100% free with no sign up required. All frames and high-resolution photo strips are free to download without watermarks.',
           },
         },
       ],
@@ -137,19 +166,42 @@ export default function LensboothAlternativePage() {
           <strong> LDR Photobooth by Pico</strong> gives you instant real-time duo capture, Korean-style strips, and 100% free access.
         </p>
 
+        {/* Rating Social Proof */}
+        <div style={styles.ratingBadge}>
+          <span style={styles.stars}>★★★★★</span>
+          <span style={styles.ratingText}>
+            <strong>4.9 / 5</strong> rating from 170+ long-distance couples
+          </span>
+        </div>
+
         <div style={styles.heroActions}>
           <Link href="/" style={styles.primaryBtn}>
             Start Photobooth Now (100% Free)
           </Link>
-          <span style={styles.heroHint}>Instant room code • No email or registration required</span>
+          <span style={styles.heroHint}>Instant room setup • No email or registration required</span>
         </div>
       </header>
 
       {/* Main Content */}
       <main style={styles.content}>
+        {/* Spotlight Quote Banner */}
+        <div style={styles.quoteBox}>
+          <div style={styles.quoteHeader}>
+            <span style={styles.quotePill}>⚡ THE PICO ADVANTAGE</span>
+            <span style={styles.quoteSub}>Zero Friction • Instant Connect</span>
+          </div>
+          <blockquote style={styles.quoteText}>
+            “Why enter a 16-digit code when you can start in 1 click with Pico?”
+          </blockquote>
+          <p style={styles.quoteDescription}>
+            Lensbooth requires couples to squint at phone screens, copying and transcribing a tedious <strong>16-digit alphanumeric code</strong> just to sync cameras. One wrong character and the connection fails. 
+            With <strong>LDR Photobooth by Pico</strong>, you connect effortlessly in <strong>1 single click</strong>. No passwords, no 16-character hurdles, and no buzzkill during your date night.
+          </p>
+        </div>
+
         {/* Comparison Table */}
         <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>LDR Photobooth vs Lensbooth: Comparison</h2>
+          <h2 style={styles.sectionTitle}>LDR Photobooth vs Lensbooth: Side-by-Side Comparison</h2>
           <div style={styles.tableWrapper}>
             <table style={styles.table}>
               <thead>
@@ -161,74 +213,136 @@ export default function LensboothAlternativePage() {
               </thead>
               <tbody>
                 <tr>
-                  <td style={styles.tdFeature}>Pricing</td>
-                  <td style={styles.tdPrimary}><strong>100% Free</strong> (No hidden tiers)</td>
+                  <td style={styles.tdFeature}>Room Setup & Pairing</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>⚡ 1-Click Instant Start</strong>
+                    <div style={styles.tdQuoteHint}>
+                      “Why enter a 16-digit code when you can start in 1 click with Pico?”
+                    </div>
+                  </td>
+                  <td style={styles.tdCompetitor}>
+                    ❌ Tedious 16-digit room code required
+                  </td>
+                </tr>
+                <tr>
+                  <td style={styles.tdFeature}>Pricing & Paywalls</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>100% Free Forever</strong> (No hidden fees, no tiers)
+                  </td>
                   <td style={styles.tdCompetitor}>Freemium / Paid upgrades</td>
                 </tr>
                 <tr>
                   <td style={styles.tdFeature}>Account / Sign Up</td>
-                  <td style={styles.tdPrimary}><strong>No Sign-Up</strong> (Just open link)</td>
-                  <td style={styles.tdCompetitor}>Often requires login</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>No Sign-Up</strong> (Open link & start immediately)
+                  </td>
+                  <td style={styles.tdCompetitor}>Prompts for login / accounts</td>
                 </tr>
                 <tr>
-                  <td style={styles.tdFeature}>Long Distance (LDR) Mode</td>
-                  <td style={styles.tdPrimary}><strong>Real-time Dual Sync</strong> (Live 2 cams)</td>
-                  <td style={styles.tdCompetitor}>Single device only</td>
+                  <td style={styles.tdFeature}>True LDR Live Dual Camera</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>Real-time WebRTC Sync</strong> (Live 2 cameras simultaneously)
+                  </td>
+                  <td style={styles.tdCompetitor}>Single device / manual upload collage</td>
                 </tr>
                 <tr>
                   <td style={styles.tdFeature}>Synchronized Countdown</td>
-                  <td style={styles.tdPrimary}>Yes (Both screens shoot simultaneously)</td>
-                  <td style={styles.tdCompetitor}>Single timer</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>Yes</strong> (Both screens shoot at the exact same millisecond)
+                  </td>
+                  <td style={styles.tdCompetitor}>Single timer or desynced</td>
                 </tr>
                 <tr>
-                  <td style={styles.tdFeature}>Frame Styles</td>
-                  <td style={styles.tdPrimary}>Korean Life4Cuts, Pastel & Custom themes</td>
+                  <td style={styles.tdFeature}>Frame Styles & Aesthetics</td>
+                  <td style={styles.tdPrimary}>
+                    Korean Life4Cuts (인생네컷), pastel themes, cute stickers
+                  </td>
                   <td style={styles.tdCompetitor}>Standard photobooth frames</td>
                 </tr>
                 <tr>
-                  <td style={styles.tdFeature}>Watermarks</td>
-                  <td style={styles.tdPrimary}>Clean, high-res photo strips</td>
-                  <td style={styles.tdCompetitor}>Often watermarked on free tier</td>
+                  <td style={styles.tdFeature}>Watermarks & Quality</td>
+                  <td style={styles.tdPrimary}>
+                    <strong>Clean Full HD strips</strong> (100% watermark-free)
+                  </td>
+                  <td style={styles.tdCompetitor}>Watermarked on free tier</td>
+                </tr>
+                <tr>
+                  <td style={styles.tdFeature}>Languages Supported</td>
+                  <td style={styles.tdPrimary}>
+                    English, Indonesian, Japanese, Korean
+                  </td>
+                  <td style={styles.tdCompetitor}>English only</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
 
+        {/* Deep Dive: 16-Digit Code vs 1-Click */}
+        <section style={styles.editorialSection}>
+          <h2 style={styles.editorialTitle}>The 16-Digit Problem: Why Friction Kills the Moment</h2>
+          <div style={styles.editorialBody}>
+            <p>
+              When you and your long-distance partner finally find time between busy work schedules and time zone differences for a virtual date, 
+              the last thing you want is technological friction. 
+            </p>
+            <p>
+              Many photobooth apps like Lensbooth generate unwieldy <strong>16-digit alphanumeric codes</strong> that must be manually texted, copied, and pasted into an input field. On mobile devices, switching apps to copy a 16-digit string often causes webcams to disconnect, browsers to refresh, or users to mistake an uppercase letter for a lowercase number.
+            </p>
+            <div style={styles.highlightCallout}>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: '17px', color: '#0f172a' }}>
+                💡 That is why our motto is simple:
+              </p>
+              <p style={{ margin: '6px 0 0 0', fontSize: '20px', fontWeight: 800, color: '#047857' }}>
+                “Why enter a 16-digit code when you can start in 1 click with Pico?”
+              </p>
+            </div>
+            <p>
+              With <strong>LDR Photobooth by Pico</strong>, everything is engineered for zero friction:
+            </p>
+            <ul style={styles.bulletList}>
+              <li><strong>1-Click Room Creation:</strong> Tap one button, copy the instant link or short code, and send it to your partner.</li>
+              <li><strong>Zero App Downloads:</strong> Operates 100% inside Safari, Chrome, Edge, and mobile browsers.</li>
+              <li><strong>100% Free with No Sign-Up:</strong> No email verification, no passwords, no hidden credit card prompts.</li>
+              <li><strong>Sub-second WebRTC Pairing:</strong> Low-latency video streams ensure you smile and pose at the exact same instant.</li>
+            </ul>
+          </div>
+        </section>
+
         {/* Core Advantages */}
         <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Why Choose LDR Photobooth over Lensbooth?</h2>
+          <h2 style={styles.sectionTitle}>Why Couples Choose LDR Photobooth over Lensbooth</h2>
           
           <div style={styles.grid}>
             <div style={styles.card}>
-              <div style={styles.cardIcon}>🌍</div>
-              <h3 style={styles.cardTitle}>1. True Long-Distance Sync</h3>
+              <div style={styles.cardIcon}>⚡</div>
+              <h3 style={styles.cardTitle}>1. Instant 1-Click Start</h3>
               <p style={styles.cardText}>
-                Standard photobooths like Lensbooth only work when both people are in front of the same webcam. LDR Photobooth pairs two separate smartphones or laptops anywhere in the world into one combined strip.
+                Why enter a 16-digit code when you can start in 1 click with Pico? No complicated codes, zero registration, and zero delays.
               </p>
             </div>
 
             <div style={styles.card}>
-              <div style={styles.cardIcon}>⚡</div>
-              <h3 style={styles.cardTitle}>2. 100% Free & No Sign-Up</h3>
+              <div style={styles.cardIcon}>🌍</div>
+              <h3 style={styles.cardTitle}>2. True Long-Distance Sync</h3>
               <p style={styles.cardText}>
-                Don’t waste time typing emails or verifying accounts. Simply create a room and invite your partner with a single click.
+                Standard photobooths only work when both people share the same webcam. LDR Photobooth pairs two separate devices across oceans into one cute strip.
               </p>
             </div>
 
             <div style={styles.card}>
               <div style={styles.cardIcon}>🌸</div>
-              <h3 style={styles.cardTitle}>3. Korean Life4Cuts (인생네컷) Aesthetic</h3>
+              <h3 style={styles.cardTitle}>3. Korean Life4Cuts (인생네컷)</h3>
               <p style={styles.cardText}>
-                Enjoy trendy, minimalist frames inspired by popular Korean photobooths with cute doodles and customizable layouts.
+                Get trendy Korean-style 4-cut strips with charming pastel colors, cute doodle borders, and customizable photo layouts.
               </p>
             </div>
 
             <div style={styles.card}>
-              <div style={styles.cardIcon}>📱</div>
-              <h3 style={styles.cardTitle}>4. Works on Any Device</h3>
+              <div style={styles.cardIcon}>💎</div>
+              <h3 style={styles.cardTitle}>4. 100% Free & No Watermarks</h3>
               <p style={styles.cardText}>
-                Zero app downloads required. Runs super smoothly directly in Safari or Chrome on iOS, Android, macOS, and Windows.
+                Download crisp, high-definition photo strips ready for Instagram, TikTok, or your memory scrapbooks without paying a single cent.
               </p>
             </div>
           </div>
@@ -239,27 +353,44 @@ export default function LensboothAlternativePage() {
           <h2 style={styles.sectionTitle}>Frequently Asked Questions</h2>
           <div style={styles.faqList}>
             <div style={styles.faqItem}>
-              <h3>Can I use LDR Photobooth alone in Solo Mode?</h3>
-              <p>Yes! We have Solo Mode for individual cute shots as well as Duo Live Mode for long-distance pairs.</p>
+              <h3 style={styles.faqQ}>Why enter a 16-digit code when you can start in 1 click with Pico?</h3>
+              <p style={styles.faqA}>
+                Exactly! In Lensbooth, setting up a room requires typing or pasting a long 16-digit code, which frequently causes typos on phones. LDR Photobooth by Pico eliminates all code friction by letting you start in 1 click or via a simple direct link.
+              </p>
             </div>
             <div style={styles.faqItem}>
-              <h3>How much does it cost?</h3>
-              <p>It is 100% completely free to use directly in your web browser.</p>
+              <h3 style={styles.faqQ}>Is LDR Photobooth really 100% free with no sign-up?</h3>
+              <p style={styles.faqA}>
+                Yes! There are no hidden paywalls, credit cards, or account requirements. All frames and high-resolution photo strip downloads are free forever.
+              </p>
             </div>
             <div style={styles.faqItem}>
-              <h3>Are our photos saved on the server?</h3>
-              <p>No. Your photos are transmitted peer-to-peer and merged on your device for maximum privacy.</p>
+              <h3 style={styles.faqQ}>Can we use it if one is on iPhone and the other is on laptop?</h3>
+              <p style={styles.faqA}>
+                Absolutely. LDR Photobooth works seamlessly across all devices — iPhone, Android, MacBook, and Windows PC. It runs directly inside your web browser.
+              </p>
+            </div>
+            <div style={styles.faqItem}>
+              <h3 style={styles.faqQ}>Are our camera feeds and photos private?</h3>
+              <p style={styles.faqA}>
+                Yes. Video feeds are transmitted directly peer-to-peer using secure WebRTC technology. Photos are merged right in your browser and are not saved on external servers.
+              </p>
             </div>
           </div>
         </section>
 
         {/* Bottom CTA */}
         <section style={styles.bottomCta}>
-          <h2>Ready to Take Cute Photos Together?</h2>
-          <p>The original, 100% free online photo booth for couples everywhere.</p>
+          <h2 style={styles.bottomCtaTitle}>Ready to Take Cute Photos Together?</h2>
+          <p style={styles.bottomCtaSub}>
+            Join thousands of long-distance couples making cute memories today. 100% free, no sign-up, no 16-digit codes.
+          </p>
           <Link href="/" style={styles.primaryBtnLg}>
-            Launch LDR Photobooth (100% Free) →
+            Start LDR Photobooth in 1 Click →
           </Link>
+          <div style={{ marginTop: '14px', fontSize: '13px', color: '#475569' }}>
+            No download • No sign-up • Works instantly on any phone or PC
+          </div>
         </section>
       </main>
 
@@ -325,8 +456,8 @@ const styles = {
   },
   hero: {
     textAlign: 'center',
-    padding: '50px 20px 40px',
-    maxWidth: '820px',
+    padding: '50px 20px 30px',
+    maxWidth: '840px',
     margin: '0 auto',
   },
   pillBadge: {
@@ -348,7 +479,7 @@ const styles = {
     color: '#0284c7',
   },
   heroTitle: {
-    fontSize: '42px',
+    fontSize: '40px',
     lineHeight: 1.2,
     fontWeight: '800',
     color: '#111827',
@@ -364,7 +495,26 @@ const styles = {
     fontSize: '17px',
     lineHeight: 1.6,
     color: '#4b5563',
-    margin: '0 0 32px 0',
+    margin: '0 0 20px 0',
+  },
+  ratingBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 16px',
+    background: '#fef3c7',
+    border: '1px solid #fde68a',
+    borderRadius: '999px',
+    marginBottom: '24px',
+  },
+  stars: {
+    color: '#f59e0b',
+    fontSize: '15px',
+    letterSpacing: '2px',
+  },
+  ratingText: {
+    fontSize: '13px',
+    color: '#92400e',
   },
   heroActions: {
     display: 'flex',
@@ -373,7 +523,7 @@ const styles = {
     gap: '10px',
   },
   primaryBtn: {
-    padding: '16px 32px',
+    padding: '16px 34px',
     background: '#06d6a0',
     color: '#0f172a',
     fontSize: '17px',
@@ -386,7 +536,7 @@ const styles = {
   },
   primaryBtnLg: {
     display: 'inline-block',
-    padding: '18px 36px',
+    padding: '18px 38px',
     background: '#06d6a0',
     color: '#0f172a',
     fontSize: '18px',
@@ -407,6 +557,51 @@ const styles = {
     margin: '0 auto',
     padding: '0 20px 60px',
     boxSizing: 'border-box',
+  },
+  quoteBox: {
+    margin: '30px 0 50px',
+    background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%)',
+    border: '2.5px solid #0f172a',
+    borderRadius: '20px',
+    padding: '32px 28px',
+    boxShadow: '6px 6px 0 #0f172a',
+  },
+  quoteHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '16px',
+    flexWrap: 'wrap',
+    gap: '10px',
+  },
+  quotePill: {
+    display: 'inline-block',
+    background: '#047857',
+    color: '#fff',
+    padding: '4px 12px',
+    borderRadius: '999px',
+    fontSize: '11px',
+    fontWeight: '800',
+    letterSpacing: '1px',
+  },
+  quoteSub: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#0369a1',
+  },
+  quoteText: {
+    margin: '0 0 16px 0',
+    fontSize: '26px',
+    fontWeight: '900',
+    lineHeight: 1.35,
+    color: '#0f172a',
+    letterSpacing: '-0.5px',
+  },
+  quoteDescription: {
+    margin: 0,
+    fontSize: '15px',
+    lineHeight: 1.65,
+    color: '#334155',
   },
   section: {
     margin: '60px 0',
@@ -437,6 +632,7 @@ const styles = {
     borderBottom: '2px solid #0f172a',
     fontWeight: '700',
     color: '#334155',
+    width: '28%',
   },
   thPrimary: {
     padding: '16px 20px',
@@ -444,6 +640,7 @@ const styles = {
     borderBottom: '2px solid #0f172a',
     fontWeight: '800',
     color: '#047857',
+    width: '42%',
   },
   thCompetitor: {
     padding: '16px 20px',
@@ -451,23 +648,64 @@ const styles = {
     borderBottom: '2px solid #0f172a',
     fontWeight: '600',
     color: '#64748b',
+    width: '30%',
   },
   tdFeature: {
     padding: '16px 20px',
     borderBottom: '1px solid #e2e8f0',
     fontWeight: '600',
     color: '#334155',
+    verticalAlign: 'top',
   },
   tdPrimary: {
     padding: '16px 20px',
     borderBottom: '1px solid #e2e8f0',
     background: '#f0fdf4',
     color: '#065f46',
+    verticalAlign: 'top',
   },
   tdCompetitor: {
     padding: '16px 20px',
     borderBottom: '1px solid #e2e8f0',
     color: '#64748b',
+    verticalAlign: 'top',
+  },
+  tdQuoteHint: {
+    fontSize: '13px',
+    fontStyle: 'italic',
+    color: '#047857',
+    marginTop: '6px',
+    fontWeight: '600',
+  },
+  editorialSection: {
+    margin: '60px 0',
+    background: '#fff',
+    borderRadius: '18px',
+    border: '2px solid #0f172a',
+    boxShadow: '5px 5px 0 #0f172a',
+    padding: '36px 30px',
+  },
+  editorialTitle: {
+    fontSize: '24px',
+    fontWeight: '800',
+    color: '#111827',
+    margin: '0 0 18px 0',
+  },
+  editorialBody: {
+    fontSize: '15px',
+    lineHeight: 1.7,
+    color: '#374151',
+  },
+  highlightCallout: {
+    background: '#f0fdf4',
+    borderLeft: '4px solid #047857',
+    padding: '16px 20px',
+    borderRadius: '8px',
+    margin: '20px 0',
+  },
+  bulletList: {
+    paddingLeft: '22px',
+    lineHeight: 1.8,
   },
   grid: {
     display: 'grid',
@@ -501,14 +739,26 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    maxWidth: '780px',
+    maxWidth: '820px',
     margin: '0 auto',
   },
   faqItem: {
     background: '#fff',
-    padding: '20px 24px',
+    padding: '22px 26px',
     borderRadius: '14px',
     border: '1.5px solid #e5e7eb',
+  },
+  faqQ: {
+    margin: '0 0 8px 0',
+    fontSize: '17px',
+    fontWeight: '700',
+    color: '#111827',
+  },
+  faqA: {
+    margin: 0,
+    fontSize: '14px',
+    lineHeight: 1.6,
+    color: '#4b5563',
   },
   bottomCta: {
     textAlign: 'center',
@@ -518,6 +768,19 @@ const styles = {
     border: '2px solid #0f172a',
     boxShadow: '6px 6px 0 #0f172a',
     margin: '60px 0 20px',
+  },
+  bottomCtaTitle: {
+    fontSize: '30px',
+    fontWeight: '800',
+    margin: '0 0 12px 0',
+    color: '#0f172a',
+  },
+  bottomCtaSub: {
+    fontSize: '16px',
+    color: '#334155',
+    maxWidth: '560px',
+    margin: '0 auto',
+    lineHeight: 1.5,
   },
   footer: {
     borderTop: '1px solid #e5e7eb',

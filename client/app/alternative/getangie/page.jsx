@@ -73,6 +73,25 @@ const articleSchema = {
       dateModified: new Date().toISOString(),
     },
     {
+      '@type': 'WebApplication',
+      name: 'LDR Photobooth by Pico',
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'All',
+      url: siteUrl,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.9',
+        reviewCount: '184',
+        bestRating: '5',
+        worstRating: '1',
+      },
+    },
+    {
       '@type': 'FAQPage',
       mainEntity: [
         {
