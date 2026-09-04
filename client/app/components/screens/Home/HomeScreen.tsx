@@ -221,7 +221,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── ACTIVITIES / MODES SECTION ── */}
       <section id="activities" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">{t('home.activities.tag')}</div>
           <h2 className="home-section-title">{t('home.activities.title')}</h2>
         </div>
 
@@ -283,7 +282,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── ARTICLES SECTION ── */}
       <section id="articles" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">{t('home.articles.tag')}</div>
           <h2 className="home-section-title">{t('home.articles.title')}</h2>
         </div>
 
@@ -309,7 +307,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── FAQ SECTION ── */}
       <section id="faq" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">{t('home.faq.tag')}</div>
           <h2 className="home-section-title">{t('home.faq.title')}</h2>
         </div>
 
