@@ -85,24 +85,24 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
 
   const faqs = [
     {
-      q: 'Is LDR Photobooth really 100% free with no sign up?',
-      a: 'Yes, completely free. No credit cards, no subscriptions, no email registration, and no paywalls. All customized photo strips download watermark-free.'
+      q: t('home.faq.q1'),
+      a: t('home.faq.a1')
     },
     {
-      q: 'Why enter a 16-digit code when you can start in 1 click with Pico?',
-      a: 'Unlike apps like Lensbooth that make couples transcribe complex 16-digit codes, Pico launches your session in 1 click or via a simple direct link.'
+      q: t('home.faq.q2'),
+      a: t('home.faq.a2')
     },
     {
-      q: 'How does real-time camera sync work across distance?',
-      a: 'We use ultra-low latency WebRTC peer-to-peer streaming. You and your partner share a screen with synchronized countdown timers so you pose together at the exact same millisecond.'
+      q: t('home.faq.q3'),
+      a: t('home.faq.a3')
     },
     {
-      q: 'Do we need to download an app or extension?',
-      a: 'No app download is needed. It runs smoothly directly inside Safari, Chrome, Edge, and all mobile browsers on iOS, Android, macOS, and Windows.'
+      q: t('home.faq.q4'),
+      a: t('home.faq.a4')
     },
     {
-      q: 'Are our photos and webcams private?',
-      a: 'Yes. Live video is transmitted directly between you and your partner. Photos are merged right on your device and are never stored on public servers unless you voluntarily publish them to the community gallery.'
+      q: t('home.faq.q5'),
+      a: t('home.faq.a5')
     }
   ];
 
@@ -117,12 +117,12 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
 
         {/* Navigation links */}
         <nav className="home-nav">
-          <a href="#activities" className="home-nav-link">Activities</a>
-          <a href="#articles" className="home-nav-link">Articles</a>
-          <a href="#faq" className="home-nav-link">FAQ</a>
+          <a href="#activities" className="home-nav-link">{t('home.nav.activities')}</a>
+          <a href="#articles" className="home-nav-link">{t('home.nav.articles')}</a>
+          <a href="#faq" className="home-nav-link">{t('home.nav.faq')}</a>
         </nav>
 
-        {/* Actions (LanguagePicker only, topbar try-it-now button removed) */}
+        {/* Actions (LanguagePicker only) */}
         <div className="home-top-actions">
           <LanguagePicker />
         </div>
@@ -134,19 +134,19 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           {/* Left Column: Bold Typography & Primary Lime CTA */}
           <div className="home-hero-left">
             <h1 className="home-headline">
-              The<br />
-              Original LDR<br />
+              {t('home.hero.title1')}<br />
+              {t('home.hero.title2')}<br />
               <span className="home-highlight-wrap">
-                Photobooth
+                {t('home.hero.titleHighlight')}
                 <span className="home-lime-underline" />
               </span><br />
-              online...
+              {t('home.hero.title3')}
             </h1>
 
             {/* CTAs: Bright Lime Green Button */}
             <div className="home-cta-row">
               <button onClick={onEnterBooth} className="home-try-lime-btn">
-                try it now... ↗
+                {t('home.hero.cta')}
               </button>
             </div>
           </div>
@@ -221,54 +221,61 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── ACTIVITIES / MODES SECTION ── */}
       <section id="activities" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">✦ ACTIVITIES</div>
-          <h2 className="home-section-title">Choose Your Session</h2>
-          <p className="home-section-desc">Instant real-time photobooth sessions engineered for long-distance pairs & individuals.</p>
+          <div className="home-section-tag">{t('home.activities.tag')}</div>
+          <h2 className="home-section-title">{t('home.activities.title')}</h2>
         </div>
 
         <div className="home-activities-grid">
           {/* Duo Live Mode */}
           <div className="home-act-card popular" onClick={() => onSelectMode('live', 2)}>
             <div className="home-act-top">
-              <span className="home-act-icon">⚡</span>
-              <span className="home-act-badge lime">POPULAR • LIVE</span>
+              <span className="home-act-icon live-icon">⚡</span>
+              <span className="home-act-badge lime">{t('home.mode.live.badge')}</span>
             </div>
-            <h3 className="home-act-title">Duo Live Mode</h3>
-            <p className="home-act-desc">Pair 2 cameras live in real time with synchronized countdowns. Smile together across any distance.</p>
-            <div className="home-act-action">Start Live Booth ↗</div>
+            <h3 className="home-act-title">{t('home.mode.live.title')}</h3>
+            <p className="home-act-desc">{t('home.mode.live.desc')}</p>
+            <div className="home-act-action">
+              <span>{t('home.mode.live.cta')}</span>
+            </div>
           </div>
 
           {/* Solo Mode */}
           <div className="home-act-card" onClick={() => onSelectMode('solo')}>
             <div className="home-act-top">
-              <span className="home-act-icon">👤</span>
-              <span className="home-act-badge">PORTRAIT</span>
+              <span className="home-act-icon solo-icon">👤</span>
+              <span className="home-act-badge solo-badge">{t('home.mode.solo.badge')}</span>
             </div>
-            <h3 className="home-act-title">Solo Mode</h3>
-            <p className="home-act-desc">Individual photo shoot with authentic Korean Life4Cuts (인생네컷) minimalist frame styles.</p>
-            <div className="home-act-action">Take Solo Photos ↗</div>
+            <h3 className="home-act-title">{t('home.mode.solo.title')}</h3>
+            <p className="home-act-desc">{t('home.mode.solo.desc')}</p>
+            <div className="home-act-action">
+              <span>{t('home.mode.solo.cta')}</span>
+            </div>
           </div>
 
           {/* LDR Surprise Mode */}
           <div className="home-act-card" onClick={onEnterBooth}>
             <div className="home-act-top">
-              <span className="home-act-icon">👥</span>
-              <span className="home-act-badge">TURN-BASED</span>
+              <span className="home-act-icon surprise-icon">👥</span>
+              <span className="home-act-badge surprise-badge">{t('home.mode.group.badge')}</span>
             </div>
-            <h3 className="home-act-title">LDR Surprise Mode</h3>
-            <p className="home-act-desc">Take turns secretly posing for each frame, then reveal the combined photo strip together at the end.</p>
-            <div className="home-act-action">Play Surprise Mode ↗</div>
+            <h3 className="home-act-title">{t('home.mode.group.title')}</h3>
+            <p className="home-act-desc">{t('home.mode.group.desc')}</p>
+            <div className="home-act-action">
+              <span>{t('home.mode.group.cta')}</span>
+            </div>
           </div>
 
           {/* Community Showcase */}
           <div className="home-act-card" onClick={() => onSelectMode('community')}>
             <div className="home-act-top">
-              <span className="home-act-icon">✨</span>
-              <span className="home-act-badge">GALLERY</span>
+              <span className="home-act-icon gallery-icon">✨</span>
+              <span className="home-act-badge gallery-badge">{t('home.mode.community.badge')}</span>
             </div>
-            <h3 className="home-act-title">LDR Gallery & Frames</h3>
-            <p className="home-act-desc">Discover cute photo strips created by couples worldwide and explore custom community frames.</p>
-            <div className="home-act-action">Explore Gallery ↗</div>
+            <h3 className="home-act-title">{t('home.mode.community.title')}</h3>
+            <p className="home-act-desc">{t('home.mode.community.desc')}</p>
+            <div className="home-act-action">
+              <span>{t('home.mode.community.cta')}</span>
+            </div>
           </div>
         </div>
       </section>
@@ -276,30 +283,25 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── ARTICLES SECTION ── */}
       <section id="articles" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">✦ ARTICLES & COMPARISONS</div>
-          <h2 className="home-section-title">The Better Way to Photobooth</h2>
-          <p className="home-section-desc">See why long-distance couples prefer Pico over traditional photobooth apps.</p>
+          <div className="home-section-tag">{t('home.articles.tag')}</div>
+          <h2 className="home-section-title">{t('home.articles.title')}</h2>
         </div>
 
         <div className="home-articles-grid">
           {/* Article 1: Lensbooth */}
           <Link href="/alternative/lensbooth" className="home-article-card">
-            <div className="home-art-badge">LENSBOOTH ALTERNATIVE</div>
-            <h3 className="home-art-title">Why enter a 16-digit code when you can start in 1 click with Pico?</h3>
-            <p className="home-art-desc">
-              Lensbooth requires entering a 16-digit code just to pair devices. Learn why LDR Photobooth by Pico is 100% free with zero registration.
-            </p>
-            <div className="home-art-link">Read Full Comparison →</div>
+            <div className="home-art-badge">{t('home.articles.lensbooth.badge')}</div>
+            <h3 className="home-art-title">{t('home.articles.lensbooth.title')}</h3>
+            <p className="home-art-desc">{t('home.articles.lensbooth.desc')}</p>
+            <div className="home-art-link">{t('home.articles.readMore')}</div>
           </Link>
 
           {/* Article 2: getAngie */}
           <Link href="/alternative/getangie" className="home-article-card">
-            <div className="home-art-badge">GETANGIE ALTERNATIVE</div>
-            <h3 className="home-art-title">The #1 Free getAngie Alternative for Long Distance Couples (Zero Paywalls)</h3>
-            <p className="home-art-desc">
-              Tired of subscription paywalls and mini-game bloat? LDR Photobooth by Pico delivers a pure, authentic Korean photo booth experience.
-            </p>
-            <div className="home-art-link">Read Full Comparison →</div>
+            <div className="home-art-badge purple">{t('home.articles.getangie.badge')}</div>
+            <h3 className="home-art-title">{t('home.articles.getangie.title')}</h3>
+            <p className="home-art-desc">{t('home.articles.getangie.desc')}</p>
+            <div className="home-art-link">{t('home.articles.readMore')}</div>
           </Link>
         </div>
       </section>
@@ -307,9 +309,8 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       {/* ── FAQ SECTION ── */}
       <section id="faq" className="home-section">
         <div className="home-section-header">
-          <div className="home-section-tag">✦ FAQ</div>
-          <h2 className="home-section-title">Frequently Asked Questions</h2>
-          <p className="home-section-desc">Everything you need to know about taking photos together from distance.</p>
+          <div className="home-section-tag">{t('home.faq.tag')}</div>
+          <h2 className="home-section-title">{t('home.faq.title')}</h2>
         </div>
 
         <div className="home-faq-list">
@@ -323,7 +324,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
               >
                 <div className="home-faq-question">
                   <span>{faq.q}</span>
-                  <span className="home-faq-arrow">{isOpen ? '−' : '+'}</span>
+                  <span className="home-faq-toggle">{isOpen ? '−' : '+'}</span>
                 </div>
                 {isOpen && <div className="home-faq-answer">{faq.a}</div>}
               </div>
@@ -334,11 +335,12 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
 
       {/* ── BOTTOM CTA BANNER ── */}
       <section className="home-bottom-cta">
-        <h2 className="home-bottom-title">Ready to take photos together?</h2>
-        <p className="home-bottom-desc">Join thousands of long-distance couples making cute memories today.</p>
-        <button onClick={onEnterBooth} className="home-bottom-btn">
-          Start Photobooth Now (100% Free) →
-        </button>
+        <div className="home-bottom-box">
+          <h2 className="home-bottom-title">{t('home.bottom.title')}</h2>
+          <button onClick={onEnterBooth} className="home-bottom-lime-btn">
+            {t('home.hero.cta')}
+          </button>
+        </div>
       </section>
 
       {/* ── MINIMALIST FOOTER ── */}
@@ -346,7 +348,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
         <div className="home-footer-inner">
           <div className="home-footer-brand">
             <strong>LDR PHOTOBOOTH</strong>
-            <span>The Original LDR Photobooth in the World</span>
+            <span>{t('home.footer.tagline')}</span>
           </div>
           <div className="home-footer-links">
             <a href="https://picobooth.web.id/" target="_blank" rel="noopener noreferrer">picobooth.web.id ↗</a>
@@ -355,7 +357,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           </div>
         </div>
         <div className="home-footer-copy">
-          © {new Date().getFullYear()} LDR Photobooth. All rights reserved.
+          {t('home.footer.rights')}
         </div>
       </footer>
     </div>

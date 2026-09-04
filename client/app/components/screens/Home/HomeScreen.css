@@ -271,31 +271,30 @@ body:has(.home-container) {
 .home-section-header {
   text-align: center;
   max-width: 600px;
-  margin: 0 auto 48px;
+  margin: 0 auto 36px;
 }
 
 .home-section-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 800;
   color: #059669;
-  letter-spacing: 1px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.8px;
   margin-bottom: 12px;
 }
 
 .home-section-title {
-  font-size: 34px;
+  font-size: clamp(28px, 4vw, 36px);
   font-weight: 900;
   color: #0f172a;
   letter-spacing: -0.8px;
-  margin: 0 0 10px 0;
-}
-
-.home-section-desc {
-  font-size: 15px;
-  color: #64748b;
-  line-height: 1.6;
-  margin: 0;
+  margin: 8px 0 0 0;
 }
 
 .home-activities-grid {
@@ -306,18 +305,18 @@ body:has(.home-container) {
 
 .home-act-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 24px;
   padding: 28px 24px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
 }
 
 .home-act-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px) scale(1.01);
   border-color: #111827;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
 }
@@ -340,40 +339,81 @@ body:has(.home-container) {
 }
 
 .home-act-icon {
-  font-size: 28px;
+  font-size: 24px;
   width: 48px;
   height: 48px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.home-act-card:hover .home-act-icon {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.home-act-icon.live-icon {
+  background: #fef9c3;
+  border: 1px solid #fef08a;
+}
+
+.home-act-icon.solo-icon {
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+}
+
+.home-act-icon.surprise-icon {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.home-act-icon.gallery-icon {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
 }
 
 .home-act-badge {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
   background: #f1f5f9;
   color: #475569;
+  letter-spacing: 0.3px;
 }
 
 .home-act-badge.lime {
   background: #ccff00;
   color: #0f172a;
+  box-shadow: 0 2px 6px rgba(204, 255, 0, 0.3);
+}
+
+.home-act-badge.solo-badge {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.home-act-badge.surprise-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.home-act-badge.gallery-badge {
+  background: #f3e8ff;
+  color: #7e22ce;
 }
 
 .home-act-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
 }
 
 .home-act-desc {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: #64748b;
   margin: 0 0 20px 0;
@@ -381,12 +421,19 @@ body:has(.home-container) {
 }
 
 .home-act-action {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   color: #0f172a;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  margin-top: auto;
+  transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.home-act-card:hover .home-act-action {
+  gap: 8px;
+  color: #000000;
 }
 
 .home-articles-grid {
@@ -397,43 +444,50 @@ body:has(.home-container) {
 
 .home-article-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 24px;
   padding: 28px 24px;
   text-decoration: none;
   color: inherit;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
 .home-article-card:hover {
   border-color: #111827;
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
 }
 
 .home-art-badge {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
   color: #0284c7;
   background: #e0f2fe;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
   align-self: flex-start;
   margin-bottom: 14px;
+  letter-spacing: 0.3px;
+}
+
+.home-art-badge.purple {
+  color: #7c3aed;
+  background: #ede9fe;
 }
 
 .home-art-title {
   font-size: 18px;
   font-weight: 800;
   color: #0f172a;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0 0 10px 0;
 }
 
 .home-art-desc {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: #64748b;
   margin: 0 0 20px 0;
@@ -441,9 +495,17 @@ body:has(.home-container) {
 }
 
 .home-art-link {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: gap 0.2s ease;
+}
+
+.home-article-card:hover .home-art-link {
+  gap: 8px;
 }
 
 .home-faq-list {
@@ -456,19 +518,23 @@ body:has(.home-container) {
 
 .home-faq-item {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 20px;
   padding: 20px 24px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .home-faq-item:hover {
   border-color: #cbd5e1;
+  background: #fafafa;
 }
 
 .home-faq-item.open {
   border-color: #111827;
+  background: #fafafa;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .home-faq-question {
@@ -476,64 +542,88 @@ body:has(.home-container) {
   align-items: center;
   justify-content: space-between;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   color: #0f172a;
   gap: 16px;
 }
 
-.home-faq-arrow {
-  font-size: 18px;
-  color: #64748b;
-  font-weight: 700;
+.home-faq-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #0f172a;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.home-faq-item.open .home-faq-toggle {
+  background: #111827;
+  color: #ffffff;
 }
 
 .home-faq-answer {
   margin-top: 12px;
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.6;
   color: #475569;
   border-top: 1px solid #f1f5f9;
-  padding-top: 12px;
+  padding-top: 14px;
 }
 
 .home-bottom-cta {
+  padding: 40px 24px 80px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.home-bottom-box {
+  background: #0f172a;
+  border-radius: 28px;
+  padding: 56px 32px;
   text-align: center;
-  padding: 80px 24px;
-  background: #fafaf9;
-  border-top: 1px solid #eaeaea;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 
 .home-bottom-title {
-  font-size: 32px;
+  font-size: clamp(24px, 4vw, 36px);
   font-weight: 900;
-  color: #0f172a;
-  margin: 0 0 10px 0;
+  color: #ffffff;
+  margin: 0;
   letter-spacing: -0.5px;
 }
 
-.home-bottom-desc {
-  font-size: 15px;
-  color: #64748b;
-  margin: 0 0 28px 0;
-}
-
-.home-bottom-btn {
-  background: #111827;
-  color: #ffffff;
-  border: 1px solid #111827;
+.home-bottom-lime-btn {
+  background: #ccff00;
+  color: #111827;
+  border: 2px solid #111827;
   border-radius: 999px;
-  padding: 16px 36px;
-  font-size: 16px;
-  font-weight: 700;
+  padding: 16px 38px;
+  font-size: 17px;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(204, 255, 0, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.home-bottom-btn:hover {
-  background: #000000;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+.home-bottom-lime-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: #bbf000;
+  box-shadow: 0 8px 24px rgba(204, 255, 0, 0.55);
 }
 
 .home-footer {
