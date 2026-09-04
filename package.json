@@ -1,6 +1,6 @@
 {
     "name": "ldr-photobooth",
-    "version": "1.0.19",
+    "version": "1.0.20",
     "description": "LDR Photobooth - P2P Photo Sharing",
     "scripts": {
         "dev": "npm run dev:client",
