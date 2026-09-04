@@ -10,6 +10,7 @@ import {
   FRAME_LAYOUT_OPTIONS, 
   FRAME_FONTS, 
   FRAME_COLORS, 
+  FRAME_PATTERNS,
   TEXT_COLORS, 
   PHOTO_FILTERS, 
   FRAME_GLARES,
@@ -90,6 +91,8 @@ interface FrameSelectScreenProps {
   setFrameNoise: (noise: number) => void;
   frameGlare: string;
   setFrameGlare: (glare: string) => void;
+  framePattern?: string;
+  setFramePattern?: (pattern: string) => void;
   showWeather: boolean;
   setShowWeather: (show: boolean) => void;
   weatherText: string;
@@ -161,6 +164,8 @@ export default function FrameSelectScreen({
   setFrameNoise,
   frameGlare,
   setFrameGlare,
+  framePattern = 'none',
+  setFramePattern,
   showWeather,
   setShowWeather,
   setWeatherText
@@ -519,6 +524,46 @@ export default function FrameSelectScreen({
                 onReapply();
               }}
             />
+          </div>
+        </div>
+
+        {/* ── FRAME PATTERN ── */}
+        <div className="ctrl-section">
+          <div className="ctrl-label">{t('frame.pattern')}</div>
+          <div className="scroll-row" style={styles.scrollRow}>
+            {FRAME_PATTERNS.map((p) => {
+              const isSelected = framePattern === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`btn-secondary ${isSelected ? 'active' : ''}`}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '14px',
+                    fontFamily: "'Gaegu', cursive",
+                    background: isSelected ? 'var(--yellow)' : 'white',
+                    border: '2px solid var(--ink)',
+                    borderRadius: '20px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    fontWeight: isSelected ? 'bold' : 'normal',
+                    boxShadow: isSelected ? '2px 2px 0px var(--ink)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => {
+                    if (setFramePattern) setFramePattern(p.id);
+                    onReapply();
+                  }}
+                >
+                  <span style={{ fontSize: '15px' }}>{p.icon}</span>
+                  <span>{p.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

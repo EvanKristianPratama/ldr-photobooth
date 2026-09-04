@@ -27,6 +27,7 @@ export function useFrameState() {
   const [weatherText, setWeatherText] = useState('');
   const [photoOffsets, setPhotoOffsets] = useState({});
   const [selectedAdjustSlot, setSelectedAdjustSlot] = useState(0);
+  const [framePattern, setFramePattern] = useState('none'); // 'none', 'polkadot', 'topography', etc.
 
   const updatePhotoOffset = useCallback((index, x, y) => {
     setPhotoOffsets(prev => ({
@@ -75,6 +76,7 @@ export function useFrameState() {
     weatherText, setWeatherText,
     photoOffsets, setPhotoOffsets, updatePhotoOffset,
     selectedAdjustSlot, setSelectedAdjustSlot,
+    framePattern, setFramePattern,
     addSticker, removeSticker, updateSticker, clearStickers
   };
 }

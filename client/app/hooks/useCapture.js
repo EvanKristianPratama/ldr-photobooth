@@ -81,25 +81,36 @@ export default function useCapture({
     };
   }, []);
 
-  const startCamera = () => {
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        frameRate: { ideal: 30, max: 30 },
-        facingMode: 'user'
-      },
-      audio: false
-    })
-      .then(stream => {
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+  const startCamera = async () => {
+    try {
+      if (streamRef.current && streamRef.current.getTracks().some(t => t.readyState === 'live')) {
+        if (videoRef.current && videoRef.current.srcObject !== streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
         }
-      })
-      .catch(err => {
-        alert('Cannot access camera: ' + err.message);
+        return streamRef.current;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 },
+          facingMode: 'user'
+        },
+        audio: false
       });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch { }
+      }
+      return stream;
+    } catch (err) {
+      console.error('Cannot access camera:', err);
+      alert('Cannot access camera: ' + err.message);
+      throw err;
+    }
   };
 
   const stopLiveVC = useCallback(async () => {
@@ -336,22 +347,48 @@ export default function useCapture({
   });
 
   const captureFrame = (video) => new Promise(async (resolve, reject) => {
-    const canvasSource = sessionMode === 'live' ? video : (compositeCanvasRef.current || video);
+    let canvasSource = (sessionMode === 'live' && compositeCanvasRef?.current) 
+      ? compositeCanvasRef.current 
+      : (video || videoRef.current);
     
-    let sourceWidth = canvasSource.videoWidth || canvasSource.width;
-    let sourceHeight = canvasSource.videoHeight || canvasSource.height;
+    // Ensure video is playing and has stream attached
+    const targetVideo = video || videoRef.current;
+    if (targetVideo) {
+      if (!targetVideo.srcObject && streamRef.current) {
+        targetVideo.srcObject = streamRef.current;
+      }
+      if (targetVideo.readyState < 2) {
+        try {
+          await targetVideo.play();
+        } catch { }
+      }
+    }
+
+    let sourceWidth = canvasSource?.videoWidth || canvasSource?.width || 0;
+    let sourceHeight = canvasSource?.videoHeight || canvasSource?.height || 0;
     
     let attempts = 0;
-    while ((!sourceWidth || !sourceHeight) && attempts < 30) {
+    while ((!sourceWidth || !sourceHeight) && attempts < 35) {
       await new Promise(r => setTimeout(r, 100));
-      sourceWidth = canvasSource.videoWidth || canvasSource.width;
-      sourceHeight = canvasSource.videoHeight || canvasSource.height;
+      if (!canvasSource && videoRef.current) canvasSource = videoRef.current;
+      if (canvasSource && canvasSource.readyState && canvasSource.readyState < 2) {
+        try { await canvasSource.play(); } catch { }
+      }
+      sourceWidth = canvasSource?.videoWidth || canvasSource?.width || 0;
+      sourceHeight = canvasSource?.videoHeight || canvasSource?.height || 0;
       attempts++;
     }
 
     if (!sourceWidth || !sourceHeight) {
-      reject(new Error('Capture source not ready after waiting'));
-      return;
+      // Fallback check videoRef directly
+      if (videoRef.current && videoRef.current.videoWidth && videoRef.current.videoHeight) {
+        canvasSource = videoRef.current;
+        sourceWidth = videoRef.current.videoWidth;
+        sourceHeight = videoRef.current.videoHeight;
+      } else {
+        reject(new Error('Capture source not ready after waiting'));
+        return;
+      }
     }
 
     const canvas = document.createElement('canvas');
@@ -359,7 +396,7 @@ export default function useCapture({
     canvas.height = sourceHeight;
     const ctx = canvas.getContext('2d');
 
-    if (canvasSource === compositeCanvasRef.current) {
+    if (canvasSource === compositeCanvasRef?.current) {
       // Composite canvas is already correctly scaled and mirrored, just draw it directly
       ctx.drawImage(canvasSource, 0, 0, sourceWidth, sourceHeight);
     } else {
@@ -417,9 +454,18 @@ export default function useCapture({
     if (typeof onFlash === 'function') onFlash(true);
     await new Promise(r => setTimeout(r, 100));
 
-    // Wait for video element to be mounted (up to 2s)
+    // Ensure stream is active
+    if (!streamRef.current || streamRef.current.getTracks().every(t => t.readyState === 'ended')) {
+      try {
+        await startCamera();
+      } catch (err) {
+        console.warn('Could not start camera in triggerCaptureAndSend:', err);
+      }
+    }
+
+    // Wait for video element to be mounted (up to 2.5s)
     let waitAttempts = 0;
-    while (!videoRef.current && waitAttempts < 20) {
+    while (!videoRef.current && waitAttempts < 25) {
       await new Promise(r => setTimeout(r, 100));
       waitAttempts++;
     }
@@ -430,10 +476,13 @@ export default function useCapture({
     }
 
     // Re-attach stream if needed and wait for readyState
-    if (videoRef.current.readyState < 2 && streamRef.current) {
+    if (streamRef.current && videoRef.current.srcObject !== streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
+    }
+    if (videoRef.current.readyState < 2) {
+      try { await videoRef.current.play(); } catch { }
       let readyAttempts = 0;
-      while (videoRef.current.readyState < 2 && readyAttempts < 20) {
+      while (videoRef.current.readyState < 2 && readyAttempts < 25) {
         await new Promise(r => setTimeout(r, 100));
         readyAttempts++;
       }

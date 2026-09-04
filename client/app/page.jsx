@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import FrameSelectScreen from './components/screens/FrameSelect/FrameSelectScreen';
@@ -102,7 +102,17 @@ export default function Page() {
         </aside>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: step === 'home' ? 'auto' : '100vh', minHeight: '100vh', overflowY: step === 'home' ? 'auto' : 'hidden' }}>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: step === 'home' ? 'auto' : '100vh',
+        minHeight: '100vh',
+        overflowY: step === 'home' ? 'auto' : 'hidden',
+        backgroundColor: '#fafbfc',
+        backgroundImage: 'radial-gradient(#cbd5e1 1.25px, transparent 1.25px)',
+        backgroundSize: '24px 24px'
+      }}>
 
       {/* TOPBAR */}
       {step !== 'community' && step !== 'welcome' && step !== 'home' && (
@@ -113,7 +123,7 @@ export default function Page() {
               LDR PHOTOBOOTH
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}
             <LanguagePicker />
           </div>
@@ -335,6 +345,8 @@ export default function Page() {
             setFrameNoise={frame.setFrameNoise}
             frameGlare={frame.frameGlare}
             setFrameGlare={frame.setFrameGlare}
+            framePattern={frame.framePattern}
+            setFramePattern={frame.setFramePattern}
             showWeather={frame.showWeather}
             setShowWeather={frame.setShowWeather}
             weatherText={frame.weatherText}

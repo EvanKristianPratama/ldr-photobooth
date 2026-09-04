@@ -64,3 +64,15 @@ export const STICKER_PACK = [
   '✨', '💖', '⭐', '🎈', '🍀', '🎀', '🍭', '🌸', '🌈', '🍦', 
   '🍩', '🦋', '🐱', '🐶', '🦄', '🍎', '🍓', '🍕', '🍔', '🍟'
 ];
+
+export const FRAME_PATTERNS = [
+  { id: 'none', label: 'Polos', icon: '🚫' },
+  { id: 'polkadot', label: 'Polkadot', icon: '⚪' },
+  { id: 'topography', label: 'Topografi', icon: '🗺️' },
+  { id: 'checkered', label: 'Checkered', icon: '🏁' },
+  { id: 'stripes', label: 'Stripes', icon: '📏' },
+  { id: 'hearts', label: 'Hearts', icon: '💖' },
+  { id: 'stars', label: 'Stars', icon: '⭐' },
+  { id: 'grid', label: 'Grid', icon: '▦' },
+  { id: 'wavy', label: 'Wavy', icon: '〰️' },
+];

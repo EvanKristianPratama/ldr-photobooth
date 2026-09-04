@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import { FRAME_CANVAS } from '../constants/layout';
 import { SHAPE_PATHS } from '../utils/shapes';
 import { saveSessionToIndexedDb } from '../utils/indexedDb';
+import { drawFramePattern } from '../utils/framePatterns';
 
 
 export function useFrameRenderer({
@@ -20,7 +21,8 @@ export function useFrameRenderer({
     stickers, orientation, frameFont, frameLayout, frameDate, 
     frameNoise, frameGlare, activeTemplate, showWeather, weatherText,
     locTextEdited, setLocTextLeft, setLocTextRight, setFrameError,
-    photoOffsets = {}, selectedAdjustSlot, setSelectedAdjustSlot
+    photoOffsets = {}, selectedAdjustSlot, setSelectedAdjustSlot,
+    framePattern
   } = frameState;
 
   const slotBoundsRef = useRef([]);
@@ -104,9 +106,10 @@ export function useFrameRenderer({
       frameGlare,
       activeTemplate?.id || 'none',
       showWeather,
-      weatherText
+      weatherText,
+      framePattern || 'none'
     ].join('|');
-  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, photoOffsets, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate, showWeather, weatherText]);
+  }, [sessionSeed, frameMode, framePresetId, frameSrc, showFrameText, frameColor, frameTextColor, locTextLeft, locTextRight, photoFilter, stickers, photoOffsets, orientation, frameFont, frameLayout, frameDate, frameNoise, frameGlare, activeTemplate, showWeather, weatherText, framePattern]);
 
   const mergePhotos = useCallback(async ({
     count,
@@ -191,8 +194,12 @@ export function useFrameRenderer({
           type: 'background',
           zIndex: backgroundZIndex,
           draw: async () => {
-            ctx.fillStyle = tpl.background_color || frameColor || '#1a1a2e';
+            const bg = tpl.background_color || frameColor || '#1a1a2e';
+            ctx.fillStyle = bg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (framePattern && framePattern !== 'none') {
+              drawFramePattern(ctx, canvas.width, canvas.height, framePattern, bg);
+            }
           }
         });
 
@@ -480,6 +487,9 @@ export function useFrameRenderer({
       if (!isCustomFrame) {
         ctx.fillStyle = activeFrameColor;
         ctx.fillRect(0, 0, totalW, totalH);
+        if (framePattern && framePattern !== 'none') {
+          drawFramePattern(ctx, totalW, totalH, framePattern, activeFrameColor);
+        }
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, totalW, totalH);

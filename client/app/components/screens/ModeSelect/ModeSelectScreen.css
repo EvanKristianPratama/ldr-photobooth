@@ -4,7 +4,7 @@
   width: 100%;
   height: calc(100vh - 68px);
   min-height: 580px;
-  background: #ffffff;
+  background: transparent;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
   position: relative;

@@ -279,12 +279,14 @@ export default function useAppController() {
     frame.frameMode, frame.framePresetId, frame.frameSrc, frame.showFrameText,
     frame.frameColor, frame.frameTextColor, frame.locTextLeft, frame.locTextRight,
     frame.photoFilter, frame.frameFont, frame.frameLayout, frame.frameDate,
-    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText
+    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText,
+    frame.framePattern
   ].join('|'), [
     frame.frameMode, frame.framePresetId, frame.frameSrc, frame.showFrameText,
     frame.frameColor, frame.frameTextColor, frame.locTextLeft, frame.locTextRight,
     frame.photoFilter, frame.frameFont, frame.frameLayout, frame.frameDate,
-    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText
+    frame.orientation, frame.frameNoise, frame.frameGlare, frame.showWeather, frame.weatherText,
+    frame.framePattern
   ]);
 
   const debouncedMergeDeps = useDebouncedValue(mergeDeps, 400);
@@ -462,6 +464,10 @@ export default function useAppController() {
 
     if (restoredMode) setSessionMode(restoredMode);
     setStep(restoredStep);
+
+    if (restoredMode === 'solo' && (restoredStep === 'layout-select' || restoredStep === 'countdown')) {
+      captureRef.current.startCamera().catch(() => {});
+    }
 
     if (['frame-select', 'result', 'checkout'].includes(restoredStep)) {
       const savedParticipants = sessionStorage.getItem('ldr_captured_participants');
@@ -648,6 +654,15 @@ export default function useAppController() {
       const delay = (rawDelay >= 0 && rawDelay <= 4000) ? rawDelay : 1000;
       if (delay > 0) await new Promise(r => setTimeout(r, delay));
     }
+    // Pastikan kamera sudah aktif dan siap sebelum masuk ke countdown
+    if (!captureRef.current.streamRef?.current || captureRef.current.streamRef.current.getTracks().every(t => t.readyState === 'ended')) {
+      try {
+        await captureRef.current.startCamera();
+      } catch (e) {
+        console.warn('Pre-starting camera failed in startBoothSession:', e);
+      }
+    }
+
     setStep('countdown');
     await new Promise(r => setTimeout(r, 300));
     captureRef.current.attachStream();

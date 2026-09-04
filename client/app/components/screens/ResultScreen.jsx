@@ -647,10 +647,6 @@ export default function ResultScreen({
         
         {/* Left/Top: Branding/Title */}
         <div className="result-branding">
-          <div className="result-pill-badge">
-            <span className="sparkle">✦</span>
-            <span>{t('result.ready') || 'Ready'}</span>
-          </div>
           <h1 className="result-clean-title">
             Ready to <span className="highlight-pink">Share!</span>
           </h1>
@@ -728,7 +724,7 @@ export default function ResultScreen({
                 <span>{t('result.share')}</span>
               </button>
 
-              {/* 4. Edit Again (Clean Slate White Pill) */}
+              {/* 4. Edit Again (Solid Clean White Pill + Outline) */}
               <button className="btn-pill btn-pill-secondary" onClick={onEditFrame}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="1 4 1 10 7 10" />
@@ -830,65 +826,35 @@ export default function ResultScreen({
                 className="result-format-card"
                 onClick={() => { downloadAsStory(); setShowDownloadModal(false); }}
               >
-                <div className="result-format-icon">📱</div>
+                <div className="result-format-icon" style={{ background: 'linear-gradient(135deg, #a78bfa, #818cf8)', border: 'none' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                </div>
                 <div>
                   <div className="result-format-name">{t('result.format.story')}</div>
                   <div className="result-format-desc">Instagram & TikTok 9:16 story format</div>
                 </div>
               </button>
 
-              {/* Option 2: 4R Printable */}
-              <button 
-                className="result-format-card"
-                onClick={() => { onDownload('4R'); setShowDownloadModal(false); }}
-              >
-                <div className="result-format-icon">🖨️</div>
-                <div>
-                  <div className="result-format-name">{t('result.format.4r')}</div>
-                  <div className="result-format-desc">Standard 4R glossy photo paper format</div>
-                </div>
-              </button>
-
-              {/* Option 2.5: Receipt Booth (80mm B&W) */}
-              <button 
-                className="result-format-card"
-                onClick={() => { onDownload('RECEIPT_80MM'); setShowDownloadModal(false); }}
-              >
-                <div className="result-format-icon">🧾</div>
-                <div>
-                  <div className="result-format-name">{t('result.format.receipt')}</div>
-                  <div className="result-format-desc">Thermal receipt black & white format</div>
-                </div>
-              </button>
-
-              {/* Option 3: Classic Strip */}
+              {/* Option 2: Download Strip */}
               <button 
                 className="result-format-card"
                 onClick={() => { onDownload('ORIGINAL'); setShowDownloadModal(false); }}
               >
-                <div className="result-format-icon">✂️</div>
+                <div className="result-format-icon" style={{ background: 'linear-gradient(135deg, #f472b6, #fb7185)', border: 'none' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </div>
                 <div>
                   <div className="result-format-name">{t('result.format.strip')}</div>
                   <div className="result-format-desc">Standard vertical photo strip format</div>
                 </div>
               </button>
-
-              {/* Option 5: Animated GIF */}
-              {localLiveFrames?.length > 0 && (
-                <button 
-                  className="result-format-card"
-                  disabled={isGeneratingGif}
-                  onClick={() => { setShowDownloadModal(false); downloadAnimatedGif(); }}
-                >
-                  <div className="result-format-icon">🎞️</div>
-                  <div>
-                    <div className="result-format-name">
-                      {isGeneratingGif ? t('result.format.generating') : t('result.format.gif')}
-                    </div>
-                    <div className="result-format-desc">Animated looping live memory</div>
-                  </div>
-                </button>
-              )}
             </div>
           </div>
         </div>

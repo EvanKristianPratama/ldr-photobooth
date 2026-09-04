@@ -5,7 +5,7 @@
   padding: 16px 20px 48px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: #f8fafc !important;
+  background: transparent !important;
   min-height: calc(100vh - 68px) !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   box-sizing: border-box !important;
@@ -118,114 +118,112 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
   border-radius: 9999px !important;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.1px !important;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.2px !important;
   cursor: pointer !important;
   text-decoration: none !important;
   box-sizing: border-box !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
   user-select: none !important;
-  border: none !important;
-  box-shadow: none !important;
+  border: 2px solid #111827 !important;
+  box-shadow: 0 3px 0 #111827 !important;
   text-shadow: none !important;
 }
 
-.btn-pill:active {
-  transform: scale(0.98) !important;
+.btn-pill:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 0 #111827 !important;
 }
 
-/* 1. Post to Community Pill (Warm Sunset Gradient) */
+.btn-pill:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #111827 !important;
+}
+
+/* 1. Post to Community Pill (Solid Coral-Orange + Outline) */
 .btn-pill-community {
-  background: linear-gradient(135deg, #ff5757 0%, #ff8b3d 100%) !important;
+  background: #ff5733 !important;
   color: #ffffff !important;
   padding: 15px 24px !important;
 }
 
 .btn-pill-community:hover {
-  transform: translateY(-2px) !important;
-  opacity: 0.92 !important;
+  background: #e64a27 !important;
 }
 
-/* 2. Download Strip Pill (Modern Rose / Pink) */
+/* 2. Download Strip Pill (Solid Punchy Rose-Pink + Outline) */
 .btn-pill-download {
-  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%) !important;
+  background: #ff3366 !important;
+  color: #ffffff !important;
+  padding: 15px 24px !important;
+}
+
+.btn-pill-download:hover {
+  background: #e61e52 !important;
+}
+
+/* 3. Share Photo Pill (Solid Emerald Green + Outline) */
+.btn-pill-share {
+  background: #10b981 !important;
   color: #ffffff !important;
   padding: 14px 24px !important;
 }
 
-.btn-pill-download:hover {
-  transform: translateY(-2px) !important;
-  opacity: 0.92 !important;
-}
-
-/* 3. Share Photo Pill (Modern Emerald / Teal) */
-.btn-pill-share {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: #ffffff !important;
-  padding: 13px 24px !important;
-}
-
 .btn-pill-share:hover {
-  transform: translateY(-2px) !important;
-  opacity: 0.92 !important;
+  background: #059669 !important;
 }
 
-/* 4. Edit Again Pill (Clean Slate White) */
+/* 4. Secondary Pill (Solid Clean White + Outline) */
 .btn-pill-secondary {
   background: #ffffff !important;
-  border: 1.5px solid #e2e8f0 !important;
-  color: #334155 !important;
+  color: #111827 !important;
   padding: 13px 24px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
 }
 
 .btn-pill-secondary:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  transform: translateY(-1px) !important;
+  background: #f1f5f9 !important;
 }
 
 /* 5. Footer Nav Links (Home & Donate) */
 .result-footer-links {
   display: flex !important;
-  gap: 10px !important;
+  gap: 12px !important;
   margin-top: 4px !important;
   width: 100% !important;
 }
 
 .btn-pill-home {
   flex: 1 !important;
-  background: #f8fafc !important;
-  border: 1.5px solid #e2e8f0 !important;
-  color: #475569 !important;
-  padding: 11px 18px !important;
-  font-size: 13px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 2px solid #111827 !important;
+  box-shadow: 0 3px 0 #111827 !important;
+  padding: 12px 18px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
 }
 
 .btn-pill-home:hover {
   background: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
 }
 
 .btn-pill-donate {
   flex: 1 !important;
-  background: #fffbeb !important;
-  border: 1.5px solid #fef08a !important;
-  color: #a16207 !important;
-  padding: 11px 18px !important;
-  font-size: 13px !important;
+  background: #ffd214 !important;
+  color: #111827 !important;
+  border: 2px solid #111827 !important;
+  box-shadow: 0 3px 0 #111827 !important;
+  padding: 12px 18px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
 }
 
 .btn-pill-donate:hover {
-  background: #fef9c3 !important;
-  border-color: #fde047 !important;
-  color: #854d0e !important;
+  background: #f5c400 !important;
 }
 
 /* ── CLEAN STUDIO MODALS ── */

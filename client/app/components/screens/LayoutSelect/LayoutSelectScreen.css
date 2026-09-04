@@ -9,7 +9,7 @@
   padding: 36px 20px 48px;
   box-sizing: border-box;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #ffffff;
+  background: transparent;
   position: relative;
 }
 
@@ -74,25 +74,25 @@
   margin: 0 auto;
 }
 
-/* ── CARD ── */
+/* ── CARD (Clean Studio Style) ── */
 .layout-card-modern {
   background: #ffffff;
-  border: 2px solid #e2e8f0;
-  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
   overflow: hidden;
   cursor: pointer;
   position: relative;
   display: flex;
   flex-direction: column;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   user-select: none;
 }
 
 .layout-card-modern:hover {
   border-color: #94a3b8;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .layout-card-modern:active {
@@ -101,8 +101,9 @@
 
 .layout-card-modern.selected {
   border-color: #0f172a;
+  border-width: 2px;
   background: #ffffff;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
 }
 
 .layout-check-badge {
@@ -117,7 +118,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   animation: scaleInCheck 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
   z-index: 5;
 }
@@ -136,13 +137,9 @@
   justify-content: center;
   padding: 12px;
   border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s ease;
+  transition: all 0.25s ease;
   overflow: hidden;
   box-sizing: border-box;
-}
-
-.layout-card-modern.selected .layout-preview-modern {
-  background: #f1f5f9;
 }
 
 .layout-preview-slots {
@@ -156,15 +153,25 @@
 .preview-slot-modern {
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
-  border-radius: 4px;
+  border-radius: 6px;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  transition: border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
+.layout-card-modern.selected .layout-preview-modern {
+  background: #f1f5f9;
+}
+
 .layout-card-modern.selected .preview-slot-modern {
-  border-color: #475569;
+  border-color: #334155;
+}
+
+.layout-card-modern.selected .layout-count-modern {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
 }
 
 /* Proportional slots by layout item count (Desktop) */
@@ -211,17 +218,13 @@
 
 .layout-count-modern {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: #64748b;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 9999px;
-  padding: 2px 8px;
-}
-
-.layout-card-modern.selected .layout-count-modern {
-  color: #0f172a;
-  background: #e2e8f0;
+  padding: 3px 10px;
+  transition: all 0.2s ease;
 }
 
 /* ── START BUTTON CONTAINER ── */

@@ -48,7 +48,9 @@ html {
 }
 
 body {
-  background: var(--cream);
+  background-color: #fafbfc;
+  background-image: radial-gradient(#cbd5e1 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
   color: var(--ink);
   font-family: 'Nunito', sans-serif;
   height: 100vh;

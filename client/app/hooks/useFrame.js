@@ -33,6 +33,7 @@ export default function useFrame({ participants, locationsById = {} }) {
     weatherText, setWeatherText,
     photoOffsets, updatePhotoOffset,
     selectedAdjustSlot, setSelectedAdjustSlot,
+    framePattern, setFramePattern,
     addSticker, removeSticker, updateSticker, clearStickers
   } = frameState;
 
@@ -139,6 +140,7 @@ export default function useFrame({ participants, locationsById = {} }) {
     setLocTextRight('');
     setLocTextEdited(false);
     setPhotoFilter('none');
+    setFramePattern('none');
     setMergedImage(null);
     setIsMerging(false);
     setActiveTemplate(null);
@@ -187,6 +189,7 @@ export default function useFrame({ participants, locationsById = {} }) {
     frameDate, setFrameDate,
     frameNoise, setFrameNoise,
     frameGlare, setFrameGlare,
+    framePattern, setFramePattern,
     activeTemplate,
     showWeather, setShowWeather,
     weatherText, setWeatherText,
