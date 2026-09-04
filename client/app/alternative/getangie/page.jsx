@@ -125,7 +125,7 @@ const articleSchema = {
 
 export default function GetAngieAlternativePage() {
   return (
-    <div style={styles.page}>
+    <div className="article-page" style={styles.page}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -328,6 +328,8 @@ const styles = {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
+    zIndex: 1,
   },
   nav: {
     display: 'flex',

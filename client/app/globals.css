@@ -39,6 +39,10 @@
   --blue-lt: #eafaff;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--cream);
   color: var(--ink);
@@ -46,6 +50,37 @@ body {
   height: 100vh;
   overflow: hidden;
   position: relative;
+}
+
+/* ── ARTICLE & LONG CONTENT SCROLLING ── */
+html:has(.article-page),
+body:has(.article-page),
+html:has(.article-page-wrapper),
+body:has(.article-page-wrapper),
+html.article-mode,
+body.article-mode {
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+}
+
+.article-page-wrapper,
+.article-page {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* Fallback for legacy browsers without :has() */
+@supports not selector(:has(*)) {
+  body:not(.photobooth-locked) {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
 }
 
 body::before {
