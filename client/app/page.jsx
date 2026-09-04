@@ -18,7 +18,7 @@ import LanguagePicker from './components/ui/LanguagePicker';
 import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelect/ModeSelectScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
-import HomeScreen from './components/screens/HomeScreen';
+import HomeScreen from './components/screens/Home/HomeScreen';
 
 import useAppController from './hooks/useAppController';
 

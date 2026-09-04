@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import LanguagePicker from '../ui/LanguagePicker';
-import { useLanguage } from '../../context/LanguageContext';
+import LanguagePicker from '../../ui/LanguagePicker';
+import { useLanguage } from '../../../context/LanguageContext';
+import './HomeScreen.css';
 
 interface HomeScreenProps {
   onEnterBooth: () => void;
@@ -62,7 +63,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           title: p.author || p.title || 'Couple Photo'
         }))
       : FALLBACK_STRIPS;
-    // Duplicate to ensure seamless continuous CSS marquee
     return [...list, ...list, ...list];
   }, [posts]);
 
@@ -122,19 +122,16 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           <a href="#faq" className="home-nav-link">FAQ</a>
         </nav>
 
-        {/* Actions */}
+        {/* Actions (LanguagePicker only, topbar try-it-now button removed) */}
         <div className="home-top-actions">
           <LanguagePicker />
-          <button onClick={onEnterBooth} className="home-topbar-lime-btn">
-            try it now... ↗
-          </button>
         </div>
       </header>
 
-      {/* ── HERO SECTION (Pico Aesthetic) ── */}
+      {/* ── HERO SECTION ── */}
       <section className="home-hero">
         <div className="home-hero-content">
-          {/* Left Column: Bold Typography & CTAs */}
+          {/* Left Column: Bold Typography & Primary Lime CTA */}
           <div className="home-hero-left">
             <h1 className="home-headline">
               The<br />
@@ -154,7 +151,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
             </div>
           </div>
 
-          {/* Right Column: 3 Lines of High-Performance Slow Vertical Scrolling Marquee on Desktop */}
+          {/* Right Column: 3 Lines of Slow Vertical Scrolling Marquee on Desktop */}
           <div className="home-hero-right">
             <div className="home-marquee-stage">
               {/* Line 1 (All Devices) */}
@@ -358,7 +355,7 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           </div>
         </div>
         <div className="home-footer-copy">
-          © {new Date().getFullYear()} LDR Photobooth by Pico. All rights reserved.
+          © {new Date().getFullYear()} LDR Photobooth. All rights reserved.
         </div>
       </footer>
     </div>
