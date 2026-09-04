@@ -107,10 +107,15 @@ export default function Page() {
       {/* TOPBAR */}
       {step !== 'community' && step !== 'welcome' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
-          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleGoHome}>
-            <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '4px' }} />
-            <span style={{ color: 'var(--ink)', fontSize: '22px', lineHeight: 'normal', verticalAlign: 'middle', fontFamily: "'PanellosPen', cursive" }}>ldr photobooth</span>
-            <span style={{ color: 'var(--ink)', opacity: 0.45, fontSize: '12px', lineHeight: 'normal', verticalAlign: 'middle', letterSpacing: '0.5px' }}>by pico</span>
+          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleGoHome}>
+            <img src="/Ldr_photobooth.png" alt="Pico Logo" style={{ height: '32px', width: 'auto', display: 'block', borderRadius: '6px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '17px', fontWeight: '900', letterSpacing: '2.5px', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif" }}>PICO</span>
+                <span style={{ fontSize: '10px', fontWeight: '800', background: '#111827', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', letterSpacing: '0.5px' }}>LDR</span>
+              </div>
+              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>ldr photobooth</span>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             {step !== 'mode-select' && <StepIndicator steps={stepsToDisplay} currentStep={step} />}

@@ -26,20 +26,20 @@ interface ModeOptionCardProps {
   icon: string;
   title: string;
   desc?: string;
+  badge?: string;
+  badgeColor?: 'lime' | 'dark' | 'gray';
   onClick: () => void;
   comingSoon?: boolean;
   theme?: 'solo' | 'duo' | 'live' | 'community' | 'default';
   style?: React.CSSProperties;
 }
 
-/**
- * Reusable ModeOptionCard sub-component for high modularity, DRY principles,
- * and high developer experience (DX).
- */
 const ModeOptionCard = React.memo(({
   icon,
   title,
   desc,
+  badge,
+  badgeColor = 'gray',
   onClick,
   comingSoon = false,
   theme = 'default',
@@ -47,7 +47,7 @@ const ModeOptionCard = React.memo(({
 }: ModeOptionCardProps) => {
   const cardStyle = useMemo(() => {
     return {
-      opacity: comingSoon ? 0.7 : 1,
+      opacity: comingSoon ? 0.6 : 1,
       cursor: comingSoon ? 'not-allowed' : 'pointer',
       ...style
     };
@@ -59,11 +59,31 @@ const ModeOptionCard = React.memo(({
       onClick={onClick}
       style={cardStyle}
     >
-      <div className="mode-icon">{icon}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div className="mode-icon">{icon}</div>
+        {badge && (
+          <span 
+            style={{
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.6px',
+              padding: '3px 8px',
+              borderRadius: '999px',
+              textTransform: 'uppercase',
+              background: badgeColor === 'lime' ? '#ccff00' : badgeColor === 'dark' ? '#111827' : '#f1f5f9',
+              color: badgeColor === 'lime' ? '#0f172a' : badgeColor === 'dark' ? '#ffffff' : '#64748b',
+              border: badgeColor === 'lime' ? '1px solid #bbf7d0' : 'none',
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+
       <div className="mode-details">
         <div className="mode-title">
-          {title}
-          {comingSoon && <span className="soon-badge">SOON!</span>}
+          <span>{title}</span>
+          {comingSoon && <span className="soon-badge">SOON</span>}
         </div>
         {desc && <div className="mode-desc">{desc}</div>}
       </div>
@@ -95,9 +115,9 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
         text: t('mode.soonDesc') || 'Fitur ini sedang dalam pengembangan.',
         icon: 'info',
         confirmButtonText: 'Oke!',
-        confirmButtonColor: 'var(--ink)',
+        confirmButtonColor: '#111827',
         customClass: {
-          popup: 'swal-doodle',
+          popup: 'swal-clean',
         },
       });
     } catch (error) {
@@ -108,33 +128,52 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
   // Renders the main photo taking options
   const renderMainOptions = () => (
     <>
-      <div className="form-section-title">{t('mode.howToPhoto')}</div>
+      <div style={styles.sectionHeader}>
+        <h2 style={styles.sectionTitle}>{t('mode.howToPhoto') || 'Mau foto gimana hari ini?'}</h2>
+        <p style={styles.sectionSub}>Pilih mode pemotretan yang kamu inginkan untuk memulai sesi.</p>
+      </div>
 
       <div className="mode-main-grid">
-        <ModeOptionCard 
-          icon="👤"
-          title={t('mode.solo')}
-          onClick={() => onSelectMode('solo')}
-          theme="solo"
-        />
-
-        <ModeOptionCard 
-          icon="👥"
-          title={t('mode.group')}
-          onClick={() => setShowGroupOptions(true)}
-          theme="duo"
-        />
-
+        {/* Duo Live Mode (Featured Hero Mode) */}
         <ModeOptionCard 
           icon="⚡"
-          title={t('mode.live')}
+          title={t('mode.live') || 'Duo Live Mode'}
+          desc="Hubungkan 2 kamera live secara real-time dari mana saja."
+          badge="POPULAR • LIVE"
+          badgeColor="lime"
           onClick={() => onSelectMode('live', 2)}
           theme="live"
         />
 
+        {/* Solo Mode */}
+        <ModeOptionCard 
+          icon="👤"
+          title={t('mode.solo') || 'Solo Mode'}
+          desc="Foto sendiri dengan strip ala photobooth Korea Life4Cuts."
+          badge="PORTRAIT"
+          badgeColor="gray"
+          onClick={() => onSelectMode('solo')}
+          theme="solo"
+        />
+
+        {/* LDR Surprise Mode */}
+        <ModeOptionCard 
+          icon="👥"
+          title={t('mode.group') || 'LDR Surprise Mode'}
+          desc="Pose bergantian secara rahasia dan lihat hasilnya di akhir."
+          badge="TURN-BASED"
+          badgeColor="gray"
+          onClick={() => setShowGroupOptions(true)}
+          theme="duo"
+        />
+
+        {/* Community Showcase */}
         <ModeOptionCard 
           icon="✨"
-          title={t('mode.community')}
+          title={t('mode.community') || 'Komunitas'}
+          desc="Lihat hasil strip foto manis dan template frame buatan kreator."
+          badge="SHOWCASE"
+          badgeColor="gray"
           onClick={() => onSelectMode('community')}
           theme="community"
         />
@@ -148,65 +187,112 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
       <button 
         type="button"
         onClick={() => setShowGroupOptions(false)}
-        className="btn-secondary btn-back-absolute"
+        className="btn-secondary"
         style={styles.backBtn}
       >
-        {t('common.back')}
+        ← {t('common.back') || 'Kembali'}
       </button>
       
-      <div className="form-section-title">{t('mode.selectSize')}</div>
+      <div style={{ ...styles.sectionHeader, marginTop: '40px' }}>
+        <h2 style={styles.sectionTitle}>{t('mode.selectSize') || 'Berapa Orang?'}</h2>
+        <p style={styles.sectionSub}>Pilih jumlah orang untuk sesi foto bersama ini.</p>
+      </div>
 
-      {groupOptions.map(opt => (
-        <ModeOptionCard
-          key={opt.id}
-          icon={opt.icon}
-          title={opt.label}
-          onClick={() => {
-            if (opt.comingSoon) {
-              handleComingSoonClick();
-              return;
-            }
-            onSelectMode('duo', opt.id);
-          }}
-          comingSoon={!!opt.comingSoon}
-          style={{ marginBottom: '16px' }}
-        />
-      ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+        {groupOptions.map(opt => (
+          <ModeOptionCard
+            key={opt.id}
+            icon={opt.icon}
+            title={opt.label}
+            desc={opt.desc}
+            badge={opt.comingSoon ? 'SOON' : 'READY'}
+            badgeColor={opt.comingSoon ? 'gray' : 'dark'}
+            onClick={() => {
+              if (opt.comingSoon) {
+                handleComingSoonClick();
+                return;
+              }
+              onSelectMode('duo', opt.id);
+            }}
+            comingSoon={!!opt.comingSoon}
+          />
+        ))}
+      </div>
     </>
   );
 
   return (
     <section className="page active" id="page-mode-select">
-      {/* Left Sidebar Brand/Title */}
-      <div className="mode-left vibe-bg">
-        <div className="big-doodle">
-          {showGroupOptions ? t('mode.howMany') : t('mode.pickYour')}
-          <span className="outline">
-            {showGroupOptions ? t('mode.people') : t('mode.vibe')}
-          </span>
+      {/* Left Sidebar: Clean Studio Showcase (LensBooth / Angie inspired) */}
+      <div className="mode-left">
+        {/* Top Tag Pill */}
+        <div style={styles.brandPill}>
+          <span style={{ color: '#059669', fontSize: '11px' }}>✦</span>
+          <span style={styles.brandPillText}>THE ORIGINAL LDR PHOTOBOOTH</span>
+        </div>
+
+        {/* Big Studio Headline */}
+        <h1 style={styles.heroHeadline}>
+          The online<br />
+          photobooth for<br />
+          <span style={styles.cursiveAccent}>moments</span> together.
+        </h1>
+
+        <p style={styles.heroSubtitle}>
+          The free online photo booth for long-distance couples, best friends, or solo cute shots to create beautiful Korean Life4Cuts strips.
+        </p>
+
+        {/* Interactive Couple Connection Card */}
+        <div style={styles.connectionCard}>
+          <div style={styles.connectionTop}>
+            <span style={styles.livePulseDot} />
+            <span style={styles.connectionStatusText}>Live Dual Camera Sync</span>
+            <span style={styles.webrtcBadge}>WebRTC</span>
+          </div>
+
+          <div style={styles.connectionCities}>
+            {/* City 1 */}
+            <div style={styles.cityItem}>
+              <div style={styles.cityAvatar}>
+                <span style={{ fontSize: '18px' }}>📸</span>
+              </div>
+              <div style={styles.cityName}>You</div>
+              <div style={styles.citySub}>📍 Local Cam</div>
+            </div>
+
+            {/* Connecting Arc Line */}
+            <div style={styles.connectorLineWrap}>
+              <div style={styles.connectorLine} />
+              <div style={styles.connectorHeart}>♥</div>
+            </div>
+
+            {/* City 2 */}
+            <div style={styles.cityItem}>
+              <div style={styles.cityAvatar}>
+                <span style={{ fontSize: '18px' }}>🌍</span>
+              </div>
+              <div style={styles.cityName}>Partner</div>
+              <div style={styles.citySub}>📍 Across Distance</div>
+            </div>
+          </div>
+
+          <div style={styles.connectionFooter}>
+            <span>⚡ 1-Click Start • Sub-second Sync • 100% Free</span>
+          </div>
         </div>
       </div>
 
       {/* Right Option Column */}
-      <div className="mode-right" style={{ position: 'relative' }}>
-        {/* Help Hint Bubble (only visible on main selection screen) */}
-        {!showGroupOptions && (
-          <div className="help-hint-container" style={styles.hintContainer}>
-            <span style={styles.hintText}>
-              {t('mode.helpHint')}
-            </span>
-          </div>
-        )}
-
-        {/* Reusable Help Button */}
+      <div className="mode-right">
+        {/* Clean Help Button */}
         <button 
           type="button" 
-          className="btn-help" 
           onClick={onShowHelp} 
-          title={t('common.help') || 'Help'}
-          style={{ position: 'absolute', top: '20px', right: '20px' }}
+          title={t('common.help') || 'Bantuan'}
+          style={styles.cleanHelpBtn}
         >
-          ?
+          <span style={{ fontSize: '12px', opacity: 0.7 }}>💡</span>
+          <span style={{ fontSize: '13px', fontWeight: 600 }}>Bantuan</span>
         </button>
 
         {showGroupOptions ? renderGroupOptions() : renderMainOptions()}
@@ -216,58 +302,176 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
 }
 
 const styles = {
-  backBtn: { 
+  brandPill: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '5px 14px',
+    background: '#ecfdf5',
+    border: '1px solid #a7f3d0',
+    borderRadius: '999px',
+    marginBottom: '20px',
+  },
+  brandPillText: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#065f46',
+    letterSpacing: '0.8px',
+  },
+  heroHeadline: {
+    fontSize: 'clamp(32px, 4vw, 44px)',
+    fontWeight: 900,
+    lineHeight: 1.15,
+    color: '#0f172a',
+    margin: '0 0 16px 0',
+    letterSpacing: '-1px',
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+  },
+  cursiveAccent: {
+    fontFamily: "'Playfair Display', Georgia, serif",
+    fontStyle: 'italic',
+    color: '#f43f5e',
+    fontWeight: 800,
+  },
+  heroSubtitle: {
+    fontSize: '15px',
+    lineHeight: 1.6,
+    color: '#64748b',
+    margin: '0 0 32px 0',
+    maxWidth: '460px',
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+  },
+  connectionCard: {
+    width: '100%',
+    maxWidth: '440px',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '20px',
+    padding: '20px 22px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+  },
+  connectionTop: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '16px',
+  },
+  livePulseDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#10b981',
+    boxShadow: '0 0 8px #10b981',
+  },
+  connectionStatusText: {
+    fontSize: '12px',
+    fontWeight: 700,
+    color: '#0f172a',
+    fontFamily: "'Inter', system-ui, sans-serif",
+  },
+  webrtcBadge: {
+    fontSize: '10px',
+    fontWeight: 700,
+    padding: '2px 6px',
+    background: '#f1f5f9',
+    color: '#64748b',
+    borderRadius: '6px',
+    marginLeft: 'auto',
+  },
+  connectionCities: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 0 16px',
+  },
+  cityItem: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '4px',
+  },
+  cityAvatar: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    background: '#f8fafc',
+    border: '1.5px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cityName: {
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#0f172a',
+  },
+  citySub: {
+    fontSize: '11px',
+    color: '#94a3b8',
+  },
+  connectorLineWrap: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative' as const,
+    margin: '0 12px',
+  },
+  connectorLine: {
+    width: '100%',
+    height: '2px',
+    background: 'repeating-linear-gradient(to right, #cbd5e1 0, #cbd5e1 6px, transparent 6px, transparent 12px)',
+  },
+  connectorHeart: {
     position: 'absolute' as const,
-    top: '20px',
-    left: '20px',
-    zIndex: 100,
-    padding: '8px 16px',
-    fontSize: '16px',
-    fontFamily: "'Gaegu', cursive",
+    color: '#f43f5e',
+    fontSize: '14px',
+    background: '#ffffff',
+    padding: '0 4px',
   },
-  optionCard: {
-    // Shared defaults (transferred to CSS / dynamic calculation)
+  connectionFooter: {
+    borderTop: '1px solid #f1f5f9',
+    paddingTop: '12px',
+    textAlign: 'center' as const,
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#64748b',
   },
-  soonBadge: { 
-    fontSize: '12px', 
-    marginLeft: '10px', 
-    background: 'var(--ink)', 
-    color: 'var(--yellow)', 
-    padding: '2px 8px', 
-    borderRadius: '10px', 
-    verticalAlign: 'middle', 
-    fontWeight: 'bold' as const,
+  sectionHeader: {
+    marginBottom: '8px',
   },
-  hintContainer: { 
-    position: 'absolute' as const, 
-    top: '22px', 
-    right: '75px', 
-    display: 'flex', 
-    alignItems: 'center', 
-    gap: '8px', 
-    pointerEvents: 'none' as const,
-    zIndex: 10,
-    maxWidth: '200px',
+  sectionTitle: {
+    fontSize: '24px',
+    fontWeight: 800,
+    color: '#0f172a',
+    margin: '0 0 6px 0',
+    letterSpacing: '-0.5px',
+    fontFamily: "'Inter', system-ui, sans-serif",
   },
-  hintText: { 
-    fontFamily: "'Gaegu', cursive", 
-    fontSize: '14px', 
-    color: 'var(--ink)', 
-    background: 'white',
-    padding: '4px 10px',
-    borderRadius: '12px 12px 0 12px',
-    border: '2px solid var(--ink)',
-    boxShadow: '2px 2px 0 var(--ink)',
-    whiteSpace: 'nowrap' as const,
-    animation: 'float-x 2s ease-in-out infinite',
+  sectionSub: {
+    fontSize: '14px',
+    color: '#64748b',
+    margin: 0,
+    fontFamily: "'Inter', system-ui, sans-serif",
   },
-  liveDesc: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: '13px',
-    marginTop: '4px',
-    fontFamily: "'Gaegu', cursive",
+  cleanHelpBtn: {
+    position: 'absolute' as const,
+    top: '24px',
+    right: '28px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '999px',
+    color: '#475569',
+    cursor: 'pointer',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+    transition: 'all 0.15s ease',
   },
-  communityIcon: { 
-    background: '#eee',
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: '16px',
   },
 };

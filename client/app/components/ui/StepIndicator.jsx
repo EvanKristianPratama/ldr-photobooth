@@ -20,7 +20,7 @@ export default function StepIndicator({ steps, currentStep }) {
             id={`step-${index}`}
           >
             <div className="step-pill">
-              <span style={{ fontSize: '11px', opacity: 0.6, fontFamily: "'Caveat', cursive" }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', opacity: 0.5, letterSpacing: '0.5px' }}>
                 0{index + 1}
               </span>
               <span>{t(`step.${step.id}`) || step.label}</span>

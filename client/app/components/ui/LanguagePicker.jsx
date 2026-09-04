@@ -28,7 +28,7 @@ export default function LanguagePicker() {
       style={{
         position: 'relative',
         zIndex: 200,
-        fontFamily: "'Gaegu', cursive",
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
       }}
     >
       <button
@@ -37,36 +37,37 @@ export default function LanguagePicker() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '5px',
-          padding: '4px 10px',
-          border: '2px solid var(--ink)',
-          borderRadius: '20px 18px 22px 18px / 18px 22px 18px 20px',
-          background: 'white',
-          fontSize: '14px',
-          fontWeight: '700',
-          color: 'var(--ink)',
+          gap: '6px',
+          padding: '6px 14px',
+          border: '1px solid #e5e7eb',
+          borderRadius: '999px',
+          background: '#ffffff',
+          fontSize: '13px',
+          fontWeight: '600',
+          color: '#111827',
           cursor: 'pointer',
-          transition: 'all 0.2s',
-          boxShadow: '3px 3px 0 var(--ink)',
-          transform: 'rotate(0.5deg)',
+          transition: 'all 0.15s ease',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
           outline: 'none',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translate(-1px, -1px) scale(1.03) rotate(-1deg)';
-          e.currentTarget.style.boxShadow = '4px 4px 0 var(--ink)';
+          e.currentTarget.style.borderColor = '#111827';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'rotate(0.5deg)';
-          e.currentTarget.style.boxShadow = '3px 3px 0 var(--ink)';
+          e.currentTarget.style.borderColor = '#e5e7eb';
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.04)';
         }}
       >
-        <span style={{ fontSize: '15px' }}>{currentLanguage.flag}</span>
-        <span className="lang-label-full" style={{ fontSize: '13px' }}>{currentLanguage.label}</span>
+        <span style={{ fontSize: '14px' }}>{currentLanguage.flag}</span>
+        <span className="lang-label-full" style={{ fontSize: '13px', letterSpacing: '-0.2px' }}>{currentLanguage.label}</span>
         <span style={{ 
-          fontSize: '10px', 
+          fontSize: '9px', 
+          color: '#64748b',
           transition: 'transform 0.2s',
           transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          display: 'inline-block'
+          display: 'inline-block',
+          marginLeft: '2px',
         }}>
           ▼
         </span>
@@ -74,21 +75,22 @@ export default function LanguagePicker() {
 
       {isOpen && (
         <div
-          className="lang-picker-dropdown squiggle"
+          className="lang-picker-dropdown"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 10px)',
+            top: 'calc(100% + 8px)',
             right: '0',
-            background: 'var(--cream)',
-            border: '2.5px solid var(--ink)',
-            borderRadius: '12px 10px 14px 10px / 10px 14px 10px 12px',
-            boxShadow: '5px 5px 0 var(--ink)',
+            background: '#ffffff',
+            border: '1px solid #f0f0f0',
+            borderRadius: '16px',
+            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.1)',
             padding: '6px',
-            minWidth: '170px',
+            minWidth: '180px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
-            animation: 'langDropdownPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            gap: '3px',
+            zIndex: 999,
+            animation: 'langDropdownPop 0.15s ease forwards',
           }}
         >
           {languages.map((lang) => {
@@ -104,33 +106,31 @@ export default function LanguagePicker() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '8px 12px',
+                  padding: '9px 12px',
                   border: 'none',
-                  borderRadius: '8px',
-                  background: isSelected ? 'var(--yellow)' : 'transparent',
-                  textAlign: 'left',
-                  fontSize: '16px',
-                  fontWeight: isSelected ? '700' : '600',
-                  color: 'var(--ink)',
+                  borderRadius: '10px',
+                  background: isSelected ? '#f1f5f9' : 'transparent',
+                  color: isSelected ? '#0f172a' : '#475569',
+                  fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+                  fontSize: '13px',
+                  fontWeight: isSelected ? '700' : '500',
                   cursor: 'pointer',
-                  transition: 'background 0.1s, transform 0.1s',
-                  fontFamily: "'Gaegu', cursive",
-                  outline: 'none',
-                  border: isSelected ? '2px solid var(--ink)' : '2px solid transparent',
+                  textAlign: 'left',
+                  transition: 'all 0.12s ease',
+                  width: '100%',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = isSelected ? 'var(--yellow)' : 'var(--pink-lt)';
-                  if (!isSelected) {
-                    e.currentTarget.style.transform = 'translateX(2px)';
-                  }
+                  if (!isSelected) e.currentTarget.style.background = '#f8fafc';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = isSelected ? 'var(--yellow)' : 'transparent';
-                  e.currentTarget.style.transform = 'none';
+                  if (!isSelected) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <span style={{ fontSize: '20px' }}>{lang.flag}</span>
-                <span style={{ fontSize: '15px' }}>{lang.label}</span>
+                <span style={{ fontSize: '15px' }}>{lang.flag}</span>
+                <span style={{ flex: 1 }}>{lang.label}</span>
+                {isSelected && (
+                  <span style={{ color: '#047857', fontWeight: '800', fontSize: '13px' }}>✓</span>
+                )}
               </button>
             );
           })}
@@ -141,7 +141,7 @@ export default function LanguagePicker() {
         @keyframes langDropdownPop {
           from {
             opacity: 0;
-            transform: scale(0.9) translateY(-6px);
+            transform: scale(0.95) translateY(-4px);
           }
           to {
             opacity: 1;
