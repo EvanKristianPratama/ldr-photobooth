@@ -1,0 +1,401 @@
+/* ── RESULT SCREEN (Clean Studio Style) ── */
+.result-page-container {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px 20px 48px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #ffffff !important;
+  min-height: calc(100vh - 68px) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  box-sizing: border-box !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.result-layout-wrapper {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 56px !important;
+  max-width: 1100px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  flex: 1 !important;
+  box-sizing: border-box !important;
+}
+
+/* ── BRANDING / READY TO SHARE HEADER ── */
+.result-branding {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  text-align: left !important;
+  max-width: 320px;
+}
+
+.result-pill-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 14px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  width: fit-content !important;
+  user-select: none;
+}
+
+.result-pill-badge .sparkle {
+  color: #0f172a;
+}
+
+.result-clean-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  font-size: clamp(28px, 4vw, 44px) !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  letter-spacing: -0.8px !important;
+  transform: none !important;
+  text-shadow: none !important;
+}
+
+.result-clean-title .highlight-pink {
+  color: #f43f5e !important;
+  display: inline !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow: none !important;
+  font-size: inherit !important;
+  transform: none !important;
+}
+
+.result-clean-sub {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #64748b !important;
+  margin: 0 !important;
+}
+
+/* ── PREVIEW & ACTIONS WRAPPER ── */
+.result-main-content {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 44px !important;
+  align-items: center !important;
+}
+
+.fs__preview-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  background: transparent !important;
+  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.09));
+  transition: transform 0.2s ease;
+}
+
+/* ── ACTIONS STACK (PILL BUTTONS) ── */
+.result-actions-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 270px !important;
+  max-width: 320px !important;
+  box-sizing: border-box !important;
+}
+
+/* Base Pill Button */
+.btn-pill {
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border-radius: 9999px !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.btn-pill:active {
+  transform: scale(0.98) !important;
+}
+
+/* 1. Post to Community Pill (Warm Sunset Gradient) */
+.btn-pill-community {
+  background: linear-gradient(135deg, #ff5757 0%, #ff8b3d 100%) !important;
+  color: #ffffff !important;
+  padding: 15px 24px !important;
+  box-shadow: 0 4px 16px rgba(255, 87, 87, 0.32) !important;
+}
+
+.btn-pill-community:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 87, 87, 0.42) !important;
+}
+
+/* 2. Download Strip Pill (Modern Rose / Pink) */
+.btn-pill-download {
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%) !important;
+  color: #ffffff !important;
+  padding: 14px 24px !important;
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.3) !important;
+}
+
+.btn-pill-download:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.4) !important;
+}
+
+/* 3. Share Photo Pill (Modern Emerald / Teal) */
+.btn-pill-share {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  padding: 13px 24px !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
+}
+
+.btn-pill-share:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* 4. Edit Again Pill (Clean Slate White) */
+.btn-pill-secondary {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #334155 !important;
+  padding: 13px 24px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+}
+
+.btn-pill-secondary:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 5. Footer Nav Links (Home & Donate) */
+.result-footer-links {
+  display: flex !important;
+  gap: 10px !important;
+  margin-top: 4px !important;
+  width: 100% !important;
+}
+
+.btn-pill-home {
+  flex: 1 !important;
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #475569 !important;
+  padding: 11px 18px !important;
+  font-size: 13px !important;
+}
+
+.btn-pill-home:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.btn-pill-donate {
+  flex: 1 !important;
+  background: #fffbeb !important;
+  border: 1.5px solid #fef08a !important;
+  color: #a16207 !important;
+  padding: 11px 18px !important;
+  font-size: 13px !important;
+}
+
+.btn-pill-donate:hover {
+  background: #fef9c3 !important;
+  border-color: #fde047 !important;
+  color: #854d0e !important;
+}
+
+/* ── CLEAN STUDIO MODALS ── */
+.result-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: resultFadeIn 0.2s ease-out;
+}
+
+.result-modal-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
+  padding: 30px 26px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  animation: resultScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.result-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.result-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.result-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+
+.result-modal-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.result-format-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.result-format-card:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.result-format-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.result-format-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+}
+
+.result-format-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+@keyframes resultFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes resultScaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── RESPONSIVE MOBILE ADJUSTMENTS ── */
+@media (max-width: 900px) {
+  .result-page-container {
+    padding: 12px 16px 40px !important;
+  }
+
+  .result-layout-wrapper {
+    flex-direction: column !important;
+    gap: 18px !important;
+  }
+
+  .result-branding {
+    text-align: center !important;
+    align-items: center !important;
+    max-width: 100% !important;
+  }
+
+  .result-clean-title {
+    font-size: 24px !important;
+    letter-spacing: -0.4px !important;
+  }
+
+  .result-clean-sub {
+    display: none !important;
+  }
+
+  .result-main-content {
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+  }
+
+  .result-actions-stack {
+    max-width: 340px !important;
+    margin: 0 auto !important;
+  }
+
+  .fs__preview-box {
+    max-height: 50vh !important;
+  }
+}
