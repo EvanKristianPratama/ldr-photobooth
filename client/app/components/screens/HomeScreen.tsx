@@ -62,9 +62,26 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
           title: p.author || p.title || 'Couple Photo'
         }))
       : FALLBACK_STRIPS;
-    // Duplicate 3x to ensure seamless continuous CSS marquee
+    // Duplicate to ensure seamless continuous CSS marquee
     return [...list, ...list, ...list];
   }, [posts]);
+
+  // 3 Lanes for desktop with natural offsets
+  const column1 = useMemo(() => {
+    return [...displayPhotos];
+  }, [displayPhotos]);
+
+  const column2 = useMemo(() => {
+    if (displayPhotos.length <= 1) return [...displayPhotos];
+    const offset = Math.floor(displayPhotos.length / 3);
+    return [...displayPhotos.slice(offset), ...displayPhotos.slice(0, offset)];
+  }, [displayPhotos]);
+
+  const column3 = useMemo(() => {
+    if (displayPhotos.length <= 2) return [...displayPhotos];
+    const offset = Math.floor((displayPhotos.length * 2) / 3);
+    return [...displayPhotos.slice(offset), ...displayPhotos.slice(0, offset)];
+  }, [displayPhotos]);
 
   const faqs = [
     {
@@ -108,8 +125,8 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
         {/* Actions */}
         <div className="home-top-actions">
           <LanguagePicker />
-          <button onClick={onEnterBooth} className="home-enter-btn">
-            Enter Booth ↗
+          <button onClick={onEnterBooth} className="home-topbar-lime-btn">
+            try it now... ↗
           </button>
         </div>
       </header>
@@ -119,11 +136,6 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
         <div className="home-hero-content">
           {/* Left Column: Bold Typography & CTAs */}
           <div className="home-hero-left">
-            <div className="home-pill-badge">
-              <span className="home-sparkle">✦</span>
-              <span>THE ORIGINAL LDR PHOTOBOOTH</span>
-            </div>
-
             <h1 className="home-headline">
               The<br />
               Original LDR<br />
@@ -134,35 +146,75 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
               online...
             </h1>
 
-            {/* CTAs */}
+            {/* CTAs: Bright Lime Green Button */}
             <div className="home-cta-row">
-              <button onClick={onEnterBooth} className="home-try-btn">
+              <button onClick={onEnterBooth} className="home-try-lime-btn">
                 try it now... ↗
-              </button>
-              <button onClick={onEnterBooth} className="home-inquiry-btn">
-                ENTER BOOTH ↗
               </button>
             </div>
           </div>
 
-          {/* Right Column: High-Performance Vertical Scrolling Marquee */}
+          {/* Right Column: 3 Lines of High-Performance Slow Vertical Scrolling Marquee on Desktop */}
           <div className="home-hero-right">
-            <div className="home-marquee-window">
-              <div className="home-marquee-track">
-                {displayPhotos.map((item, idx) => (
-                  <div key={`${item.id}-${idx}`} className="home-strip-card">
-                    <img
-                      src={item.url}
-                      alt={item.title}
-                      loading="lazy"
-                      className="home-strip-img"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/Ldr_photobooth.png';
-                      }}
-                    />
-                    <div className="home-strip-label">{item.title}</div>
-                  </div>
-                ))}
+            <div className="home-marquee-stage">
+              {/* Line 1 (All Devices) */}
+              <div className="home-marquee-col col-1">
+                <div className="home-marquee-track slow-1">
+                  {column1.map((item, idx) => (
+                    <div key={`c1-${item.id}-${idx}`} className="home-strip-card">
+                      <img
+                        src={item.url}
+                        alt={item.title}
+                        loading="lazy"
+                        className="home-strip-img"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/Ldr_photobooth.png';
+                        }}
+                      />
+                      <div className="home-strip-label">{item.title}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Line 2 (Desktop Only) */}
+              <div className="home-marquee-col col-2 desktop-only-col">
+                <div className="home-marquee-track slow-2">
+                  {column2.map((item, idx) => (
+                    <div key={`c2-${item.id}-${idx}`} className="home-strip-card">
+                      <img
+                        src={item.url}
+                        alt={item.title}
+                        loading="lazy"
+                        className="home-strip-img"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/Ldr_photobooth.png';
+                        }}
+                      />
+                      <div className="home-strip-label">{item.title}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Line 3 (Desktop Only) */}
+              <div className="home-marquee-col col-3 desktop-only-col">
+                <div className="home-marquee-track slow-3">
+                  {column3.map((item, idx) => (
+                    <div key={`c3-${item.id}-${idx}`} className="home-strip-card">
+                      <img
+                        src={item.url}
+                        alt={item.title}
+                        loading="lazy"
+                        className="home-strip-img"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/Ldr_photobooth.png';
+                        }}
+                      />
+                      <div className="home-strip-label">{item.title}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
