@@ -6,6 +6,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 interface ModeSelectProps {
   onSelectMode: (mode: 'solo' | 'duo' | 'live' | 'community', sizeId?: number) => void;
   onShowHelp: () => void;
+  onBack?: () => void;
 }
 
 interface GroupOption {
@@ -92,7 +93,7 @@ const ModeOptionCard = React.memo(({
 
 ModeOptionCard.displayName = 'ModeOptionCard';
 
-export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelectProps) {
+export default function ModeSelectScreen({ onSelectMode, onShowHelp, onBack }: ModeSelectProps) {
   const { t } = useLanguage();
   const [showGroupOptions, setShowGroupOptions] = useState(false);
 
@@ -129,10 +130,22 @@ export default function ModeSelectScreen({ onSelectMode, onShowHelp }: ModeSelec
     <>
       <div style={styles.sectionHeader}>
         <div style={styles.headerTopLine}>
-          <div className="mobile-only-pill" style={styles.mobileHeroBadge}>
-            <span style={{ color: '#059669', fontSize: '11px' }}>✦</span>
-            <span>THE ORIGINAL LDR PHOTOBOOTH</span>
-          </div>
+          {onBack ? (
+            <button 
+              type="button" 
+              onClick={onBack} 
+              title="Kembali ke Beranda"
+              style={styles.cleanBackBtn}
+            >
+              <span style={{ fontSize: '13px' }}>←</span>
+              <span style={{ fontSize: '12px', fontWeight: 600 }}>Home</span>
+            </button>
+          ) : (
+            <div className="mobile-only-pill" style={styles.mobileHeroBadge}>
+              <span style={{ color: '#059669', fontSize: '11px' }}>✦</span>
+              <span>THE ORIGINAL LDR PHOTOBOOTH</span>
+            </div>
+          )}
           <button 
             type="button" 
             onClick={onShowHelp} 
@@ -487,6 +500,19 @@ const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: '999px',
     color: '#475569',
+    cursor: 'pointer',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+    transition: 'all 0.15s ease',
+  },
+  cleanBackBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '5px 14px',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '999px',
+    color: '#0f172a',
     cursor: 'pointer',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     transition: 'all 0.15s ease',

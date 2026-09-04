@@ -38,7 +38,7 @@ const loadJsPDF = () => {
 };
 
 export default function useAppController() {
-  const [step, setStep] = useState('welcome');
+  const [step, setStep] = useState('home');
   const [invoiceData, setInvoiceData] = useState(null);
   const stepRef = useRef(step);
   const isMountedRef = useRef(false);
@@ -50,7 +50,7 @@ export default function useAppController() {
     if (typeof window !== 'undefined') {
       if (['frame-select', 'result', 'layout-select', 'room', 'join', 'checkout', 'invoice'].includes(step)) {
         sessionStorage.setItem('ldr_step', step);
-      } else if (step === 'mode-select') {
+      } else if (step === 'mode-select' || step === 'home') {
         sessionStorage.removeItem('ldr_step');
       }
     }
@@ -109,7 +109,7 @@ export default function useAppController() {
   const navigateToHome = () => {
     const newUrl = `${window.location.origin}${window.location.pathname}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
-    setStep('mode-select');
+    setStep('home');
     setSessionMode(null);
   };
 
@@ -403,7 +403,7 @@ export default function useAppController() {
     const sessionStep = sessionStorage.getItem('ldr_step');
     const sessionModeStored = sessionStorage.getItem('ldr_session_mode');
 
-    let restoredStep = 'welcome';
+    let restoredStep = 'home';
     let restoredMode = null;
 
     if (view === 'community') {
@@ -414,7 +414,7 @@ export default function useAppController() {
       if (orderId) {
         loadInvoiceData(orderId);
       } else {
-        restoredStep = 'mode-select';
+        restoredStep = 'home';
       }
     } else if (sharedRoom) {
       const modeParam = params.get('mode');
@@ -437,7 +437,7 @@ export default function useAppController() {
         if (orderId) {
           loadInvoiceData(orderId);
         } else {
-          restoredStep = 'mode-select';
+          restoredStep = 'home';
         }
       }
     } else if (mode === 'solo' || mode === 'live') {

@@ -19,6 +19,7 @@ import HowToUseScreen from './components/screens/HowToUseScreen';
 import ModeSelectScreen from './components/screens/ModeSelect/ModeSelectScreen';
 import WelcomeScreen from './components/screens/WelcomeScreen';
 import CommunityScreen from './components/screens/CommunityScreen';
+import HomeScreen from './components/screens/HomeScreen';
 
 import useAppController from './hooks/useAppController';
 
@@ -67,7 +68,7 @@ export default function Page() {
   const iconBase = "/doodle icons/SVG/interface";
 
   return (
-    <div className={step === 'community' ? 'comm-pin-root' : ''} style={{ position: 'relative', zIndex: 1, height: '100vh', display: 'flex', flexDirection: 'row' }}>
+    <div className={step === 'community' ? 'comm-pin-root' : ''} style={{ position: 'relative', zIndex: 1, height: step === 'home' ? 'auto' : '100vh', minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
       {isFlash && <div className="flash-effect" />}
 
       {/* ── GLOBAL EXPANDABLE SIDEBAR (for Community) ── */}
@@ -102,10 +103,10 @@ export default function Page() {
         </aside>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: step === 'home' ? 'auto' : '100vh', minHeight: '100vh', overflowY: step === 'home' ? 'auto' : 'hidden' }}>
 
       {/* TOPBAR */}
-      {step !== 'community' && step !== 'welcome' && (
+      {step !== 'community' && step !== 'welcome' && step !== 'home' && (
         <header className="topbar" style={{ flexShrink: 0 }}>
           <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }} onClick={handleGoHome}>
             <img src="/Ldr_photobooth.png" alt="Pico Logo" style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '5px' }} />
@@ -124,7 +125,7 @@ export default function Page() {
         </header>
       )}
 
-      <main style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, overflow: step === 'home' ? 'visible' : 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {step === 'loading' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '20px', fontFamily: "'Gaegu', cursive", color: 'var(--ink)' }}>
             <style>{`
@@ -145,12 +146,23 @@ export default function Page() {
           </div>
         )}
 
+        {step === 'home' && (
+          <HomeScreen
+            onEnterBooth={() => setStep('mode-select')}
+            onSelectMode={handleModeSelect}
+          />
+        )}
+
         {step === 'welcome' && (
           <WelcomeScreen onContinue={() => setStep('mode-select')} />
         )}
 
         {step === 'mode-select' && (
-          <ModeSelectScreen onSelectMode={handleModeSelect} onShowHelp={() => setShowHowTo(true)} />
+          <ModeSelectScreen
+            onSelectMode={handleModeSelect}
+            onShowHelp={() => setShowHowTo(true)}
+            onBack={() => setStep('home')}
+          />
         )}
 
         {step === 'community' && (
