@@ -83,6 +83,18 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
     return [...displayPhotos.slice(offset), ...displayPhotos.slice(0, offset)];
   }, [displayPhotos]);
 
+  // Distinct photo strips for the bottom scatter CTA collage
+  const scatterPhotos = useMemo(() => {
+    const list = posts.length > 0
+      ? posts.map(p => ({
+          id: p.id,
+          url: p.url.startsWith('http') ? p.url : `https://ldr-photobooth.if2372047.workers.dev${p.url}`,
+          title: p.author || p.title || 'Couple Photo'
+        }))
+      : FALLBACK_STRIPS;
+    return [...list, ...FALLBACK_STRIPS, ...list, ...FALLBACK_STRIPS].slice(0, 12);
+  }, [posts]);
+
   const faqs = [
     {
       q: t('home.faq.q1'),
@@ -330,11 +342,33 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
         </div>
       </section>
 
-      {/* ── BOTTOM CTA BANNER ── */}
-      <section className="home-bottom-cta">
-        <div className="home-bottom-box">
-          <h2 className="home-bottom-title">{t('home.bottom.title')}</h2>
-          <button onClick={onEnterBooth} className="home-bottom-lime-btn">
+      {/* ── SCATTERED PHOTO CTA SECTION ── */}
+      <section className="home-scatter-section">
+        <div className="home-scatter-stage">
+          {scatterPhotos.map((item, idx) => {
+            const scClass = `sc-${(idx % 12) + 1}`;
+            return (
+              <div key={`sc-${item.id}-${idx}`} className={`home-scatter-card ${scClass}`}>
+                <div className="home-scatter-paper">
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    loading="lazy"
+                    className="home-scatter-img"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/Ldr_photobooth.png';
+                    }}
+                  />
+                  <div className="home-scatter-label">{item.title}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Center Floating Lime CTA Button */}
+        <div className="home-scatter-center">
+          <button onClick={onEnterBooth} className="home-scatter-lime-btn">
             {t('home.hero.cta')}
           </button>
         </div>
