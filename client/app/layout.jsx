@@ -1,7 +1,7 @@
 import './globals.css';
 import { LanguageProvider } from './context/LanguageContext';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ldrphotobooth.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ldrphotobooth.web.id';
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
