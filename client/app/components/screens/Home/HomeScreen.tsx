@@ -378,13 +378,18 @@ export default function HomeScreen({ onEnterBooth, onSelectMode }: HomeScreenPro
       <footer className="home-footer">
         <div className="home-footer-inner">
           <div className="home-footer-brand">
-            <strong>LDR PHOTOBOOTH</strong>
-            <span>{t('home.footer.tagline')}</span>
+            <img src="/Ldr_photobooth.png" alt="Pico" className="home-footer-logo-img" />
+            <span className="home-footer-title">LDR PHOTOBOOTH</span>
           </div>
           <div className="home-footer-links">
-            <a href="https://picobooth.web.id/" target="_blank" rel="noopener noreferrer">picobooth.web.id ↗</a>
-            <Link href="/alternative/lensbooth">Lensbooth Alternative</Link>
-            <Link href="/alternative/getangie">getAngie Alternative</Link>
+            <a
+              href="https://picobooth.web.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="home-footer-pico-link"
+            >
+              part of PICOBOOTH ↗
+            </a>
           </div>
         </div>
         <div className="home-footer-copy">
