@@ -654,9 +654,6 @@ export default function ResultScreen({
           <h1 className="result-clean-title">
             Ready to <span className="highlight-pink">Share!</span>
           </h1>
-          <p className="result-clean-sub">
-            Your photobooth strip is ready to save, post, or share.
-          </p>
         </div>
 
         {/* Middle/Bottom: Preview & Actions */}

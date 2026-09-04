@@ -5,7 +5,7 @@
   padding: 16px 20px 48px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: #ffffff !important;
+  background: #f8fafc !important;
   min-height: calc(100vh - 68px) !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   box-sizing: border-box !important;
@@ -143,12 +143,11 @@
   background: linear-gradient(135deg, #ff5757 0%, #ff8b3d 100%) !important;
   color: #ffffff !important;
   padding: 15px 24px !important;
-  box-shadow: 0 4px 16px rgba(255, 87, 87, 0.32) !important;
 }
 
 .btn-pill-community:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(255, 87, 87, 0.42) !important;
+  opacity: 0.92 !important;
 }
 
 /* 2. Download Strip Pill (Modern Rose / Pink) */
@@ -156,12 +155,11 @@
   background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%) !important;
   color: #ffffff !important;
   padding: 14px 24px !important;
-  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.3) !important;
 }
 
 .btn-pill-download:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.4) !important;
+  opacity: 0.92 !important;
 }
 
 /* 3. Share Photo Pill (Modern Emerald / Teal) */
@@ -169,12 +167,11 @@
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: #ffffff !important;
   padding: 13px 24px !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
 }
 
 .btn-pill-share:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35) !important;
+  opacity: 0.92 !important;
 }
 
 /* 4. Edit Again Pill (Clean Slate White) */
