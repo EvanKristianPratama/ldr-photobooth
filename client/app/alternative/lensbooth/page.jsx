@@ -4,30 +4,35 @@ import Link from 'next/link';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ldrphotobooth.web.id';
 
 export const metadata = {
-  title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth | LDR Photobooth by Pico',
+  title: 'Best Lensbooth Alternative: Created for Full Customization & 100% Free | LDR Photobooth by Pico',
   description:
-    'Why enter a 16-digit code when you can start in 1 click with Pico? LDR Photobooth by Pico is 100% free with no sign up, zero paywalls, and real-time dual camera sync for long distance couples.',
+    'Why enter a 16-digit code or be trapped in rigid frames? LDR Photobooth by Pico is 100% free with no sign-up. Created for full customization and embracing creativity—kami membuat LDR Photobooth tanpa batasan style atau frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin.',
   keywords: [
     'lensbooth alternative',
+    'created for full customization and embrace creativity',
+    'photobooth tanpa batasan frame kaku',
+    'bebas berekspresi photobooth',
+    'customizable photobooth online',
     'why enter a 16-digit code when you can start in 1 click with pico',
     'free lensbooth alternative',
     'sites like lensbooth',
     'lensbooth online free',
-    '100% free no sign photobooth',
+    '100% free no sign up photobooth',
     'online photobooth free no app',
     'ldr photo booth',
     'ldr photobooth',
     'virtual photobooth for couples',
     'korean photobooth online free',
     'life4cuts online',
+    'unlimited photobooth frame styles',
   ],
   alternates: {
     canonical: `${siteUrl}/alternative/lensbooth`,
   },
   openGraph: {
-    title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
+    title: 'Best Lensbooth Alternative: Created for Full Customization & 100% Free',
     description:
-      'Why enter a 16-digit code when you can start in 1 click with Pico? 100% free, no sign up required, real-time dual camera sync for long-distance couples.',
+      'Why enter a 16-digit code or settle for rigid presets? LDR Photobooth is 100% free with no sign up, zero paywalls, and created for full customization to embrace creativity.',
     url: `${siteUrl}/alternative/lensbooth`,
     siteName: 'LDR Photobooth by Pico',
     images: [
@@ -35,7 +40,7 @@ export const metadata = {
         url: '/Ldr_photobooth.png',
         width: 1200,
         height: 630,
-        alt: 'Lensbooth Alternative - LDR Photobooth by Pico',
+        alt: 'Lensbooth Alternative - Created for Full Customization | LDR Photobooth by Pico',
       },
     ],
     locale: 'en_US',
@@ -43,9 +48,9 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Best Lensbooth Alternative: 100% Free No Sign Up Online Photobooth',
+    title: 'Best Lensbooth Alternative: Created for Full Customization & 100% Free',
     description:
-      'Why enter a 16-digit code when you can start in 1 click with Pico? 100% free no sign up photobooth for couples.',
+      'Why enter a 16-digit code? LDR Photobooth is created for full customization and embracing creativity—tanpa batasan frame kaku agar kalian bisa berekspresi sebebas mungkin.',
     images: ['/Ldr_photobooth.png'],
   },
 };
@@ -55,9 +60,9 @@ const articleSchema = {
   '@graph': [
     {
       '@type': 'Article',
-      headline: 'Best Lensbooth Alternative: Why enter a 16-digit code when you can start in 1 click with Pico?',
+      headline: 'Best Lensbooth Alternative: Created for Full Customization & Embracing Creativity',
       description:
-        'A comprehensive guide to why LDR Photobooth by Pico is the premier free Lensbooth alternative. Why enter a 16-digit code when you can start in 1 click with Pico? Featuring zero registration and true real-time dual camera pairing.',
+        'A comprehensive guide to why LDR Photobooth by Pico is the premier free Lensbooth alternative. Featuring instant 1-click start, no sign-up, real-time dual camera pairing, and complete creative freedom without rigid frame restrictions.',
       author: {
         '@type': 'Organization',
         name: 'LDR Photobooth by Pico',
@@ -106,10 +111,18 @@ const articleSchema = {
         },
         {
           '@type': 'Question',
+          name: 'How does LDR Photobooth support full customization and creative freedom?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Kami membuat LDR Photobooth tanpa batasan style atau frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin. Anda dapat menyesuaikan layout, warna, filter kamera live, serta strip foto tanpa terkunci template kaku atau paywall.',
+          },
+        },
+        {
+          '@type': 'Question',
           name: 'What makes LDR Photobooth the best alternative to Lensbooth?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'While Lensbooth is built primarily for single devices or requires complex code sharing, LDR Photobooth by Pico connects two separate devices live across any distance in real time. Plus, it is 100% free with absolutely no sign up needed.',
+            text: 'While Lensbooth is built primarily for single devices or requires complex code sharing with locked templates, LDR Photobooth by Pico connects two separate devices live across any distance in real time with total aesthetic freedom. Plus, it is 100% free with absolutely no sign up needed.',
           },
         },
         {
@@ -125,7 +138,7 @@ const articleSchema = {
           name: 'Do I need to sign up or pay to remove watermarks?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'No. LDR Photobooth is 100% free with no sign up required. All frames and high-resolution photo strips are free to download without watermarks.',
+            text: 'No. LDR Photobooth is 100% free with no sign up required. All layouts, frames, and high-resolution photo strips are free to download without watermarks.',
           },
         },
       ],
@@ -135,660 +148,1078 @@ const articleSchema = {
 
 export default function LensboothAlternativePage() {
   return (
-    <div className="article-page" style={styles.page}>
+    <div className="lb-page">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
 
-      {/* Nav */}
-      <nav style={styles.nav}>
-        <Link href="/" style={styles.navLogo}>
-          <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" style={styles.navLogoImg} />
-          <span style={styles.navLogoText}>ldr photobooth</span>
-          <span style={styles.navLogoSub}>by pico</span>
+      {/* Embedded Clean Studio Styling */}
+      <style>{`
+        .lb-page {
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          background: #ffffff;
+          color: #0f172a;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        /* Topbar */
+        .lb-topbar {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: #ffffff;
+          border-bottom: 1px solid #eaeaea;
+          height: 68px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 40px;
+          box-sizing: border-box;
+        }
+        .lb-logo-link {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+          color: #0f172a;
+        }
+        .lb-logo-img {
+          height: 30px;
+          width: auto;
+          border-radius: 6px;
+        }
+        .lb-logo-title {
+          font-size: 15px;
+          font-weight: 800;
+          letter-spacing: 1.2px;
+          color: #111827;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .lb-topbar-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 20px;
+          background: #111827;
+          color: #ffffff;
+          border-radius: 9999px;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          border: 1px solid #111827;
+        }
+        .lb-topbar-cta:hover {
+          background: #1f2937;
+          transform: translateY(-1px);
+        }
+
+        /* Hero */
+        .lb-hero {
+          text-align: center;
+          padding: 72px 24px 44px;
+          max-width: 900px;
+          margin: 0 auto;
+          box-sizing: border-box;
+        }
+        .lb-pill-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 16px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 9999px;
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          margin-bottom: 24px;
+        }
+        .lb-pill-badge .sparkle {
+          color: #0f172a;
+        }
+        .lb-hero-title {
+          font-size: 46px;
+          line-height: 1.15;
+          font-weight: 900;
+          color: #0f172a;
+          margin: 0 0 20px 0;
+          letter-spacing: -1px;
+        }
+        .lb-highlight-wrap {
+          position: relative;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .lb-lime-underline {
+          position: absolute;
+          left: 0;
+          bottom: 4px;
+          width: 100%;
+          height: 12px;
+          background: #ccff00;
+          z-index: -1;
+          border-radius: 3px;
+          transform: rotate(-0.5deg);
+        }
+        .lb-hero-sub {
+          font-size: 18px;
+          line-height: 1.65;
+          color: #475569;
+          margin: 0 auto 28px;
+          max-width: 740px;
+        }
+        .lb-rating-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 18px;
+          background: #fffbeb;
+          border: 1px solid #fef3c7;
+          border-radius: 9999px;
+          font-size: 13px;
+          color: #92400e;
+          margin-bottom: 32px;
+        }
+        .lb-stars {
+          color: #f59e0b;
+          letter-spacing: 2px;
+          font-size: 14px;
+        }
+        .lb-hero-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+        .lb-cta-lime-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px 36px;
+          background: #ccff00;
+          color: #0f172a;
+          font-size: 17px;
+          font-weight: 800;
+          border-radius: 9999px;
+          text-decoration: none;
+          box-shadow: 0 4px 18px rgba(204, 255, 0, 0.45);
+          transition: all 0.2s ease;
+          border: 1px solid #bbf000;
+        }
+        .lb-cta-lime-btn:hover {
+          transform: translateY(-2px);
+          background: #bbf000;
+          box-shadow: 0 8px 26px rgba(204, 255, 0, 0.55);
+        }
+        .lb-hero-hint {
+          font-size: 13px;
+          color: #64748b;
+        }
+
+        /* Content Container */
+        .lb-content {
+          max-width: 1000px;
+          width: 100%;
+          margin: 0 auto;
+          padding: 0 24px 80px;
+          box-sizing: border-box;
+        }
+
+        /* Double Feature Advantage Callout */
+        .lb-advantage-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin: 20px 0 60px;
+        }
+        .lb-adv-card {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 32px 28px;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
+          transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .lb-adv-card:hover {
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+        }
+        .lb-adv-card.highlight {
+          background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+          border-color: #bbf7d0;
+        }
+        .lb-adv-card.highlight-blue {
+          background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+          border-color: #bfdbfe;
+        }
+        .lb-adv-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 12px;
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          width: fit-content;
+          margin-bottom: 16px;
+        }
+        .lb-adv-tag.green {
+          background: #dcfce7;
+          color: #15803d;
+        }
+        .lb-adv-tag.blue {
+          background: #dbeafe;
+          color: #1d4ed8;
+        }
+        .lb-adv-quote {
+          font-size: 22px;
+          line-height: 1.35;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 14px 0;
+          letter-spacing: -0.3px;
+        }
+        .lb-adv-desc {
+          font-size: 14px;
+          line-height: 1.65;
+          color: #475569;
+          margin: 0;
+        }
+
+        /* Section Headings */
+        .lb-section {
+          margin: 64px 0;
+        }
+        .lb-section-header {
+          text-align: center;
+          margin-bottom: 36px;
+        }
+        .lb-section-pill {
+          display: inline-block;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 1.2px;
+          text-transform: uppercase;
+          color: #64748b;
+          margin-bottom: 8px;
+        }
+        .lb-section-title {
+          font-size: 32px;
+          font-weight: 900;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+          margin: 0;
+        }
+        .lb-section-sub {
+          font-size: 16px;
+          color: #64748b;
+          margin-top: 10px;
+          max-width: 640px;
+          margin-left: auto;
+          margin-right: auto;
+          line-height: 1.5;
+        }
+
+        /* Comparison Table */
+        .lb-table-card {
+          border-radius: 20px;
+          border: 1px solid #e2e8f0;
+          overflow: hidden;
+          background: #ffffff;
+          box-shadow: 0 8px 30px -4px rgba(0,0,0,0.04);
+        }
+        .lb-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+          font-size: 14px;
+        }
+        .lb-th-feature {
+          padding: 18px 24px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+          font-weight: 700;
+          color: #475569;
+          width: 28%;
+        }
+        .lb-th-pico {
+          padding: 18px 24px;
+          background: #f0fdf4;
+          border-bottom: 1px solid #e2e8f0;
+          font-weight: 800;
+          color: #166534;
+          width: 42%;
+        }
+        .lb-th-comp {
+          padding: 18px 24px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+          font-weight: 600;
+          color: #64748b;
+          width: 30%;
+        }
+        .lb-td-feature {
+          padding: 18px 24px;
+          border-bottom: 1px solid #f1f5f9;
+          font-weight: 600;
+          color: #1e293b;
+          vertical-align: middle;
+        }
+        .lb-td-pico {
+          padding: 18px 24px;
+          border-bottom: 1px solid #f1f5f9;
+          background: #fcfdfc;
+          color: #14532d;
+          font-weight: 600;
+          vertical-align: middle;
+        }
+        .lb-td-comp {
+          padding: 18px 24px;
+          border-bottom: 1px solid #f1f5f9;
+          color: #64748b;
+          vertical-align: middle;
+        }
+        .lb-badge-check {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: #15803d;
+          font-weight: 700;
+        }
+        .lb-badge-cross {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: #94a3b8;
+        }
+
+        /* Editorial Essay Block: Full Customization Manifesto */
+        .lb-manifesto-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 24px;
+          padding: 44px 40px;
+          box-shadow: 0 10px 32px -4px rgba(0,0,0,0.04);
+          margin-bottom: 60px;
+        }
+        .lb-manifesto-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 14px;
+          background: #fef3c7;
+          border: 1px solid #fde68a;
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 800;
+          color: #92400e;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          margin-bottom: 16px;
+        }
+        .lb-manifesto-quote-box {
+          background: #f8fafc;
+          border-left: 4px solid #0f172a;
+          border-radius: 0 16px 16px 0;
+          padding: 24px 28px;
+          margin: 24px 0 32px;
+        }
+        .lb-manifesto-quote-text {
+          font-size: 20px;
+          line-height: 1.55;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 10px 0;
+        }
+        .lb-manifesto-quote-sub {
+          font-size: 14px;
+          color: #64748b;
+          margin: 0;
+          font-style: italic;
+        }
+        .lb-manifesto-body {
+          font-size: 16px;
+          line-height: 1.75;
+          color: #334155;
+        }
+        .lb-manifesto-body p {
+          margin: 0 0 20px 0;
+        }
+        .lb-creative-pillars {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-top: 32px;
+        }
+        .lb-pillar-item {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 20px 18px;
+        }
+        .lb-pillar-num {
+          font-size: 12px;
+          font-weight: 800;
+          color: #0f172a;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+        }
+        .lb-pillar-title {
+          font-size: 15px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 8px 0;
+        }
+        .lb-pillar-desc {
+          font-size: 13px;
+          line-height: 1.55;
+          color: #64748b;
+          margin: 0;
+        }
+
+        /* 4 Core Value Cards */
+        .lb-features-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+        .lb-feature-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 30px;
+          box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03);
+          transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .lb-feature-card:hover {
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+        }
+        .lb-feature-icon-wrap {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          background: #f1f5f9;
+          color: #0f172a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 18px;
+        }
+        .lb-feature-title {
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 10px 0;
+        }
+        .lb-feature-text {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #64748b;
+          margin: 0;
+        }
+
+        /* FAQ */
+        .lb-faq-list {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          max-width: 860px;
+          margin: 0 auto;
+        }
+        .lb-faq-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 24px 28px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .lb-faq-q {
+          font-size: 16px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 10px 0;
+        }
+        .lb-faq-a {
+          font-size: 14px;
+          line-height: 1.65;
+          color: #475569;
+          margin: 0;
+        }
+
+        /* Bottom Hero CTA */
+        .lb-bottom-cta {
+          text-align: center;
+          padding: 64px 24px;
+          background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+          border: 1px solid #e2e8f0;
+          border-radius: 28px;
+          margin: 60px 0 20px;
+          box-shadow: 0 12px 36px -6px rgba(0,0,0,0.04);
+        }
+        .lb-bottom-cta-title {
+          font-size: 34px;
+          font-weight: 900;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+          margin: 0 0 14px 0;
+        }
+        .lb-bottom-cta-sub {
+          font-size: 16px;
+          color: #64748b;
+          max-width: 580px;
+          margin: 0 auto 30px;
+          line-height: 1.6;
+        }
+
+        /* Minimalist Footer */
+        .lb-footer {
+          border-top: 1px solid #eaeaea;
+          background: #ffffff;
+          padding: 40px 40px 30px;
+          margin-top: auto;
+        }
+        .lb-footer-inner {
+          max-width: 1200px;
+          margin: 0 auto 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
+        .lb-footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          user-select: none;
+        }
+        .lb-footer-logo-img {
+          height: 26px;
+          width: auto;
+          border-radius: 6px;
+          object-fit: contain;
+          display: block;
+        }
+        .lb-footer-title {
+          font-size: 14px;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          color: #0f172a;
+        }
+        .lb-footer-links {
+          display: flex;
+          align-items: center;
+        }
+        .lb-footer-pico-link {
+          text-decoration: none;
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 9999px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          transition: all 0.2s ease;
+        }
+        .lb-footer-pico-link:hover {
+          color: #0f172a;
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+        .lb-footer-copy {
+          text-align: center;
+          font-size: 12px;
+          color: #94a3b8;
+          border-top: 1px solid #f1f5f9;
+          padding-top: 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 768px) {
+          .lb-topbar {
+            padding: 0 20px;
+            height: 60px;
+          }
+          .lb-hero {
+            padding: 44px 16px 30px;
+          }
+          .lb-hero-title {
+            font-size: 30px;
+            line-height: 1.25;
+          }
+          .lb-hero-sub {
+            font-size: 15px;
+          }
+          .lb-advantage-grid {
+            grid-template-columns: 1fr;
+          }
+          .lb-creative-pillars {
+            grid-template-columns: 1fr;
+          }
+          .lb-features-grid {
+            grid-template-columns: 1fr;
+          }
+          .lb-manifesto-card {
+            padding: 28px 20px;
+          }
+          .lb-manifesto-quote-text {
+            font-size: 17px;
+          }
+          .lb-bottom-cta {
+            padding: 44px 20px;
+          }
+          .lb-bottom-cta-title {
+            font-size: 26px;
+          }
+          .lb-footer {
+            padding: 30px 20px 24px;
+          }
+        }
+      `}</style>
+
+      {/* ── TOPBAR NAVIGATION ── */}
+      <header className="lb-topbar">
+        <Link href="/" className="lb-logo-link">
+          <img src="/Ldr_photobooth.png" alt="LDR Photobooth Logo" className="lb-logo-img" />
+          <span className="lb-logo-title">LDR PHOTOBOOTH</span>
         </Link>
-        <Link href="/" style={styles.navCta}>
-          Launch Booth Free →
+        <Link href="/" className="lb-topbar-cta">
+          <span>Launch Booth Free</span>
+          <span>→</span>
         </Link>
-      </nav>
-
-      {/* Hero Header */}
-      <header style={styles.hero}>
-        <div style={styles.pillBadge}>
-          <span style={styles.sparkle}>✦</span> 100% Free • No Sign Up • No App Required
-        </div>
-        <h1 style={styles.heroTitle}>
-          The Best Free <span style={styles.highlight}>Lensbooth</span> Alternative for Couples & Friends
-        </h1>
-        <p style={styles.heroSub}>
-          Looking for a web photobooth that does not require an account, has zero paywalls, and lets you take photos with your long-distance partner live? 
-          <strong> LDR Photobooth by Pico</strong> gives you instant real-time duo capture, Korean-style strips, and 100% free access.
-        </p>
-
-        {/* Rating Social Proof */}
-        <div style={styles.ratingBadge}>
-          <span style={styles.stars}>★★★★★</span>
-          <span style={styles.ratingText}>
-            <strong>4.9 / 5</strong> rating from 170+ long-distance couples
-          </span>
-        </div>
-
-        <div style={styles.heroActions}>
-          <Link href="/" style={styles.primaryBtn}>
-            Start Photobooth Now (100% Free)
-          </Link>
-          <span style={styles.heroHint}>Instant room setup • No email or registration required</span>
-        </div>
       </header>
 
-      {/* Main Content */}
-      <main style={styles.content}>
-        {/* Spotlight Quote Banner */}
-        <div style={styles.quoteBox}>
-          <div style={styles.quoteHeader}>
-            <span style={styles.quotePill}>⚡ THE PICO ADVANTAGE</span>
-            <span style={styles.quoteSub}>Zero Friction • Instant Connect</span>
-          </div>
-          <blockquote style={styles.quoteText}>
-            “Why enter a 16-digit code when you can start in 1 click with Pico?”
-          </blockquote>
-          <p style={styles.quoteDescription}>
-            Lensbooth requires couples to squint at phone screens, copying and transcribing a tedious <strong>16-digit alphanumeric code</strong> just to sync cameras. One wrong character and the connection fails. 
-            With <strong>LDR Photobooth by Pico</strong>, you connect effortlessly in <strong>1 single click</strong>. No passwords, no 16-character hurdles, and no buzzkill during your date night.
-          </p>
+      {/* ── HERO HEADER ── */}
+      <section className="lb-hero">
+        <div className="lb-pill-badge">
+          <span className="sparkle">✦</span> 100% Free • No Sign-Up • Created for Creative Freedom
         </div>
 
-        {/* Comparison Table */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>LDR Photobooth vs Lensbooth: Side-by-Side Comparison</h2>
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+        <h1 className="lb-hero-title">
+          The Best Free <span className="lb-highlight-wrap">Lensbooth<span className="lb-lime-underline"></span></span> Alternative for Couples & Friends
+        </h1>
+
+        <p className="lb-hero-sub">
+          Looking for a web photobooth that does not force you through sign-up walls, never locks you into rigid preset frames, and lets you take photos with your long-distance partner live in real-time? 
+          <strong> LDR Photobooth by Pico</strong> was engineered for instant connection and total creative customization.
+        </p>
+
+        <div className="lb-rating-badge">
+          <span className="lb-stars">★★★★★</span>
+          <span><strong>4.9 / 5</strong> rating from 170+ long-distance couples</span>
+        </div>
+
+        <div className="lb-hero-actions">
+          <Link href="/" className="lb-cta-lime-btn">
+            Start Photobooth Now (100% Free) →
+          </Link>
+          <span className="lb-hero-hint">1-Click Instant Start • Zero Registration • No App Download Required</span>
+        </div>
+      </section>
+
+      {/* ── MAIN EDITORIAL & VALUE CONTENT ── */}
+      <main className="lb-content">
+        {/* Double Core Advantages: Frictionless Connection & Unbounded Creativity */}
+        <div className="lb-advantage-grid">
+          {/* Card 1: 1-Click vs 16-Digit */}
+          <div className="lb-adv-card highlight">
+            <span className="lb-adv-tag green">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              Zero Friction
+            </span>
+            <h2 className="lb-adv-quote">
+              “Why enter a 16-digit code when you can start in 1 click with Pico?”
+            </h2>
+            <p className="lb-adv-desc">
+              Lensbooth forces couples to manually copy and transcribe long 16-digit codes between apps—often dropping camera feeds. With LDR Photobooth by Pico, you start instantly in 1 click without passwords or verification delays.
+            </p>
+          </div>
+
+          {/* Card 2: Created for Full Customization & Embracing Creativity */}
+          <div className="lb-adv-card highlight-blue">
+            <span className="lb-adv-tag blue">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              Creative Freedom
+            </span>
+            <h2 className="lb-adv-quote">
+              Created for Full Customization & Embracing True Creativity
+            </h2>
+            <p className="lb-adv-desc">
+              Kami membuat LDR Photobooth tanpa batasan style atau frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin. Abadikan momen kalian tanpa terkunci template sempit.
+            </p>
+          </div>
+        </div>
+
+        {/* ── MANIFESTO ARTICLE SECTION ── */}
+        <section className="lb-manifesto-card">
+          <span className="lb-manifesto-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Philosophy & Creative Vision
+          </span>
+
+          <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0f172a', margin: '0 0 12px 0', letterSpacing: '-0.5px' }}>
+            Created for Full Customization: Bebas Berekspresi Tanpa Frame Kaku
+          </h2>
+
+          <div className="lb-manifesto-quote-box">
+            <p className="lb-manifesto-quote-text">
+              “Kami membuat LDR Photobooth tanpa batasan style / frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin.”
+            </p>
+            <p className="lb-manifesto-quote-sub">
+              — LDR Photobooth by Pico Philosophy: Built to eliminate artistic restrictions and celebrate genuine love across distance.
+            </p>
+          </div>
+
+          <div className="lb-manifesto-body">
+            <p>
+              Saat Anda dan orang tersayang meluangkan waktu berharga di tengah padatnya rutinitas atau perbedaan zona waktu untuk melakukan sesi foto bersama, 
+              hal terakhir yang Anda inginkan adalah rasa frustrasi karena <strong>pilihan template yang kaku dan membosankan</strong>.
+            </p>
+            <p>
+              Banyak platform photobooth online, termasuk Lensbooth dan aplikasi bilik foto konvensional, memperlakukan pengguna seperti cetakan pabrik: 
+              Anda dipaksa memilih dari segelintir frame bawaan yang statis, rasio foto yang tidak bisa disesuaikan, atau opsi kustomisasi warna dan stiker yang dikunci di balik akun berbayar (paywall). 
+              Hal tersebut justru membelenggu kreativitas dan membuat foto setiap pasangan tampak seragam.
+            </p>
+            <p>
+              Di <strong>LDR Photobooth by Pico</strong>, kami percaya bahwa bilik foto digital seharusnya berfungsi sebagai <em>kanvas tanpa batas</em>. 
+              Setiap hubungan memiliki bahasa cinta, humor, dan dinamika estetika yang unik—ada yang menyukai gaya minimalis Life4Cuts monokrom Korea, 
+              ada yang gemar warna-warna pastel cerah, dan ada yang ingin mengeksplorasi pose konyol spontan dengan layout grid yang leluasa.
+            </p>
+          </div>
+
+          {/* 3 Pillars of Creative Freedom */}
+          <div className="lb-creative-pillars">
+            <div className="lb-pillar-item">
+              <span className="lb-pillar-num">1</span>
+              <h3 className="lb-pillar-title">Zero Rigid Boundaries</h3>
+              <p className="lb-pillar-desc">
+                Tata letak dan proporsi yang adaptif. Bebas memilih kombinasi strip, ukuran slot seimbang, dan estetika tanpa batasan frame kaku bawaan.
+              </p>
+            </div>
+            <div className="lb-pillar-item">
+              <span className="lb-pillar-num">2</span>
+              <h3 className="lb-pillar-title">Live Synchronized Framing</h3>
+              <p className="lb-pillar-desc">
+                Tampilan kamera ganda real-time berlatensi ultra-rendah memungkinkan Anda dan pasangan mengarahkan pose kreatif bersama sebelum shutter berbunyi.
+              </p>
+            </div>
+            <div className="lb-pillar-item">
+              <span className="lb-pillar-num">3</span>
+              <h3 className="lb-pillar-title">Zero Creative Paywalls</h3>
+              <p className="lb-pillar-desc">
+                Semua hasil foto strip dapat diunduh dalam kualitas Full HD jernih tanpa watermark, tanpa biaya langganan, dan tanpa perlu membuat akun.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SIDE-BY-SIDE COMPARISON TABLE ── */}
+        <section className="lb-section">
+          <div className="lb-section-header">
+            <span className="lb-section-pill">Direct Breakdown</span>
+            <h2 className="lb-section-title">LDR Photobooth vs Lensbooth: Side-by-Side Comparison</h2>
+            <p className="lb-section-sub">
+              See why couples and long-distance besties choose LDR Photobooth by Pico over traditional alternatives.
+            </p>
+          </div>
+
+          <div className="lb-table-card">
+            <table className="lb-table">
               <thead>
                 <tr>
-                  <th style={styles.thFeature}>Feature</th>
-                  <th style={styles.thPrimary}>LDR Photobooth by Pico</th>
-                  <th style={styles.thCompetitor}>Lensbooth</th>
+                  <th className="lb-th-feature">Feature</th>
+                  <th className="lb-th-pico">LDR Photobooth by Pico</th>
+                  <th className="lb-th-comp">Lensbooth</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={styles.tdFeature}>Room Setup & Pairing</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>⚡ 1-Click Instant Start</strong>
-                    <div style={styles.tdQuoteHint}>
-                      “Why enter a 16-digit code when you can start in 1 click with Pico?”
+                  <td className="lb-td-feature">Room Setup & Pairing</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      1-Click Instant Start (Zero friction)
                     </div>
                   </td>
-                  <td style={styles.tdCompetitor}>
-                    ❌ Tedious 16-digit room code required
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Tedious 16-digit code transcription
+                    </div>
                   </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>Pricing & Paywalls</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>100% Free Forever</strong> (No hidden fees, no tiers)
+                  <td className="lb-td-feature">Creative Freedom & Framing</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      Tanpa batasan frame kaku bawaan
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Freemium / Paid upgrades</td>
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Rigid preset templates & locked themes
+                    </div>
+                  </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>Account / Sign Up</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>No Sign-Up</strong> (Open link & start immediately)
+                  <td className="lb-td-feature">Pricing & Paywalls</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      100% Free Forever (All features unlocked)
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Prompts for login / accounts</td>
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Freemium / Paid upgrades for extras
+                    </div>
+                  </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>True LDR Live Dual Camera</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>Real-time WebRTC Sync</strong> (Live 2 cameras simultaneously)
+                  <td className="lb-td-feature">Account / Sign-Up Requirement</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      No Sign-Up (Zero accounts or emails)
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Single device / manual upload collage</td>
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Prompts for login and registrations
+                    </div>
+                  </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>Synchronized Countdown</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>Yes</strong> (Both screens shoot at the exact same millisecond)
+                  <td className="lb-td-feature">True LDR Live Dual Camera</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      Real-time WebRTC live video sync
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Single timer or desynced</td>
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Single device or manual upload collage
+                    </div>
+                  </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>Frame Styles & Aesthetics</td>
-                  <td style={styles.tdPrimary}>
-                    Korean Life4Cuts (인생네컷), pastel themes, cute stickers
+                  <td className="lb-td-feature">Synchronized Shutter Timer</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      Millisecond-accurate dual countdown
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Standard photobooth frames</td>
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Single timer or desynchronized
+                    </div>
+                  </td>
                 </tr>
+
                 <tr>
-                  <td style={styles.tdFeature}>Watermarks & Quality</td>
-                  <td style={styles.tdPrimary}>
-                    <strong>Clean Full HD strips</strong> (100% watermark-free)
+                  <td className="lb-td-feature">Watermarks & Strip Quality</td>
+                  <td className="lb-td-pico">
+                    <div className="lb-badge-check">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      Clean Full HD strips (100% watermark-free)
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>Watermarked on free tier</td>
-                </tr>
-                <tr>
-                  <td style={styles.tdFeature}>Languages Supported</td>
-                  <td style={styles.tdPrimary}>
-                    English, Indonesian, Japanese, Korean
+                  <td className="lb-td-comp">
+                    <div className="lb-badge-cross">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      Watermarked on free tier
+                    </div>
                   </td>
-                  <td style={styles.tdCompetitor}>English only</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* Deep Dive: 16-Digit Code vs 1-Click */}
-        <section style={styles.editorialSection}>
-          <h2 style={styles.editorialTitle}>The 16-Digit Problem: Why Friction Kills the Moment</h2>
-          <div style={styles.editorialBody}>
-            <p>
-              When you and your long-distance partner finally find time between busy work schedules and time zone differences for a virtual date, 
-              the last thing you want is technological friction. 
-            </p>
-            <p>
-              Many photobooth apps like Lensbooth generate unwieldy <strong>16-digit alphanumeric codes</strong> that must be manually texted, copied, and pasted into an input field. On mobile devices, switching apps to copy a 16-digit string often causes webcams to disconnect, browsers to refresh, or users to mistake an uppercase letter for a lowercase number.
-            </p>
-            <div style={styles.highlightCallout}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '17px', color: '#0f172a' }}>
-                💡 That is why our motto is simple:
-              </p>
-              <p style={{ margin: '6px 0 0 0', fontSize: '20px', fontWeight: 800, color: '#047857' }}>
-                “Why enter a 16-digit code when you can start in 1 click with Pico?”
-              </p>
-            </div>
-            <p>
-              With <strong>LDR Photobooth by Pico</strong>, everything is engineered for zero friction:
-            </p>
-            <ul style={styles.bulletList}>
-              <li><strong>1-Click Room Creation:</strong> Tap one button, copy the instant link or short code, and send it to your partner.</li>
-              <li><strong>Zero App Downloads:</strong> Operates 100% inside Safari, Chrome, Edge, and mobile browsers.</li>
-              <li><strong>100% Free with No Sign-Up:</strong> No email verification, no passwords, no hidden credit card prompts.</li>
-              <li><strong>Sub-second WebRTC Pairing:</strong> Low-latency video streams ensure you smile and pose at the exact same instant.</li>
-            </ul>
+        {/* ── CORE PILLARS GRID ── */}
+        <section className="lb-section">
+          <div className="lb-section-header">
+            <span className="lb-section-pill">Why Switch</span>
+            <h2 className="lb-section-title">Engineered for Moments, Not Technical Hurdles</h2>
           </div>
-        </section>
 
-        {/* Core Advantages */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Why Couples Choose LDR Photobooth over Lensbooth</h2>
-          
-          <div style={styles.grid}>
-            <div style={styles.card}>
-              <div style={styles.cardIcon}>⚡</div>
-              <h3 style={styles.cardTitle}>1. Instant 1-Click Start</h3>
-              <p style={styles.cardText}>
-                Why enter a 16-digit code when you can start in 1 click with Pico? No complicated codes, zero registration, and zero delays.
+          <div className="lb-features-grid">
+            <div className="lb-feature-card">
+              <div className="lb-feature-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </div>
+              <h3 className="lb-feature-title">1. Instant 1-Click Launch</h3>
+              <p className="lb-feature-text">
+                Why enter a 16-digit code when you can start in 1 click with Pico? Open the room, send your partner the instant link, and start snapping memories immediately.
               </p>
             </div>
 
-            <div style={styles.card}>
-              <div style={styles.cardIcon}>🌍</div>
-              <h3 style={styles.cardTitle}>2. True Long-Distance Sync</h3>
-              <p style={styles.cardText}>
-                Standard photobooths only work when both people share the same webcam. LDR Photobooth pairs two separate devices across oceans into one cute strip.
+            <div className="lb-feature-card">
+              <div className="lb-feature-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+              </div>
+              <h3 className="lb-feature-title">2. Unrestricted Creative Customization</h3>
+              <p className="lb-feature-text">
+                Kami membuat LDR Photobooth tanpa batasan style atau frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin dengan fleksibilitas layout dan visual.
               </p>
             </div>
 
-            <div style={styles.card}>
-              <div style={styles.cardIcon}>🌸</div>
-              <h3 style={styles.cardTitle}>3. Korean Life4Cuts (인생네컷)</h3>
-              <p style={styles.cardText}>
-                Get trendy Korean-style 4-cut strips with charming pastel colors, cute doodle borders, and customizable photo layouts.
+            <div className="lb-feature-card">
+              <div className="lb-feature-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </div>
+              <h3 className="lb-feature-title">3. True Dual-Camera WebRTC Sync</h3>
+              <p className="lb-feature-text">
+                Low-latency video streaming connects you face-to-face across any country or timezone. See each other live and count down to the exact millisecond.
               </p>
             </div>
 
-            <div style={styles.card}>
-              <div style={styles.cardIcon}>💎</div>
-              <h3 style={styles.cardTitle}>4. 100% Free & No Watermarks</h3>
-              <p style={styles.cardText}>
-                Download crisp, high-definition photo strips ready for Instagram, TikTok, or your memory scrapbooks without paying a single cent.
+            <div className="lb-feature-card">
+              <div className="lb-feature-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <h3 className="lb-feature-title">4. 100% Free & No Watermarks</h3>
+              <p className="lb-feature-text">
+                Download your photo strips in crisp, high-resolution Full HD. Perfect for sharing directly to Instagram stories, TikTok, or printing for your physical scrapbooks.
               </p>
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Frequently Asked Questions</h2>
-          <div style={styles.faqList}>
-            <div style={styles.faqItem}>
-              <h3 style={styles.faqQ}>Why enter a 16-digit code when you can start in 1 click with Pico?</h3>
-              <p style={styles.faqA}>
-                Exactly! In Lensbooth, setting up a room requires typing or pasting a long 16-digit code, which frequently causes typos on phones. LDR Photobooth by Pico eliminates all code friction by letting you start in 1 click or via a simple direct link.
+        {/* ── FAQ SECTION ── */}
+        <section className="lb-section">
+          <div className="lb-section-header">
+            <span className="lb-section-pill">Got Questions?</span>
+            <h2 className="lb-section-title">Frequently Asked Questions</h2>
+          </div>
+
+          <div className="lb-faq-list">
+            <div className="lb-faq-card">
+              <h3 className="lb-faq-q">Why enter a 16-digit code when you can start in 1 click with Pico?</h3>
+              <p className="lb-faq-a">
+                In Lensbooth, setting up a room requires manually typing or copying an unwieldy 16-character code, which frequently causes typos or reloads on mobile browsers. LDR Photobooth by Pico provides instant 1-click room generation with zero friction.
               </p>
             </div>
-            <div style={styles.faqItem}>
-              <h3 style={styles.faqQ}>Is LDR Photobooth really 100% free with no sign-up?</h3>
-              <p style={styles.faqA}>
-                Yes! There are no hidden paywalls, credit cards, or account requirements. All frames and high-resolution photo strip downloads are free forever.
+
+            <div className="lb-faq-card">
+              <h3 className="lb-faq-q">Bagaimana LDR Photobooth memberikan kebebasan kustomisasi bagi pengguna?</h3>
+              <p className="lb-faq-a">
+                Kami merancang LDR Photobooth tanpa batasan style atau frame bawaan yang kaku agar kalian semua bisa berekspresi sebebas mungkin. Anda dapat memilih beragam layout, mengatur nuansa foto secara mandiri, dan menciptakan strip foto yang benar-benar mencerminkan karakter Anda berdua tanpa harus terkunci di template monoton.
               </p>
             </div>
-            <div style={styles.faqItem}>
-              <h3 style={styles.faqQ}>Can we use it if one is on iPhone and the other is on laptop?</h3>
-              <p style={styles.faqA}>
-                Absolutely. LDR Photobooth works seamlessly across all devices — iPhone, Android, MacBook, and Windows PC. It runs directly inside your web browser.
+
+            <div className="lb-faq-card">
+              <h3 className="lb-faq-q">Is LDR Photobooth really 100% free with no sign-up?</h3>
+              <p className="lb-faq-a">
+                Yes! We never ask for your email, credit card, or social login. All strip layouts, real-time duo camera synchronizations, and high-definition downloads are completely free forever.
               </p>
             </div>
-            <div style={styles.faqItem}>
-              <h3 style={styles.faqQ}>Are our camera feeds and photos private?</h3>
-              <p style={styles.faqA}>
-                Yes. Video feeds are transmitted directly peer-to-peer using secure WebRTC technology. Photos are merged right in your browser and are not saved on external servers.
+
+            <div className="lb-faq-card">
+              <h3 className="lb-faq-q">Can we use it if one partner is on iPhone and the other is on PC or Android?</h3>
+              <p className="lb-faq-a">
+                Absolutely. LDR Photobooth runs directly in modern browsers (Safari, Chrome, Edge) across iOS, Android, macOS, and Windows with zero app downloads necessary.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Bottom CTA */}
-        <section style={styles.bottomCta}>
-          <h2 style={styles.bottomCtaTitle}>Ready to Take Cute Photos Together?</h2>
-          <p style={styles.bottomCtaSub}>
-            Join thousands of long-distance couples making cute memories today. 100% free, no sign-up, no 16-digit codes.
+        {/* ── BOTTOM HERO CTA ── */}
+        <section className="lb-bottom-cta">
+          <h2 className="lb-bottom-cta-title">Ready to Capture Memories Together?</h2>
+          <p className="lb-bottom-cta-sub">
+            Join thousands of long-distance couples and best friends making cute memories right now. 
+            No sign-up, no 16-digit codes, and no rigid frame limits.
           </p>
-          <Link href="/" style={styles.primaryBtnLg}>
+          <Link href="/" className="lb-cta-lime-btn">
             Start LDR Photobooth in 1 Click →
           </Link>
-          <div style={{ marginTop: '14px', fontSize: '13px', color: '#475569' }}>
-            No download • No sign-up • Works instantly on any phone or PC
+          <div style={{ marginTop: '16px', fontSize: '13px', color: '#64748b' }}>
+            Instant room setup • 100% Free Forever • Works seamlessly on any phone or laptop
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <p>© {new Date().getFullYear()} LDR Photobooth by Pico. The Original LDR Photobooth in the World.</p>
-        <p style={{ opacity: 0.7, fontSize: '13px', marginTop: '6px' }}>
-          Free online photo booth for couples • No app • No sign-up
-        </p>
+      {/* ── MINIMALIST FOOTER (Standardized with Home Page) ── */}
+      <footer className="lb-footer">
+        <div className="lb-footer-inner">
+          <div className="lb-footer-brand">
+            <img src="/Ldr_photobooth.png" alt="Pico" className="lb-footer-logo-img" />
+            <span className="lb-footer-title">LDR PHOTOBOOTH</span>
+          </div>
+          <div className="lb-footer-links">
+            <a
+              href="https://picobooth.web.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lb-footer-pico-link"
+            >
+              part of PICOBOOTH ↗
+            </a>
+          </div>
+        </div>
+        <div className="lb-footer-copy">
+          © {new Date().getFullYear()} LDR Photobooth by Pico. All rights reserved.
+        </div>
       </footer>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-    color: '#1a1a2e',
-    backgroundColor: '#fffdf9',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative',
-    zIndex: 1,
-  },
-  nav: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 24px',
-    maxWidth: '1100px',
-    width: '100%',
-    margin: '0 auto',
-    boxSizing: 'border-box',
-  },
-  navLogo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    textDecoration: 'none',
-    color: '#1a1a2e',
-  },
-  navLogoImg: {
-    height: '32px',
-    width: 'auto',
-    borderRadius: '4px',
-  },
-  navLogoText: {
-    fontSize: '22px',
-    fontFamily: "'PanellosPen', cursive",
-  },
-  navLogoSub: {
-    fontSize: '12px',
-    opacity: 0.5,
-    marginLeft: '-2px',
-  },
-  navCta: {
-    padding: '8px 18px',
-    background: '#1a1a2e',
-    color: '#fff',
-    borderRadius: '999px',
-    textDecoration: 'none',
-    fontSize: '13px',
-    fontWeight: '600',
-  },
-  hero: {
-    textAlign: 'center',
-    padding: '50px 20px 30px',
-    maxWidth: '840px',
-    margin: '0 auto',
-  },
-  pillBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '6px 16px',
-    background: '#e0f2fe',
-    border: '1px solid #bae6fd',
-    borderRadius: '999px',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#0284c7',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    marginBottom: '20px',
-  },
-  sparkle: {
-    color: '#0284c7',
-  },
-  heroTitle: {
-    fontSize: '40px',
-    lineHeight: 1.2,
-    fontWeight: '800',
-    color: '#111827',
-    margin: '0 0 18px 0',
-    letterSpacing: '-0.5px',
-  },
-  highlight: {
-    color: '#0284c7',
-    textDecoration: 'underline',
-    textDecorationColor: '#bae6fd',
-  },
-  heroSub: {
-    fontSize: '17px',
-    lineHeight: 1.6,
-    color: '#4b5563',
-    margin: '0 0 20px 0',
-  },
-  ratingBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '6px 16px',
-    background: '#fef3c7',
-    border: '1px solid #fde68a',
-    borderRadius: '999px',
-    marginBottom: '24px',
-  },
-  stars: {
-    color: '#f59e0b',
-    fontSize: '15px',
-    letterSpacing: '2px',
-  },
-  ratingText: {
-    fontSize: '13px',
-    color: '#92400e',
-  },
-  heroActions: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  primaryBtn: {
-    padding: '16px 34px',
-    background: '#06d6a0',
-    color: '#0f172a',
-    fontSize: '17px',
-    fontWeight: '700',
-    borderRadius: '14px',
-    textDecoration: 'none',
-    border: '2px solid #0f172a',
-    boxShadow: '4px 4px 0 #0f172a',
-    transition: 'all 0.15s ease',
-  },
-  primaryBtnLg: {
-    display: 'inline-block',
-    padding: '18px 38px',
-    background: '#06d6a0',
-    color: '#0f172a',
-    fontSize: '18px',
-    fontWeight: '700',
-    borderRadius: '16px',
-    textDecoration: 'none',
-    border: '2px solid #0f172a',
-    boxShadow: '4px 4px 0 #0f172a',
-    marginTop: '20px',
-  },
-  heroHint: {
-    fontSize: '13px',
-    color: '#6b7280',
-  },
-  content: {
-    maxWidth: '960px',
-    width: '100%',
-    margin: '0 auto',
-    padding: '0 20px 60px',
-    boxSizing: 'border-box',
-  },
-  quoteBox: {
-    margin: '30px 0 50px',
-    background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%)',
-    border: '2.5px solid #0f172a',
-    borderRadius: '20px',
-    padding: '32px 28px',
-    boxShadow: '6px 6px 0 #0f172a',
-  },
-  quoteHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '16px',
-    flexWrap: 'wrap',
-    gap: '10px',
-  },
-  quotePill: {
-    display: 'inline-block',
-    background: '#047857',
-    color: '#fff',
-    padding: '4px 12px',
-    borderRadius: '999px',
-    fontSize: '11px',
-    fontWeight: '800',
-    letterSpacing: '1px',
-  },
-  quoteSub: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#0369a1',
-  },
-  quoteText: {
-    margin: '0 0 16px 0',
-    fontSize: '26px',
-    fontWeight: '900',
-    lineHeight: 1.35,
-    color: '#0f172a',
-    letterSpacing: '-0.5px',
-  },
-  quoteDescription: {
-    margin: 0,
-    fontSize: '15px',
-    lineHeight: 1.65,
-    color: '#334155',
-  },
-  section: {
-    margin: '60px 0',
-  },
-  sectionTitle: {
-    fontSize: '28px',
-    fontWeight: '800',
-    textAlign: 'center',
-    margin: '0 0 32px 0',
-    color: '#111827',
-  },
-  tableWrapper: {
-    overflowX: 'auto',
-    borderRadius: '18px',
-    border: '2px solid #0f172a',
-    boxShadow: '6px 6px 0 #0f172a',
-    background: '#fff',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    textAlign: 'left',
-    fontSize: '15px',
-  },
-  thFeature: {
-    padding: '16px 20px',
-    background: '#f8fafc',
-    borderBottom: '2px solid #0f172a',
-    fontWeight: '700',
-    color: '#334155',
-    width: '28%',
-  },
-  thPrimary: {
-    padding: '16px 20px',
-    background: '#ecfdf5',
-    borderBottom: '2px solid #0f172a',
-    fontWeight: '800',
-    color: '#047857',
-    width: '42%',
-  },
-  thCompetitor: {
-    padding: '16px 20px',
-    background: '#f8fafc',
-    borderBottom: '2px solid #0f172a',
-    fontWeight: '600',
-    color: '#64748b',
-    width: '30%',
-  },
-  tdFeature: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #e2e8f0',
-    fontWeight: '600',
-    color: '#334155',
-    verticalAlign: 'top',
-  },
-  tdPrimary: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #e2e8f0',
-    background: '#f0fdf4',
-    color: '#065f46',
-    verticalAlign: 'top',
-  },
-  tdCompetitor: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #e2e8f0',
-    color: '#64748b',
-    verticalAlign: 'top',
-  },
-  tdQuoteHint: {
-    fontSize: '13px',
-    fontStyle: 'italic',
-    color: '#047857',
-    marginTop: '6px',
-    fontWeight: '600',
-  },
-  editorialSection: {
-    margin: '60px 0',
-    background: '#fff',
-    borderRadius: '18px',
-    border: '2px solid #0f172a',
-    boxShadow: '5px 5px 0 #0f172a',
-    padding: '36px 30px',
-  },
-  editorialTitle: {
-    fontSize: '24px',
-    fontWeight: '800',
-    color: '#111827',
-    margin: '0 0 18px 0',
-  },
-  editorialBody: {
-    fontSize: '15px',
-    lineHeight: 1.7,
-    color: '#374151',
-  },
-  highlightCallout: {
-    background: '#f0fdf4',
-    borderLeft: '4px solid #047857',
-    padding: '16px 20px',
-    borderRadius: '8px',
-    margin: '20px 0',
-  },
-  bulletList: {
-    paddingLeft: '22px',
-    lineHeight: 1.8,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '20px',
-  },
-  card: {
-    background: '#fff',
-    padding: '24px',
-    borderRadius: '16px',
-    border: '2px solid #0f172a',
-    boxShadow: '4px 4px 0 #0f172a',
-  },
-  cardIcon: {
-    fontSize: '32px',
-    marginBottom: '12px',
-  },
-  cardTitle: {
-    fontSize: '18px',
-    fontWeight: '700',
-    margin: '0 0 10px 0',
-    color: '#111827',
-  },
-  cardText: {
-    fontSize: '14px',
-    lineHeight: 1.6,
-    color: '#4b5563',
-    margin: 0,
-  },
-  faqList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    maxWidth: '820px',
-    margin: '0 auto',
-  },
-  faqItem: {
-    background: '#fff',
-    padding: '22px 26px',
-    borderRadius: '14px',
-    border: '1.5px solid #e5e7eb',
-  },
-  faqQ: {
-    margin: '0 0 8px 0',
-    fontSize: '17px',
-    fontWeight: '700',
-    color: '#111827',
-  },
-  faqA: {
-    margin: 0,
-    fontSize: '14px',
-    lineHeight: 1.6,
-    color: '#4b5563',
-  },
-  bottomCta: {
-    textAlign: 'center',
-    padding: '50px 20px',
-    background: '#e0f2fe',
-    borderRadius: '24px',
-    border: '2px solid #0f172a',
-    boxShadow: '6px 6px 0 #0f172a',
-    margin: '60px 0 20px',
-  },
-  bottomCtaTitle: {
-    fontSize: '30px',
-    fontWeight: '800',
-    margin: '0 0 12px 0',
-    color: '#0f172a',
-  },
-  bottomCtaSub: {
-    fontSize: '16px',
-    color: '#334155',
-    maxWidth: '560px',
-    margin: '0 auto',
-    lineHeight: 1.5,
-  },
-  footer: {
-    borderTop: '1px solid #e5e7eb',
-    textAlign: 'center',
-    padding: '30px 20px',
-    color: '#6b7280',
-    marginTop: 'auto',
-  },
-};
