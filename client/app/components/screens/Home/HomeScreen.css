@@ -855,18 +855,60 @@ body:has(.home-container) {
     font-size: 26px !important;
   }
   .home-scatter-section {
-    min-height: 480px !important;
-    padding: 40px 12px !important;
+    min-height: 520px !important;
+    padding: 60px 16px !important;
+    margin: 20px 0 10px 0 !important;
   }
-  .home-scatter-card {
-    width: 105px !important;
-  }
-  .home-scatter-card.sc-7,
-  .home-scatter-card.sc-8 {
-    display: none !important;
+  .home-scatter-center {
+    padding: 24px !important;
   }
   .home-scatter-lime-btn {
-    padding: 15px 32px !important;
+    padding: 16px 36px !important;
     font-size: 16px !important;
+  }
+  .home-scatter-card {
+    width: 95px !important;
+  }
+  /* Hide cards crowding the middle horizontal and vertical zones on mobile */
+  .home-scatter-card.sc-2,
+  .home-scatter-card.sc-4,
+  .home-scatter-card.sc-6,
+  .home-scatter-card.sc-7,
+  .home-scatter-card.sc-8,
+  .home-scatter-card.sc-9 {
+    display: none !important;
+  }
+  /* Position remaining perimeter cards with generous clearance from the button */
+  .home-scatter-card.sc-1 {
+    top: 0% !important;
+    left: -10px !important;
+    transform: rotate(-10deg) !important;
+  }
+  .home-scatter-card.sc-3 {
+    top: -20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) rotate(2deg) !important;
+    width: 100px !important;
+  }
+  .home-scatter-card.sc-5 {
+    top: 0% !important;
+    right: -10px !important;
+    transform: rotate(10deg) !important;
+  }
+  .home-scatter-card.sc-10 {
+    bottom: 0% !important;
+    left: -10px !important;
+    transform: rotate(-8deg) !important;
+  }
+  .home-scatter-card.sc-11 {
+    bottom: -20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) rotate(-3deg) !important;
+    width: 100px !important;
+  }
+  .home-scatter-card.sc-12 {
+    bottom: 0% !important;
+    right: -10px !important;
+    transform: rotate(8deg) !important;
   }
 }
